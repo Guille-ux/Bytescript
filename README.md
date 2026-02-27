@@ -1,0 +1,2 @@
+# Bytescript
+Interpreted programming language
