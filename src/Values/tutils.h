@@ -1,7 +1,8 @@
-#ifndef TUTILS
-#define TUTILS
+#ifndef TUTILS_H
+#define TUTILS_H
 
-#include "trashv.h"
+#include "Values/bytev.h"
+#include "Globals/table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,10 +17,11 @@
       (((hihi) & 0x80) ? 0xFF000000 : 0) )
 
 
-TValue to_return_value(TValue returnv[], size_t returnlen);
+TValue to_return_value(TValue returnv[], size_t returnc);
+TValue potential_shrink(TTable* table);
+TValue make_string(char* str);
 TTable* shift_table(TTable* table, size_t dead_values);
 TTable* shift_table_right(TTable* table, size_t idx);
 char* read_string();
-TValue make_string(char* str);
 
 #endif

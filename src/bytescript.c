@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <Error/error.h>
+#include "Values/bytev.h"
 
 
 
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
     }
 
     
-
+    printf("%zu", sizeof(TTable));
     fclose(pFile);
     return 0;
 }

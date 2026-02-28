@@ -1,5 +1,5 @@
-#ifndef ERROR
-#define ERROR
+#ifndef ERROR_H
+#define ERROR_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -24,8 +24,10 @@ Error* new_error(char* name, char* details, uint8_t pst, uint8_t pen);
 void call_error(Error* err, char* filetext);
 
 
-#define TYPE_ERROR(details)             (call_error(new_error("TypeError", (details), 0, 0), NULL))
-#define INVALID_ARGS_ERROR(details)     (call_error(new_error("InvalidArgsError", (details), 0, 0), NULL))
+#define TYPE_ERROR(details)                 (call_error(new_error("TypeError", (details), 0, 0), NULL))
+#define INVALID_ARGS_ERROR(details)         (call_error(new_error("InvalidArgsError", (details), 0, 0), NULL))
+#define FAILED_ALLOCATION_ERROR(details)    (call_error(new_error("FailedAllocationError", (details), 0, 0), NULL))
+#define INDEX_OUT_OF_SCOPE_ERROR(details)   (call_error(new_error("IndexOutOfScopeError", (details), 0, 0), NULL))
 
 
 #endif

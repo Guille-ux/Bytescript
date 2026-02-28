@@ -1,31 +1,34 @@
-#include "tutils.h"
+#include "Values/tutils.h"
+#include "Error/error.h"
 
 
-TValue to_return_value(TValue returnv[], size_t returnlen) {
-    if (returnlen == 1) return *returnv;
-    if (returnlen == 0) return NUM_AS_TVALUE((double)(0));
+TValue to_return_value(TValue returnv[], size_t returnc) {
+    if (returnc == 1) return *returnv;
+    if (returnc == 0) return NIL;
+    return new_table(returnv, returnc);
+}
 
-    TValue* newarray = malloc(sizeof(TValue) * returnlen);
-    TTable* newtab = malloc(sizeof(TTable));
-    if (newarray == NULL || newtab == NULL) exit(1);
-    newtab->array = newarray;
-    newtab->capacity = returnlen;
-    newtab->len = returnlen;
-    
-    for (int i = 0; i < returnlen; i++) {
-        newarray[i] = returnv[i];
+TValue potential_shrink(TTable* table) {
+    if (table->len <= table->capacity / 2) {
+        shrink_table(&table, 1);
     }
-    
-    uint64_t ptr = (uint64_t)(newtab);
-    uint64_t value = (TABLE | ptr);
-    return NAN_AS_TVALUE(value);
+}
+
+TValue make_string(char* str) {
+    size_t stlen = strlen(str);
+
+    TStr* nTStr = malloc(sizeof(TStr) + stlen + 1);
+    nTStr->len = stlen;
+    strcpy(nTStr->str, str);
+
+    return STR_TO_TVALUE(nTStr);
 }
 
 TTable* shift_table(TTable* table, size_t dead_values) {
-    for (int i = 0; i <= table->len + dead_values; i++) {
-        if (AS_NUM(table->array[i]) == 0) {
+    for (int i = 0; i < table->len + dead_values; i++) {
+        if (IS_NIL(table->array[i])) {
             table->array[i] = table->array[i + 1];
-            table->array[i + 1] = NUM_AS_TVALUE((double)(0));
+            table->array[i + 1] = NIL;
         }
     }
 
@@ -42,22 +45,17 @@ TTable* shift_table_right(TTable* table, size_t idx) {
 
 char* read_string() {
     size_t size = 4;
+    size_t count = 0;
     char* str = malloc(size + 1);
     if (!str) return NULL;
 
-    size_t count = 0;
     int c;
-
     while ((c = getchar()) != '\n' && c != EOF) {
         if (count >= size) {
             size *= 2;
-            char *new_str = realloc(str, size + 1);
+            char* new_str = realloc(str, size + 1);
+            if (!new_str) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation while reading stdout");
 
-            if (!new_str) {
-                free(str);
-                return NULL;
-            }
-            
             str = new_str;
         }
 
@@ -66,17 +64,4 @@ char* read_string() {
 
     str[count] = '\0';
     return str;
-}
-
-TValue make_string(char* str) {
-    size_t stlen = strlen(str);
-    char* nStr = malloc(stlen + 1);
-    strcpy(nStr, str);
-
-    TStr* nTStr = malloc(sizeof(TStr));
-    nTStr->len = stlen;
-    nTStr->str = nStr;
-    uint64_t ptr = (uint64_t)(nTStr);
-    uint64_t value = STRING | (PAYLOAD_MASK & ptr);
-    return (TValue){.nan = value};
 }
