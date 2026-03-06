@@ -9,20 +9,22 @@ OBJ      := $(MAIN_OBJ) $(LIB_OBJ)
 TARGET := $(patsubst src/%.c, dist/%.exe, $(MAIN_SRC))
 
 
-base : $(TARGET)
+main : $(TARGET)
 
-o_one : CFLAGS += -O1
-o_one : base
+o_one : CFLAGS += -O1 -march=native
+o_one : main
 
-o_two : CFLAGS += -O2
-o_two : base
+o_two : CFLAGS += -O2 -march=native
+o_two : main
 
-byte : CFLAGS += -O2
+byte : CFLAGS += -O2 -march=native
 byte : post_build
 
-all: CFLAGS += -O3
-all: base
+all: CFLAGS += -O3 -march=native
+all: main
 
+release : CFLAGS += -O3
+release : main
 
 
 dist/%.exe: build/%.o $(LIB_OBJ) | dist
@@ -45,7 +47,7 @@ clean :
 clean_trash : clean
 	rm bytescript.exe
 
-post_build : clean base
+post_build : clean main
 	mv dist/bytescript.exe ./bytescript.exe
 	rm -rf build
 	rm -rf dist

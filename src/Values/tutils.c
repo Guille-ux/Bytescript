@@ -9,8 +9,9 @@ TValue to_return_value(TValue returnv[], size_t returnc) {
 }
 
 TValue potential_shrink(TTable* table) {
-    if (table->len <= table->capacity / 2) {
-        shrink_table(&table, 1);
+    if (table->array.len <= table->array.capacity / 2) {
+        TValue tv_table = TBL_TO_TVALUE(table);
+        shrink_table(&tv_table, 1);
     }
 }
 
@@ -25,10 +26,10 @@ TValue make_string(char* str) {
 }
 
 TTable* shift_table(TTable* table, size_t dead_values) {
-    for (int i = 0; i < table->len + dead_values; i++) {
-        if (IS_NIL(table->array[i])) {
-            table->array[i] = table->array[i + 1];
-            table->array[i + 1] = NIL;
+    for (int i = 0; i < table->array.len + dead_values; i++) {
+        if (IS_NIL(table->array.array[i])) {
+            table->array.array[i] = table->array.array[i + 1];
+            table->array.array[i + 1] = NIL;
         }
     }
 
@@ -36,8 +37,8 @@ TTable* shift_table(TTable* table, size_t dead_values) {
 }
 
 TTable* shift_table_right(TTable* table, size_t idx) {
-    for (int i = table->len; i > idx; i--) {
-        table->array[i] = table->array[i - 1];
+    for (int i = table->array.len; i > idx; i--) {
+        table->array.array[i] = table->array.array[i - 1];
     }
 
     return table;

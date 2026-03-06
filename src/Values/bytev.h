@@ -9,13 +9,18 @@
 
 // TYPEDEFS
 
+
 typedef uint64_t TBool;
 typedef double TNumber;
 
-typedef LJ_ALIGN(8) union TrashValue {
+typedef LJ_ALIGN(8) union BValue {
     uint64_t nan;
     TNumber  num;
 } TValue;
+
+
+// MAIN TYPES
+
 
 typedef struct Func {
     const uint8_t* bytecode;
@@ -28,16 +33,42 @@ typedef struct Str {
     char str[];
 } TStr;
 
-typedef struct Table {
+
+// TABLES
+
+
+typedef struct Array {
     size_t len;
     size_t capacity;
     TValue* array;
+} BArray;
+
+typedef struct Pair {
+    TValue key;
+    TValue value;
+} BPair;
+
+typedef struct Bucket {
+    BPair pair;
+    BPair* sub;
+} BBucket;
+
+typedef struct HashTable {
+    size_t len;
+    size_t capacity;
+    BBucket* array;
+} BHashTable;
+
+typedef struct Table {
+    BArray array;
+    BHashTable hash_table;
 } TTable;
 
 typedef TValue (*CFunc)(TValue* args, uint8_t nArgs);
 
 
 // NAN BOXING
+
 
 typedef TValue* TStack;
 #define TVALUESIZE sizeof(TValue)
@@ -80,6 +111,7 @@ typedef TValue* TStack;
 #define IS_TABLE(v)     ((AS_TVALUE(v) & ~PAYLOAD_MASK) == TABLE)
 
 #define PAYLOAD(v)      (AS_TVALUE(v) & PAYLOAD_MASK)
+#define TYPE(v)         (AS_TVALUE(v) & (TYPE_MASK | QNaN))
 
 #define AS_STRING(v)    ( ( TStr* )( PAYLOAD(v) ) )
 #define AS_FUNC(v)      ( ( TFunc* )( PAYLOAD(v) ) )

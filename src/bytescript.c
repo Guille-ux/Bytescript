@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <Error/error.h>
 #include "Values/bytev.h"
+#include "Globals/table.h"
+#include "Globals/builtins.h"
 
 
 
@@ -21,7 +23,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    
     FILE* pFile = fopen(filename, "r");
     if (pFile == NULL) {
         char details[snprintf(NULL, 0, "Could not find file : %s", filename) + 1];
@@ -31,8 +32,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    
-    printf("%zu", sizeof(TTable));
     fclose(pFile);
     return 0;
 }
