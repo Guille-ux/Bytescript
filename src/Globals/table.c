@@ -1,4 +1,5 @@
 #include "Globals/table.h"
+#include <stdbool.h>
 
 
 static inline uint64_t hash_single_value(TValue value) {
@@ -23,26 +24,221 @@ static inline uint64_t hash_single_value(TValue value) {
     return v;
 }
 
+static inline void empty_pairs(Pair* pairs, size_t count) {
+    for (int i = 0; i < count; i++) {
+        pairs[i].key = NIL;
+        pairs[i].value = NIL;
+    }
+}
+
+static inline void empty_buckets(Bucket* bucks, size_t count) {
+    for (int i = 0; i < count; i++) {
+        empty_pairs(&bucks[i].pair, 1);
+        if (bucks[i].sub.arr != NULL) empty_pairs(bucks[i].sub.arr, bucks[i].sub.capacity);
+    }
+}
+
+static inline void reset_buckets(Bucket* bucks, size_t count) {
+    for (int i = 0; i < count; i++) {
+        bucks[i].sub.arr = NULL;
+        bucks[i].sub.capacity = 0;
+        bucks[i].sub.len = 0;
+        bucks[i].sub.tombstones = 0;
+        empty_pairs(&bucks[i].pair, 1);
+    }
+}
+
+
+static inline void potential_tombstone(Pair* last_tombstone, Pair* found_pair, TValue key, TValue value, uint8_t* placed) {
+    if (last_tombstone == NULL) {
+        found_pair->key = key;
+        found_pair->value = value;
+    } else {
+        last_tombstone->key = key;
+        last_tombstone->value = value;
+    }
+
+    *placed = 1;
+}
+
+static inline void make_bucket_sub(Bucket* buck) {
+    size_t pair_cap = 8;
+    Pair* n_sub_array = malloc(sizeof(Pair) * pair_cap);
+    empty_pairs(n_sub_array, pair_cap);
+
+    buck->sub.arr = n_sub_array;
+    buck->sub.capacity = pair_cap;
+}
+
+static inline void rehash_into(PairArray* pre, Pair* post, size_t pre_len) {
+    Pair* arr = pre->arr;
+    PairArray copied = *pre;
+    copied.arr = post;
+
+    for (int i = 0; i < pre_len; i++) {
+        Pair pair = arr[i];
+
+        if (!EMPTY_PAIR(pair) && !TOMBSTONE_PAIR(pair)) {
+            Pair* out[2];
+            uint64_t hashed = hash_single_value(pair.key);
+            linear_probe(&copied, hashed, pair.key, out);
+
+            Pair* new_pair = out[0] == NULL ? out[1] : out[0];
+            new_pair = out[1] == NULL ? out[0] : out[1];
+
+            new_pair->key = pair.key;
+            new_pair->value = pair.value;
+            pre->len++;
+        }
+    }
+}
+
+static inline void oa_rehash(Bucket* buck, size_t pre_len) {
+    Pair* newhasharray = malloc(sizeof(Pair) * buck->sub.capacity);
+    if (newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <table.new>");
+
+    empty_pairs(newhasharray, buck->sub.capacity);
+    buck->sub.len = 0;
+    buck->sub.tombstones = 0;
+
+    rehash_into(&buck->sub, newhasharray, pre_len);
+    free(buck->sub.arr);
+    buck->sub.arr = newhasharray;
+}
+
+static inline void potential_oa_resize(Bucket* buck, HashTable hash_table) {
+    double load_factor = (double)buck->sub.len / buck->sub.capacity;
+    double tombstone_factor = (double)buck->sub.tombstones / buck->sub.tombstones;
+    bool need_rehashing = false;
+    size_t pre_len = buck->sub.capacity;
+    
+    if (load_factor > MAX_OA_LOAD_FACTOR) {
+        need_rehashing = true;
+        buck->sub.capacity *= 2;
+
+        if (buck->sub.capacity == hash_table.capacity) buck->sub.capacity *= 1.2;
+
+    } else if (tombstone_factor > MAX_TOMBSTONE_FACTOR || (buck->sub.tombstones > buck->sub.len && buck->sub.len > 6)) need_rehashing = true;
+
+    if (need_rehashing) oa_rehash(buck, pre_len);
+}
+
+static inline void linear_probe(PairArray* pair_array, uint64_t hashed, TValue key, Pair* out[2]) {
+    Pair* last_tombstone = NULL;
+    uint64_t index = hashed % pair_array->capacity;
+    uint64_t i = index;
+    uint8_t placed = 0;
+
+    do {
+        Pair* pair = pair_array->arr + index;
+
+        if (EMPTY_PAIR(*pair) || AS_TVALUE((*pair).key) == AS_TVALUE(key)) {
+            out[0] = pair;
+            out[1] = last_tombstone;
+            return;
+
+        } else if (TOMBSTONE_PAIR(*pair) && last_tombstone == NULL) last_tombstone = pair;
+
+        index = ++index % pair_array->capacity;
+    } while (index != i);
+
+    out[0] = NULL;
+    out[1] = last_tombstone;
+}
+
+static inline void probe_bucket(Bucket* buck, uint64_t hashed, TValue key, TValue value, HashTable hash_table) {
+    if (buck->sub.arr == NULL) make_bucket_sub(buck);
+
+    Pair* out[2];
+    linear_probe(&buck->sub, hashed, key, out);
+
+    Pair* found_pair = out[0] == NULL ? out[1] : out[0];
+    found_pair = out[1] == NULL ? out[0] : out[1];
+
+    if (AS_TVALUE(out[0]->key) == AS_TVALUE(key) && found_pair != out[0]) { out[0]->value = NIL; buck->sub.tombstones++; }
+    if (AS_TVALUE(found_pair->key) != AS_TVALUE(key) && TOMBSTONE_PAIR(buck->pair)) {
+        buck->pair.key = key;
+        buck->pair.value = value;
+
+    } else  {
+        found_pair->key = key;
+        found_pair->value = value;
+    }
+
+    buck->sub.len++;
+    if (IS_NIL(value)) {buck->sub.tombstones++; buck->sub.len--;}
+
+    potential_oa_resize(buck, hash_table);
+}
+
+
+static inline void resize_hash_table(TTable* table) {
+    HashTable* hash_table = &table->hash_table;
+    Bucket* pre_arr = hash_table->array;
+    size_t pre_len = hash_table->capacity;
+
+    double load_factor = (double)hash_table->len / hash_table->capacity;
+
+    hash_table->capacity *= 2;
+    hash_table->len = 0;
+
+    Bucket* newhasharray = malloc(sizeof(Bucket) * hash_table->capacity);
+    reset_buckets(newhasharray, hash_table->capacity);
+    hash_table->array = newhasharray;
+
+    TValue args[3];
+    args[0] = TBL_TO_TVALUE(table);
+
+    for (int i = 0; i < pre_len; i++) {
+        Bucket buck = pre_arr[i];
+        
+        if (!TOMBSTONE_PAIR(buck.pair) && !EMPTY_PAIR(buck.pair)) {
+            args[1] = buck.pair.key;
+            args[2] = buck.pair.value;
+            append_key_table(args, 3);
+        }
+
+        if (buck.sub.arr != NULL) {
+            for (int i2 = 0; i2 < buck.sub.capacity; i2++) {
+                Pair pr = buck.sub.arr[i2];
+                if (!TOMBSTONE_PAIR(pr) && !EMPTY_PAIR(pr)) {
+                    args[1] = pr.key;
+                    args[2] = pr.value;
+                    append_key_table(args, 3);
+                }
+            }
+        }
+    }
+}
+
+static inline void potential_hash_resize(TTable* table) {
+    HashTable* hash_table = &table->hash_table;
+    double load_factor = (double)hash_table->len / hash_table->capacity;
+    if (load_factor > MAX_LOAD_FACTOR) resize_hash_table(table);
+}
+
 
 TValue new_table(TValue* argv, size_t argc) {
-        size_t cap = argc;
-        if (cap == 0) cap = 4;
+        size_t arr_cap = argc;
+        size_t hash_cap = 16;
 
-        TValue* newarray = malloc(BSIZE(cap));
+        if (arr_cap == 0) arr_cap = 4;
+
+        TValue* newarray = malloc(BSIZE(arr_cap));
         TTable* newtab = malloc(sizeof(TTable));
-        BBucket* newhasharray = malloc(sizeof(BBucket) * 2);
+        Bucket* newhasharray = malloc(sizeof(Bucket) * hash_cap);
         if (newarray == NULL || newtab == NULL || newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <table.new>");
 
         newtab->array.array = newarray;      
-        newtab->array.capacity = cap;         
+        newtab->array.capacity = arr_cap;         
         newtab->array.len = argc;
+
         newtab->hash_table.array = newhasharray;
-        newtab->hash_table.capacity = 2;
+        newtab->hash_table.capacity = hash_cap;
         newtab->hash_table.len = 0;
 
-        for (int i = 0; i < argc; i++) {
-            newarray[i] = argv[i];
-        }
+        for (int i = 0; i < argc; i++) newarray[i] = argv[i];
+        reset_buckets(newhasharray, hash_cap);
 
         TValue tab_tvalue = TBL_TO_TVALUE(newtab);
         return to_return_value(&tab_tvalue, 1);
@@ -226,4 +422,49 @@ TValue hash_value_table(TValue* argv, size_t argc) {
     }
 
     return to_return_value(returnv, returnc);
+}
+
+TValue append_key_table(TValue* argv, size_t argc) {
+    if (argc < 3) return NIL;
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <table.appendKey> take type <Table> as first argument");
+
+    TTable* ptr = AS_TABLE(argv[0]);
+    TValue key = argv[1];
+    TValue value = argv[2];
+
+    uint64_t hashed = hash_single_value(key);
+    uint64_t index = hashed % ptr->hash_table.capacity;
+    Bucket* buck = ptr->hash_table.array + index;
+
+    if (EMPTY_PAIR(buck->pair) || AS_TVALUE(buck->pair.key) == AS_TVALUE(key)) {
+        buck->pair.key = key;
+        buck->pair.value = value;
+
+    } else probe_bucket(buck, hashed, key, value, ptr->hash_table);
+
+    ptr->hash_table.len++;
+    if (IS_NIL(value)) ptr->hash_table.len--;
+
+    potential_hash_resize(ptr);
+    return value;
+}
+
+TValue get_key_table(TValue* argv, size_t argc) {
+    if (argc < 2) return NIL;
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <table.appendKey> take type <Table> as first argument");
+
+    TTable* ptr = AS_TABLE(argv[0]);
+    TValue key = argv[1];
+
+    uint64_t hashed = hash_single_value(key);
+    uint64_t index = hashed % ptr->hash_table.capacity;
+    Bucket* buck = ptr->hash_table.array + index;
+
+    if (AS_TVALUE(buck->pair.key) == AS_TVALUE(key)) {
+        return buck->pair.value;
+    } else {
+        Pair* out[2];
+        linear_probe(&buck->sub, hashed, key, out);
+        return out[0] == NULL ? NIL : out[0]->value;
+    }
 }

@@ -29,5 +29,6 @@ void call_error(Error* err, char* filetext) {
         while (linestart++ != lineend) if (linestart >= err->pst && lineend <= err->pen) printf("^");;
     }
 
+    printf("\n");
     exit(1);
 }

@@ -37,31 +37,38 @@ typedef struct Str {
 // TABLES
 
 
-typedef struct Array {
+typedef struct {
     size_t len;
     size_t capacity;
     TValue* array;
-} BArray;
+} Array;
 
-typedef struct Pair {
+typedef struct {
     TValue key;
     TValue value;
-} BPair;
+} Pair;
 
-typedef struct Bucket {
-    BPair pair;
-    BPair* sub;
-} BBucket;
-
-typedef struct HashTable {
+typedef struct {
     size_t len;
     size_t capacity;
-    BBucket* array;
-} BHashTable;
+    size_t tombstones;
+    Pair* arr;
+} PairArray;
+
+typedef struct {
+    Pair pair;
+    PairArray sub;
+} Bucket;
+
+typedef struct {
+    size_t len;
+    size_t capacity;
+    Bucket* array;
+} HashTable;
 
 typedef struct Table {
-    BArray array;
-    BHashTable hash_table;
+    Array array;
+    HashTable hash_table;
 } TTable;
 
 typedef TValue (*CFunc)(TValue* args, uint8_t nArgs);
