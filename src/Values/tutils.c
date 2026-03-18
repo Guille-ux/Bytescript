@@ -1,5 +1,6 @@
 #include "Values/tutils.h"
 #include "Error/error.h"
+#include "Lexer/lexer.h"
 
 
 TValue to_return_value(TValue returnv[], size_t returnc) {
@@ -16,13 +17,7 @@ TValue potential_shrink(TTable* table) {
 }
 
 TValue make_string(char* str) {
-    size_t stlen = strlen(str);
-
-    TStr* nTStr = malloc(sizeof(TStr) + stlen + 1);
-    nTStr->len = stlen;
-    strcpy(nTStr->str, str);
-
-    return STR_TO_TVALUE(nTStr);
+    return make_substring(str, strlen(str));
 }
 
 TTable* shift_table(TTable* table, size_t dead_values) {
@@ -65,4 +60,15 @@ char* read_string() {
 
     str[count] = '\0';
     return str;
+}
+
+void print_tokens(Token* tokens, size_t tok_len) {
+    printf("\n[\n");
+
+    for (int i = 0; i < tok_len; i++) {
+        printf("\tTT : %3d; Value : ", tokens[i].tt);
+        print(&tokens[i].value, 1);
+    }
+
+    printf("]\n");
 }

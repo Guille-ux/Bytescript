@@ -3,7 +3,9 @@
 
 
 
-
+typedef enum {
+    filename
+} FlagsIndex;
 
 
 #endif

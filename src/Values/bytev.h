@@ -2,7 +2,8 @@
 #define BYTE_VALUE_H
 
 #include <stdint.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 #define LJ_ALIGN(x) __attribute__((aligned(x)))
 
@@ -132,6 +133,17 @@ typedef TValue* TStack;
 #define FALSY(v)        ( !AS_NUM(v) || IS_NIL(v) )
 
 #define BSIZE(v)        (TVALUESIZE * v)
+
+
+static inline TValue make_substring(char* string, size_t len) {
+    TStr* str = malloc(sizeof(TStr) + len + 1);
+    strncpy(str->str, string, len);
+
+    str->str[len] = '\0';
+    str->len = len;
+
+    return STR_TO_TVALUE(str);
+}
 
 
 #endif

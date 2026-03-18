@@ -11,21 +11,25 @@ TValue print(TValue* argv, size_t argc) {
             case STRING : {
                 TStr* ptr = AS_STRING(v);
                 printf("%s", ptr->str);
+                break;
             }
 
             case TABLE : {
                 TTable* ptr = AS_TABLE(v);
                 printf("table <%p>", ptr);
+                break;
             }
 
             case FUNC : {
                 TFunc* ptr = AS_FUNC(v);
                 printf("function <%p>", ptr);
+                break;
             }
 
             default : {
                 double num = AS_NUM(v);
                 printf("%f", num);
+                break;
             }
         }
 

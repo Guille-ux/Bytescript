@@ -1,0 +1,70 @@
+statements :    NEWLINE* statement? (NEWLINE+ statement)* NEWLINE*
+
+statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
+                KEYWORD:"break"
+                KEYWORD:"continue"
+                expr
+
+expr :          KEYWORD:"var" IDENTIFIER EQ expr
+                IDENTIFIER LSBRAC expr RSBRAC EQ expr
+                IDENTIFIER EQ expr
+                comparaison ((KEYWORD:"and" | KEYWORD:"or" | || | &&) comparaison)*
+                
+comparaison :   KEYWORD:'not' comparaison
+                arithmetics ((EEQ || NEQ || LT || GT || LTEQ || GTEQ) arithmetics)*
+        
+arithmetics :   term ((PLUS|MINUS) term)*
+
+term :          factor ((MUL|DIV|IDIV|MOD) factor)*
+
+factor :        (PLUS|MINUS) factor
+                power
+
+power :         call ((POW | CONCAT) factor)*
+
+call :          numerics (LPAR (expr (SEPARATOR expr)*)? RPAR)?
+
+numerics :      INT | FLOAT | STR | IDENTIFIER (LSBRAC expr RSBRAC)? (DOT IDENTIFIER)*
+                LPAR expr RPAR
+                table-expr
+                alloc-expr
+                if-expr
+                for-expr
+                while-expr
+                repeat-expr
+                func-expr
+                import-expr
+
+
+table-expr :    LCBRAC (expr (SEPARATOR expr)*)? RCBRAC
+
+alloc-expr :    KEYWORD:"alloc" IDENTIFIER ARROW (expr (SEPARATOR expr)*)? end
+
+
+if-expr :       KEYWORD:"if" expr KEYWORD:"then" statements
+                (KEYWORD:"elseif" expr KEYWORD:"then" statements)*
+                (KEYWORD:"else" statements)*
+                KEYWORD:"end"
+
+
+for-expr :      KEYWORD:"for" IDENTIFIER EQ expr SEPARATOR expr
+                (SEPARATOR expr)?
+                KEYWORD:"repeat"
+                statements
+                KEYWORD:"end"
+
+
+while-expr :    KEYWORD:"while" expr KEYWORD:"repeat"
+                statements
+                KEYWORD:"end"
+
+repeat-expr :   KEYWORD:"repeat"
+                statements
+                KEYWORD:"while" expr
+
+func-expr :     KEYWORD:"func" IDENTIFIER?
+                LPAR (IDENTIFIER (SEPARATOR IDENTIFIER)*)? RPAR
+                statements
+                KEYWORD:"end"
+
+import-expr :   KEYWORD:"import" STR KEYWORD:"as" IDENTIFIER KEYWORD:"end"
