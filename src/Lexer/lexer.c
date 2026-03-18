@@ -13,8 +13,14 @@ static inline void emit(Token* tp, TokenType tt, TValue value) {
     *tp = tk;
 }
 
-static inline void double_case(char* text, Token* tp, char next_case, TokenType case1, TokenType case2) {
-    if (next_match(text, next_case)) emit(tp, case1, NIL); else emit(tp, case2, NIL);
+static inline void double_case(char** text, Token* tp, char next_case, TokenType case1, TokenType case2) {
+    if (next_match(*text, next_case)) {emit(tp, case2, NIL); (*text)++;} else emit(tp, case1, NIL);
+}
+
+static inline void triple_case(char** text, Token* tp, char next_case, char next_case2, TokenType case1, TokenType case2, TokenType case3) {
+    if (next_match(*text, next_case)) {emit(tp, case2, NIL); (*text)++;}
+    else if (next_match(*text, next_case2)) {emit(tp, case3, NIL); (*text)++;}
+    else emit(tp, case1, NIL);
 }
 
 
@@ -25,8 +31,14 @@ static inline void make_word(Token* tp, char** text) {
     size_t len = 1;
 
     while (isalpha((c = *++*text)) || c == '_') len++;
-    if (is_keyword(pst_text, len)) emit(tp, TT_KWORD, make_substring(pst_text, len));
-    else emit(tp, TT_IDENTIFIER, make_substring(pst_text, len));
+    if (is_keyword(pst_text, len)) {
+        TValue keyword = make_substring(pst_text, len);
+        TStr* keyword_str = AS_STRING(keyword);
+
+        if (!strcmp("not", keyword_str->str)) emit(tp, TT_NOT, NIL);
+        else emit(tp, TT_KWORD, make_substring(pst_text, len));
+
+    } else emit(tp, TT_IDENTIFIER, make_substring(pst_text, len));
 }
 
 static inline void emit_default(Token* tp, char** text) {
@@ -105,17 +117,17 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
             }
 
             case '-': {
-                emit(tp, TT_MINUS, NIL);
+                double_case(&text, tp, '>', TT_MINUS, TT_ARROW);
                 break;
             }
 
             case '*': {
-                double_case(text, tp, '*', TT_MUL, TT_POW);
+                double_case(&text, tp, '*', TT_MUL, TT_POW);
                 break;
             }
 
             case '/': {
-                double_case(text, tp, '/', TT_DIV, TT_IDIV);
+                double_case(&text, tp, '/', TT_DIV, TT_IDIV);
                 break;
             }
 
@@ -125,7 +137,7 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
             }
 
             case '=': {
-                emit(tp, TT_EQ, NIL);
+                double_case(&text, tp, '=', TT_EQ, TT_EEQ);
                 break;
             }
 
@@ -145,12 +157,78 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
                 break;
             }
 
+            case '(': {
+                emit(tp, TT_LPAR, NIL);
+                break;
+            }
+
+            case ')': {
+                emit(tp, TT_RPAR, NIL);
+                break;
+            }
+
+            case '[': {
+                emit(tp, TT_LSBRAC, NIL);
+                break;
+            }
+
+            case ']': {
+                emit(tp, TT_RSBRAC, NIL);
+                break;
+            }
+
+            case '{': {
+                emit(tp, TT_LCBRAC, NIL);
+                break;
+            }
+
+            case '}': {
+                emit(tp, TT_RCBRAC, NIL);
+                break;
+            }
+
+            case '!': {
+                double_case(&text, tp, '=', TT_NOT, TT_NEQ);
+                break;
+            }
+
+            case '<': {
+                triple_case(&text, tp, '=', '<', TT_LT, TT_LTEQ, TT_LSHIFT);
+                break;
+            }
+
+            case '>': {
+                triple_case(&text, tp, '=', '>', TT_GT, TT_GTEQ, TT_RSHIFT);
+                break;
+            }
+
+            case '&': {
+                double_case(&text, tp, '&', TT_BAND, TT_AND);
+                break;
+            }
+
+            case '|': {
+                double_case(&text, tp, '=', TT_BOR, TT_OR);
+                break;
+            }
+
+            case '^': {
+                emit(tp, TT_BXOR, NIL);
+                break;
+            }
+
+            case ',': {
+                emit(tp, TT_SEPARATOR, NIL);
+                break;
+            }
+
             case '\n': {
                 emit(tp, TT_NEWLINE, NIL);
                 break;
             }
 
             case '\0': {
+                emit(tp, TT_EOF, NIL);
                 goto end;
                 break;
             }

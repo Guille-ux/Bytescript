@@ -17,15 +17,16 @@ typedef enum {
     TT_IDIV,
     TT_MOD,
     TT_CONCAT,
-    TT_RPAR,
     TT_LPAR,
-    TT_RCBRAC,
+    TT_RPAR,
     TT_LCBRAC,
-    TT_RSBRAC,
+    TT_RCBRAC,
     TT_LSBRAC,
+    TT_RSBRAC,
     TT_EQ,
     TT_EEQ,
     TT_NEQ,
+    TT_NOT,
     TT_LT,
     TT_GT,
     TT_LTEQ,
@@ -58,7 +59,8 @@ bool is_keyword(char* str, size_t len);
 
 static inline bool next_match(char* text, char next_match);
 static inline void emit(Token* tp, TokenType tt, TValue value);
-static inline void double_case(char* text, Token* tp, char next_case, TokenType case1, TokenType case2);
+static inline void double_case(char** text, Token* tp, char next_case, TokenType case1, TokenType case2);
+static inline void triple_case(char** text, Token* tp, char next_case, char next_case2, TokenType case1, TokenType case2, TokenType case3);
 
 static inline void make_word(Token* tp, char** text);
 static inline void emit_default(Token* tp, char** text);
