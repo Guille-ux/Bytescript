@@ -1,1 +1,5 @@
-var a = 5 // 8 % 5 -> "hello"
+
+
+for i = 0, 5 repeat
+    print("hello")
+end

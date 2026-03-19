@@ -41,6 +41,7 @@ typedef enum {
     TT_IDENTIFIER,
     TT_KWORD,
     TT_SEPARATOR,
+    TT_DOT,
     TT_ARROW,
     TT_NEWLINE,
     TT_UNDEF,
@@ -67,7 +68,7 @@ static inline void emit_default(Token* tp, char** text);
 TValue make_number(char** text);
 TValue make_string_token(char** text, char initializer);
 
-Token* make_tokens(char* text, size_t text_len, size_t* tok_len);
+Token* make_tokens(char* text, size_t* tok_len);
 void print_tokens(Token* tokens, size_t tok_len);
 
 

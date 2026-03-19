@@ -22,15 +22,16 @@ void get_flags(int argc, char* argv[], char* byte_args[]) {
 
 char* read_file(FILE* file, size_t* out_size) {
     fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-
+    long size = ftell(file);
+    if (size == -1) FAILED_ALLOCATION_ERROR("Failed allocation while reading file");
+    
     rewind(file);
 
     char* buffer = malloc(size + 1);
-    if (!buffer) FAILED_ALLOCATION_ERROR("failed allocation of buffer while reading file");
+    if (!buffer) FAILED_ALLOCATION_ERROR("Failed allocation of buffer while reading file");
 
-    fread(buffer, 1, size, file);
-    buffer[size] = '\0';
+    size_t read = fread(buffer, 1, size, file);
+    buffer[read] = '\0';
 
     fclose(file);
     if (out_size) *out_size = size;
@@ -59,9 +60,8 @@ int main(int argc, char* argv[]) {
     size_t file_size = 0;
     char* buff = read_file(pFile, &file_size);
 
-
     size_t tok_len = 0;
-    Token* tokens = make_tokens(buff, file_size, &tok_len);
+    Token* tokens = make_tokens(buff, &tok_len);
     print_tokens(tokens, tok_len);
 
 

@@ -39,6 +39,7 @@ static inline void make_word(Token* tp, char** text) {
         else emit(tp, TT_KWORD, make_substring(pst_text, len));
 
     } else emit(tp, TT_IDENTIFIER, make_substring(pst_text, len));
+    *--*text;
 }
 
 static inline void emit_default(Token* tp, char** text) {
@@ -53,6 +54,8 @@ static inline void emit_default(Token* tp, char** text) {
 
 TValue make_number(char** text) {
     double res = strtod(*text, text);
+    *--*text;
+
     return NUM_AS_TVALUE(res);
 }
 
@@ -99,7 +102,7 @@ TValue make_string_token(char** text, char initializer) {
 }
 
 
-Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
+Token* make_tokens(char* text, size_t* tok_len) {
     size_t cap = 32;
     Token* tokens = malloc(sizeof(Token) * cap);
     Token* tp = tokens;
@@ -108,7 +111,7 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
     if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
 
     do {
-        if (*text == ' ' || *text == '\t') goto skip;
+        if (*text == ' ' || *text == '\t' || *text == '\r') goto skip;
 
         switch (*text) {
             case '+': {
@@ -142,8 +145,9 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
             }
 
             case '.': {
-                if (*(text + 1) == '.') emit(tp, TT_CONCAT, NIL);
-                else emit(tp, TT_NUMBER, make_number(&text));
+                if (*(text + 1) == '.') {emit(tp, TT_CONCAT, NIL); text++;}
+                else if (isdigit(*(text + 1))) (tp, TT_NUMBER, make_number(&text));
+                else emit(tp, TT_DOT, NIL);
                 break;
             }
 
@@ -222,13 +226,18 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
                 break;
             }
 
+            case ';':
+
             case '\n': {
                 emit(tp, TT_NEWLINE, NIL);
                 break;
             }
 
+            case EOF:
+
             case '\0': {
                 emit(tp, TT_EOF, NIL);
+                ++*tok_len;
                 goto end;
                 break;
             }
@@ -241,13 +250,12 @@ Token* make_tokens(char* text, size_t text_len, size_t* tok_len) {
 
         tp++;
         if (++*tok_len >= cap) {
-            size_t current = tokens - tp;
+            if (cap >= 64) break;
             cap *= 2;
-
             tokens = realloc(tokens, sizeof(Token) * cap);
             if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
 
-            tp = tokens + current;
+            tp = tokens + *tok_len;
         }
 
         skip:
