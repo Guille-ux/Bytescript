@@ -1,10 +1,5 @@
 #include <stdio.h>
-
 #include "bytescript.h"
-#include "Lexer/lexer.h"
-
-#include "Error/error.h"
-#include "Values/bytev.h"
 
 
 
@@ -60,11 +55,10 @@ int main(int argc, char* argv[]) {
     size_t file_size = 0;
     char* buff = read_file(pFile, &file_size);
 
-    size_t tok_len = 0;
-    Token* tokens = make_tokens(buff, &tok_len);
-    print_tokens(tokens, tok_len);
+    Token* tokens = make_tokens(buff);
+    free(buff);
 
+    //Node* ast = parse(tokens);
 
-    fclose(pFile);
     return 0;
 }

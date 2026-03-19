@@ -134,16 +134,4 @@ typedef TValue* TStack;
 
 #define BSIZE(v)        (TVALUESIZE * v)
 
-
-static inline TValue make_substring(char* string, size_t len) {
-    TStr* str = malloc(sizeof(TStr) + len + 1);
-    strncpy(str->str, string, len);
-
-    str->str[len] = '\0';
-    str->len = len;
-
-    return STR_TO_TVALUE(str);
-}
-
-
 #endif

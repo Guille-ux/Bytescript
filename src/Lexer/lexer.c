@@ -1,10 +1,14 @@
 #include "lexer.h"
 #include "Error/error.h"
+#include "Globals/string.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
 
+static inline bool match_token(Token tok1, Token tok2) {
+    return tok1.tt == tok2.tt && AS_TVALUE(tok1.value) == AS_TVALUE(tok2.value);
+}
 
 static inline bool next_match(char* text, char next_match) {return *++text == next_match;}
 
@@ -32,13 +36,13 @@ static inline void make_word(Token* tp, char** text) {
 
     while (isalpha((c = *++*text)) || c == '_') len++;
     if (is_keyword(pst_text, len)) {
-        TValue keyword = make_substring(pst_text, len);
+        TValue keyword = make_string(pst_text, len);
         TStr* keyword_str = AS_STRING(keyword);
 
         if (!strcmp("not", keyword_str->str)) emit(tp, TT_NOT, NIL);
-        else emit(tp, TT_KWORD, make_substring(pst_text, len));
+        else emit(tp, TT_KWORD, keyword);
 
-    } else emit(tp, TT_IDENTIFIER, make_substring(pst_text, len));
+    } else emit(tp, TT_IDENTIFIER, make_string(pst_text, len));
     *--*text;
 }
 
@@ -96,17 +100,17 @@ TValue make_string_token(char** text, char initializer) {
         }
     }
 
-    TValue str =  make_substring(buff, len);
+    TValue str =  make_string(buff, len);
     free(buff);
     return str;
 }
 
 
-Token* make_tokens(char* text, size_t* tok_len) {
+Token* make_tokens(char* text) {
     size_t cap = 32;
     Token* tokens = malloc(sizeof(Token) * cap);
     Token* tp = tokens;
-    *tok_len = 0;
+    size_t tok_len = 0;
 
     if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
 
@@ -237,7 +241,7 @@ Token* make_tokens(char* text, size_t* tok_len) {
 
             case '\0': {
                 emit(tp, TT_EOF, NIL);
-                ++*tok_len;
+                ++tok_len;
                 goto end;
                 break;
             }
@@ -249,13 +253,13 @@ Token* make_tokens(char* text, size_t* tok_len) {
         }
 
         tp++;
-        if (++*tok_len >= cap) {
+        if (++tok_len >= cap) {
             if (cap >= 64) break;
             cap *= 2;
             tokens = realloc(tokens, sizeof(Token) * cap);
             if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
 
-            tp = tokens + *tok_len;
+            tp = tokens + tok_len;
         }
 
         skip:

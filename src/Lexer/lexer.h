@@ -58,6 +58,7 @@ typedef struct {
 extern const char* keywords[];
 bool is_keyword(char* str, size_t len);
 
+static inline bool match_token(Token tok1, Token tok2);
 static inline bool next_match(char* text, char next_match);
 static inline void emit(Token* tp, TokenType tt, TValue value);
 static inline void double_case(char** text, Token* tp, char next_case, TokenType case1, TokenType case2);
@@ -68,8 +69,8 @@ static inline void emit_default(Token* tp, char** text);
 TValue make_number(char** text);
 TValue make_string_token(char** text, char initializer);
 
-Token* make_tokens(char* text, size_t* tok_len);
-void print_tokens(Token* tokens, size_t tok_len);
+Token* make_tokens(char* text);
+void print_tokens(Token* tokens);
 
 
 #endif

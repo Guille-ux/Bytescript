@@ -1,5 +1,1 @@
-
-
-for i = 0, 5 repeat
-    print("hello")
-end
+var a = 5

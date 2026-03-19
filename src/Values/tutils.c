@@ -9,36 +9,6 @@ TValue to_return_value(TValue returnv[], size_t returnc) {
     return new_table(returnv, returnc);
 }
 
-TValue potential_shrink(TTable* table) {
-    if (table->array.len <= table->array.capacity / 2) {
-        TValue tv_table = TBL_TO_TVALUE(table);
-        shrink_table(&tv_table, 1);
-    }
-}
-
-TValue make_string(char* str) {
-    return make_substring(str, strlen(str));
-}
-
-TTable* shift_table(TTable* table, size_t dead_values) {
-    for (int i = 0; i < table->array.len + dead_values; i++) {
-        if (IS_NIL(table->array.array[i])) {
-            table->array.array[i] = table->array.array[i + 1];
-            table->array.array[i + 1] = NIL;
-        }
-    }
-
-    return table;
-}
-
-TTable* shift_table_right(TTable* table, size_t idx) {
-    for (int i = table->array.len; i > idx; i--) {
-        table->array.array[i] = table->array.array[i - 1];
-    }
-
-    return table;
-}
-
 char* read_string() {
     size_t size = 4;
     size_t count = 0;
@@ -62,13 +32,13 @@ char* read_string() {
     return str;
 }
 
-void print_tokens(Token* tokens, size_t tok_len) {
+void print_tokens(Token* tokens) {
     printf("\n[\n");
 
-    for (int i = 0; i < tok_len; i++) {
-        printf("\tTT : %3d; Value : ", tokens[i].tt);
-        print(&tokens[i].value, 1);
-    }
+    do {
+        printf("\tTT : %3d; Value : ", tokens->tt);
+        print(&tokens->value, 1);
+    } while ((++tokens)->tt != TT_EOF);
 
     printf("]\n");
 }

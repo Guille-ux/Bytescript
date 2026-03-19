@@ -36,6 +36,10 @@ static inline void probe_bucket(Bucket* buck, uint64_t hashed, TValue key, TValu
 static inline void resize_hash_table(TTable* table);
 static inline void potential_hash_resize(TTable* table);
 
+static inline TValue potential_shrink(TTable* table);
+TTable* shift_table(TTable* table, size_t dead_values);
+TTable* shift_table_right(TTable* table, size_t idx);
+
 
 TValue new_table(TValue* argv, size_t argc);
 TValue free_table(TValue* argv, size_t argc);
@@ -54,9 +58,14 @@ TValue append_key_table(TValue* argv, size_t argc);
 TValue get_key_table(TValue* argv, size_t argc);
 
 
-static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
-    TValue args[3] = {table, key, value};
+inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
+    TValue args[3] = { table, key, value };
     append_key_table(args, 3);
+}
+
+inline TValue get_value_from_hashtable(TValue table, TValue key) {
+    TValue args[2] = { table, key };
+    return get_key_table(args, 2);
 }
 
 

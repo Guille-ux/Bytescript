@@ -4,6 +4,7 @@
 #include "Values/bytev.h"
 #include "Globals/table.h"
 #include "Globals/builtins.h"
+#include "Lexer/lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,10 +20,7 @@
 
 
 TValue to_return_value(TValue returnv[], size_t returnc);
-TValue potential_shrink(TTable* table);
-TValue make_string(char* str);
-TTable* shift_table(TTable* table, size_t dead_values);
-TTable* shift_table_right(TTable* table, size_t idx);
 char* read_string();
+void print_tokens(Token* tokens);
 
 #endif
