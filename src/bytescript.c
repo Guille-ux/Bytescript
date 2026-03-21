@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     Token* tokens = make_tokens(buff);
     free(buff);
 
-    //Node* ast = parse(tokens);
+    Node* ast = parse(tokens, byte_args[filename]);
 
     return 0;
 }

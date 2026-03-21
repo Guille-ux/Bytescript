@@ -8,7 +8,7 @@
 extern const TTable* string_cache;
 
 
-TValue cache_string(char* string, size_t len);
+TValue cache_string(TStr* str);
 TValue make_string(char* string, size_t len);
 TValue make_fstring(char* str);
 

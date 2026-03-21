@@ -1,6 +1,7 @@
 #ifndef NODES_H
 #define NODES_H
 
+#include <stdbool.h>
 
 typedef enum {
     OT_PLUS,
@@ -13,22 +14,35 @@ typedef enum {
 } OperationType;
 
 typedef enum {
-    STATEMENTS_NODE,
-    NUMBER_NODE,
-    BIN_OP_NODE,
-    VAR_DECLARE_NODE,
-    VAR_ASSIGN_NODE
+    NT_STATEMENTS,
+    NT_RETURN,
+    NT_BREAK,
+    NT_CONTINUE,
+    NT_VAR_DECLARE,
+    NT_VAR_ASSIGN,
+    NT_BIN_OP,
+    NT_NUMBER
 } NodeType;
 
 
+typedef struct BNode Node;
+
+typedef struct {
+    size_t len;
+    size_t cap;
+    Node** nodes;
+} NodeArray;
+
 typedef struct BNode {
     NodeType nt;
+    bool cc;
     union {
-        struct { size_t len; struct BNode* nodes; } StatementsNode;
+        NodeArray StatementsNode;
+        NodeArray ReturnNode;
+        struct { Node* value; TValue var_name; } VarDeclareNode;
+        struct { Node* value; TValue var_name; } VarAssignNode;
+        struct { Node* left; Node* right; OperationType op; } BinOpNode;
         struct { TValue num; } NumberNode;
-        struct { struct BNode* left; struct BNode* right; OperationType op; } BinOpNode;
-        struct { struct BNode* value; TValue var_name; } VarDeclareNode;
-        struct { struct BNode* value; TValue var_name; } VarAssignNode;
     } node;
 } Node;
 

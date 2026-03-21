@@ -1,5 +1,7 @@
 #include "Globals/table.h"
 #include <stdbool.h>
+#include <inttypes.h>
+
 
 
 static inline uint64_t hash_single_value(TValue value) {
@@ -8,16 +10,19 @@ static inline uint64_t hash_single_value(TValue value) {
     switch (TYPE(value)) {
         case STRING : {
             TStr* str = AS_STRING(value);
-            v = rapidhash((const uint8_t*)str->str, strlen(str->str)); 
+            v = rapidhash(str->str, str->len);
+            break;
         }
 
         case TABLE : {
             TTable* tbl = AS_TABLE(value);
             v = rapidhash(&tbl->array.array, BSIZE(tbl->array.len));
+            break;
         }
 
         default : {
             v = rapidhash(&v, sizeof(v));
+            break;
         }
     }
 
@@ -132,7 +137,7 @@ static inline void linear_probe(PairArray* pair_array, uint64_t hashed, TValue k
     do {
         Pair* pair = pair_array->arr + index;
 
-        if (EMPTY_PAIR(*pair) || AS_TVALUE((*pair).key) == AS_TVALUE(key)) {
+        if (EMPTY_PAIR(*pair) || compare_tvalues((*pair).key, key)) {
             out[0] = pair;
             out[1] = last_tombstone;
             return;
@@ -155,8 +160,8 @@ static inline void probe_bucket(Bucket* buck, uint64_t hashed, TValue key, TValu
     Pair* found_pair = out[0] == NULL ? out[1] : out[0];
     found_pair = out[1] == NULL ? out[0] : out[1];
 
-    if (AS_TVALUE(out[0]->key) == AS_TVALUE(key) && found_pair != out[0]) { out[0]->value = NIL; buck->sub.tombstones++; }
-    if (AS_TVALUE(found_pair->key) != AS_TVALUE(key) && TOMBSTONE_PAIR(buck->pair)) {
+    if (compare_tvalues(out[0]->key, key) && found_pair != out[0]) { out[0]->value = NIL; buck->sub.tombstones++; }
+    if (!compare_tvalues(found_pair->key, key) && TOMBSTONE_PAIR(buck->pair)) {
         buck->pair.key = key;
         buck->pair.value = value;
 
@@ -277,6 +282,12 @@ TValue free_table(TValue* argv, size_t argc) {
         if (!IS_TABLE(value)) TYPE_ERROR("function <Table.free> take type <Table> as arguments");
 
         TTable* ptr = AS_TABLE(value);
+
+        for (int i2 = 0; i2 < ptr->hash_table.capacity; i++) {
+            Pair* sub = ptr->hash_table.array[i2].sub.arr;
+            if (sub != NULL) free(sub);
+        }
+
         free(ptr->array.array);
         free(ptr->hash_table.array);
         free(ptr);
@@ -463,7 +474,9 @@ TValue append_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
-    if (EMPTY_PAIR(buck->pair) || AS_TVALUE(buck->pair.key) == AS_TVALUE(key)) {
+    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
+    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
+    if (EMPTY_PAIR(buck->pair) || compare_tvalues(buck->pair.key, key)) {
         buck->pair.key = key;
         buck->pair.value = value;
 
@@ -487,7 +500,10 @@ TValue get_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
-    if (AS_TVALUE(buck->pair.key) == AS_TVALUE(key)) {
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", buck->pair.key);
+    if (compare_tvalues(buck->pair.key, key)) {
         return buck->pair.value;
     } else {
         if (buck->sub.arr == NULL) make_bucket_sub(buck);

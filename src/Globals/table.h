@@ -5,7 +5,7 @@
 #include "Values/tutils.h"
 #include "Error/error.h"
 #include "Globals/builtins.h"
-#include "rapidhash.h"
+#include "Globals/rapidhash.h"
 
 
 #define WITHIN_SCOPE(v, i)          (i < v->array.len || i >= 0)

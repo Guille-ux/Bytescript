@@ -42,3 +42,7 @@ void print_tokens(Token* tokens) {
 
     printf("]\n");
 }
+
+void print_hash_table(TTable* tab) {
+    
+}

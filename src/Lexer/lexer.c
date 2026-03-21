@@ -6,7 +6,12 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-static inline bool match_token(Token tok1, Token tok2) {
+
+inline bool match_keyword(Token tok, char kword[]) {
+    return match_token(tok, (Token){ .tt = TT_KWORD, .value = make_fstring(kword) });
+}
+
+inline bool match_token(Token tok1, Token tok2) {
     return tok1.tt == tok2.tt && AS_TVALUE(tok1.value) == AS_TVALUE(tok2.value);
 }
 

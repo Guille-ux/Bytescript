@@ -134,4 +134,15 @@ typedef TValue* TStack;
 
 #define BSIZE(v)        (TVALUESIZE * v)
 
+
+inline int compare_tvalues(TValue tv1, TValue tv2) {
+    if (TYPE(tv1) != TYPE(tv2)) return AS_TVALUE(tv1) == AS_TVALUE(tv2);
+
+    switch (TYPE(tv1)) {
+        case STRING: return !strcmp(AS_STRING(tv1)->str, AS_STRING(tv2)->str);
+        default: return AS_TVALUE(tv1) == AS_TVALUE(tv2);
+    }
+}
+
+
 #endif

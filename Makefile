@@ -51,3 +51,7 @@ post_build : clean main
 	mv dist/bytescript.exe ./bytescript.exe
 	rm -rf build
 	rm -rf dist
+	
+dis : CFLAGS += -O2
+dis : clean all
+	objdump -d build/dised.o > dist/dised.txt

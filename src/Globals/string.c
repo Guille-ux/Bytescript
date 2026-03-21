@@ -6,31 +6,31 @@
 const TTable* string_cache = NULL;
 
 
-inline TValue cache_string(char* string, size_t len) {
-    struct {
-        size_t len;
-        char str[len];
-    } fake_pre_cache;
+inline TValue cache_string(TStr* str) {
+    TValue tstr = STR_TO_TVALUE(str);
 
-    fake_pre_cache.len = len;
-    memcpy(fake_pre_cache.str, string, len);
-    TStr* pre_cache = (TStr*)(&fake_pre_cache);
+    if (string_cache == NULL) string_cache = AS_TABLE(new_table(NULL, 0));
+    else {
+        TValue cached =  get_value_from_hashtable(TBL_TO_TVALUE(string_cache), tstr);
+       // printf("%d\n", IS_NIL(cached));
 
-    if (string_cache == NULL) { string_cache = AS_TABLE(new_table(NULL, 0)); return NIL; }
-    else return get_value_from_hashtable(TBL_TO_TVALUE(string_cache), STR_TO_TVALUE(pre_cache));
+        if (!IS_NIL(cached)) {
+            free(str);
+            return cached;
+        }
+    }
+
+    add_value_to_hashtable(TBL_TO_TVALUE(string_cache), tstr, tstr);
+    return tstr;
 }
 
 inline TValue make_string(char* string, size_t len) {
-    TValue cached = cache_string(string, len);
-    if (!IS_NIL(cached)) return cached;
-
     TStr* str = malloc(sizeof(TStr) + len + 1);
     strncpy(str->str, string, len);
 
     str->str[len] = '\0';
     str->len = len;
-
-    return STR_TO_TVALUE(str);
+    return cache_string(str);
 }
 
 inline TValue make_fstring(char* str) {
