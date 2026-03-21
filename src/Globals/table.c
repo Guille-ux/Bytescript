@@ -3,15 +3,6 @@
 #include <inttypes.h>
 
 
-static inline uint64_t hash1(const char *s, size_t len) {
-    uint64_t h = 1469598103934665603ULL;
-    for (size_t i = 0; i < len; i++) {
-        h = (h ^ (unsigned char)s[i]) * 1099511628211ULL;
-    }
-
-    return h;
-}
-
 
 static inline uint64_t hash_single_value(TValue value) {
     uint64_t v = AS_TVALUE(value);
@@ -146,7 +137,7 @@ static inline void linear_probe(PairArray* pair_array, uint64_t hashed, TValue k
     do {
         Pair* pair = pair_array->arr + index;
 
-        if (EMPTY_PAIR(*pair) || AS_TVALUE((*pair).key) == AS_TVALUE(key)) {
+        if (EMPTY_PAIR(*pair) || compare_tvalues((*pair).key, key)) {
             out[0] = pair;
             out[1] = last_tombstone;
             return;
@@ -169,8 +160,8 @@ static inline void probe_bucket(Bucket* buck, uint64_t hashed, TValue key, TValu
     Pair* found_pair = out[0] == NULL ? out[1] : out[0];
     found_pair = out[1] == NULL ? out[0] : out[1];
 
-    if (AS_TVALUE(out[0]->key) == AS_TVALUE(key) && found_pair != out[0]) { out[0]->value = NIL; buck->sub.tombstones++; }
-    if (AS_TVALUE(found_pair->key) != AS_TVALUE(key) && TOMBSTONE_PAIR(buck->pair)) {
+    if (compare_tvalues(out[0]->key, key) && found_pair != out[0]) { out[0]->value = NIL; buck->sub.tombstones++; }
+    if (!compare_tvalues(found_pair->key, key) && TOMBSTONE_PAIR(buck->pair)) {
         buck->pair.key = key;
         buck->pair.value = value;
 
@@ -483,6 +474,8 @@ TValue append_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
+    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
+    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
     if (EMPTY_PAIR(buck->pair) || compare_tvalues(buck->pair.key, key)) {
         buck->pair.key = key;
         buck->pair.value = value;
@@ -507,6 +500,9 @@ TValue get_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
+    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", buck->pair.key);
     if (compare_tvalues(buck->pair.key, key)) {
         return buck->pair.value;
     } else {
