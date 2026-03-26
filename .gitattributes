@@ -2,4 +2,4 @@
 * text=auto
 Makefile linguist-vendored=true
 *.h linguist-language=C
-*.bs linguist-language=JavaScript
+*.bs linguist-language=C
