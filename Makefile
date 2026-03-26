@@ -26,6 +26,9 @@ all: main
 release : CFLAGS += -O3
 release : main
 
+debug : CFLAGS += -O0 -g
+debug : post_build
+
 
 dist/%.exe: build/%.o $(LIB_OBJ) | dist
 	$(CC) $(CFLAGS) $^ -o $@

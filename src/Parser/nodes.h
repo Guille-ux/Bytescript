@@ -1,17 +1,10 @@
 #ifndef NODES_H
 #define NODES_H
 
+#include "Lexer/lexer.h"
 #include <stdbool.h>
 
-typedef enum {
-    OT_PLUS,
-    OT_MINUS,
-    OT_MUL,
-    OT_POW,
-    OT_DIV,
-    OT_IDIV,
-    OT_MOD
-} OperationType;
+
 
 typedef enum {
     NT_STATEMENTS,
@@ -19,9 +12,14 @@ typedef enum {
     NT_BREAK,
     NT_CONTINUE,
     NT_VAR_DECLARE,
-    NT_VAR_ASSIGN,
+    NT_ASSIGNEMENT,
     NT_BIN_OP,
-    NT_NUMBER
+    NT_UNI_OP,
+    NT_CALL,
+    NT_VAR_ACESS,
+    NT_NUMBER,
+    NT_STRING,
+    NT_PLACEHOLDER
 } NodeType;
 
 
@@ -40,9 +38,13 @@ typedef struct BNode {
         NodeArray StatementsNode;
         NodeArray ReturnNode;
         struct { Node* value; TValue var_name; } VarDeclareNode;
-        struct { Node* value; TValue var_name; } VarAssignNode;
-        struct { Node* left; Node* right; OperationType op; } BinOpNode;
+        struct { Node* value; TValue var_name; } AssignementNode;
+        struct { Node* left; Node* right; Token op; } BinOpNode;
+        struct { Node* target; Token op; } UniOpNode;
+        struct { Node* target; NodeArray args; } CallNode;
+        struct { TValue name; } VarAcess;
         struct { TValue num; } NumberNode;
+        struct { TValue str; } StringNode;
     } node;
 } Node;
 

@@ -11,8 +11,12 @@ inline bool match_keyword(Token tok, char kword[]) {
     return match_token(tok, (Token){ .tt = TT_KWORD, .value = make_fstring(kword) });
 }
 
+inline bool match_tt(Token tok1, TokenType tt) {
+    return tok1.tt == tt;
+}
+
 inline bool match_token(Token tok1, Token tok2) {
-    return tok1.tt == tok2.tt && AS_TVALUE(tok1.value) == AS_TVALUE(tok2.value);
+    return match_tt(tok1, tok2.tt) && AS_TVALUE(tok1.value) == AS_TVALUE(tok2.value);
 }
 
 static inline bool next_match(char* text, char next_match) {return *++text == next_match;}

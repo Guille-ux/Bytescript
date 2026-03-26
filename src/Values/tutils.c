@@ -38,7 +38,7 @@ void print_tokens(Token* tokens) {
     do {
         printf("\tTT : %3d; Value : ", tokens->tt);
         print(&tokens->value, 1);
-    } while ((++tokens)->tt != TT_EOF);
+    } while ((tokens++)->tt != TT_EOF);
 
     printf("]\n");
 }

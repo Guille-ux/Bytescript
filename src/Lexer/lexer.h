@@ -59,6 +59,7 @@ extern const char* keywords[];
 bool is_keyword(char* str, size_t len);
 
 bool match_keyword(Token tok, char kword[]);
+bool match_tt(Token tok1, TokenType tt);
 bool match_token(Token tok1, Token tok2);
 static inline bool next_match(char* text, char next_match);
 static inline void emit(Token* tp, TokenType tt, TValue value);

@@ -58,12 +58,12 @@ TValue append_key_table(TValue* argv, size_t argc);
 TValue get_key_table(TValue* argv, size_t argc);
 
 
-inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
+static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
     TValue args[3] = { table, key, value };
     append_key_table(args, 3);
 }
 
-inline TValue get_value_from_hashtable(TValue table, TValue key) {
+static inline TValue get_value_from_hashtable(TValue table, TValue key) {
     TValue args[2] = { table, key };
     return get_key_table(args, 2);
 }

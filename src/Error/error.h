@@ -28,6 +28,7 @@ void call_error(Error* err, char* filetext);
 #define INVALID_ARGS_ERROR(details)         (call_error(new_error("InvalidArgsError", (details), 0, 0), NULL))
 #define FAILED_ALLOCATION_ERROR(details)    (call_error(new_error("FailedAllocationError", (details), 0, 0), NULL))
 #define INDEX_OUT_OF_SCOPE_ERROR(details)   (call_error(new_error("IndexOutOfScopeError", (details), 0, 0), NULL))
+#define SYNTAX_ERROR(details)               (call_error(new_error("InvalidSyntaxError", (details), 0, 0), NULL))
 
 
 #endif

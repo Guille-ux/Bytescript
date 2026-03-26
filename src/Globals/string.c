@@ -12,7 +12,6 @@ inline TValue cache_string(TStr* str) {
     if (string_cache == NULL) string_cache = AS_TABLE(new_table(NULL, 0));
     else {
         TValue cached =  get_value_from_hashtable(TBL_TO_TVALUE(string_cache), tstr);
-       // printf("%d\n", IS_NIL(cached));
 
         if (!IS_NIL(cached)) {
             free(str);

@@ -1,4 +1,4 @@
-statements :    NEWLINE* statement? (NEWLINE+ statement)* NEWLINE*
+statements :    NEWLINE* NEWLINE* (statement? NEWLINE+)*
 
 statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
                 KEYWORD:"break"
@@ -7,20 +7,19 @@ statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
 
 expr :          KEYWORD:"var" IDENTIFIER EQ expr
                 IDENTIFIER LSBRAC expr RSBRAC EQ expr
-                IDENTIFIER EQ expr
-                comparaison ((KEYWORD:"and" | KEYWORD:"or" | || | &&) comparaison)*
+                (comparaison ((KEYWORD:"and" | KEYWORD:"or" | || | && | | | &) comparaison)*) (EQ expr)?
                 
 comparaison :   KEYWORD:'not' comparaison
                 arithmetics ((EEQ || NEQ || LT || GT || LTEQ || GTEQ) arithmetics)*
         
-arithmetics :   term ((PLUS|MINUS) term)*
+arithmetics :   term ((PLUS|MINUS|CONCAT) term)*
 
 term :          factor ((MUL|DIV|IDIV|MOD) factor)*
 
 factor :        (PLUS|MINUS) factor
                 power
 
-power :         call ((POW | CONCAT) factor)*
+power :         call ((POW) factor)*
 
 call :          numerics (LPAR (expr (SEPARATOR expr)*)? RPAR)?
 

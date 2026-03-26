@@ -474,8 +474,6 @@ TValue append_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
-    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
-    //if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
     if (EMPTY_PAIR(buck->pair) || compare_tvalues(buck->pair.key, key)) {
         buck->pair.key = key;
         buck->pair.value = value;
@@ -500,9 +498,6 @@ TValue get_key_table(TValue* argv, size_t argc) {
     uint64_t index = hashed % ptr->hash_table.capacity;
     Bucket* buck = ptr->hash_table.array + index;
 
-    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", key);
-    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", hashed);
-    if (!strcmp(AS_STRING(key)->str, "break")) printf("%" PRIu64 "\n", buck->pair.key);
     if (compare_tvalues(buck->pair.key, key)) {
         return buck->pair.value;
     } else {

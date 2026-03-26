@@ -59,6 +59,7 @@ int main(int argc, char* argv[]) {
     free(buff);
 
     Node* ast = parse(tokens, byte_args[filename]);
+    //printf("%zu", ast->node.StatementsNode.len);
 
     return 0;
 }

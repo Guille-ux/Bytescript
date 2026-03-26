@@ -22,6 +22,7 @@ typedef LJ_ALIGN(8) union BValue {
 
 // MAIN TYPES
 
+typedef TValue (*CFunc)(TValue* argv, size_t argc);
 
 typedef struct Func {
     const uint8_t* bytecode;
@@ -71,8 +72,6 @@ typedef struct Table {
     Array array;
     HashTable hash_table;
 } TTable;
-
-typedef TValue (*CFunc)(TValue* args, uint8_t nArgs);
 
 
 // NAN BOXING
@@ -135,12 +134,26 @@ typedef TValue* TStack;
 #define BSIZE(v)        (TVALUESIZE * v)
 
 
-inline int compare_tvalues(TValue tv1, TValue tv2) {
+static inline int compare_tvalues(TValue tv1, TValue tv2) {
     if (TYPE(tv1) != TYPE(tv2)) return AS_TVALUE(tv1) == AS_TVALUE(tv2);
 
     switch (TYPE(tv1)) {
         case STRING: return !strcmp(AS_STRING(tv1)->str, AS_STRING(tv2)->str);
         default: return AS_TVALUE(tv1) == AS_TVALUE(tv2);
+    }
+}
+
+static inline TValue copy_tvalue(TValue tv1) {
+    switch (TYPE(tv1)) {
+        case STRING: {
+            TStr* str = AS_STRING(tv1);
+            TStr* copied = malloc(sizeof(TStr) + str->len + 1);
+            strncpy(copied->str, str->str, str->len + 1);
+            
+            return STR_TO_TVALUE(copied);
+        }
+
+        default: return tv1;
     }
 }
 
