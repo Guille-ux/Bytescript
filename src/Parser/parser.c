@@ -37,6 +37,7 @@ static NodeArray separated(ParseResult* res, ParseFunc func, Token separator) {
 
     } while (1);
 
+    res->err = NULL;
     return nda;
 }
 
@@ -53,22 +54,22 @@ Node* parse(Token* tokens, char filename[]) {
 Node* numerics(ParseResult* res) {
     Node* return_node = new_node(NT_PLACEHOLDER);
 
-    switch ((*res->tokens).tt) {
+    switch (res->tokens->tt) {
         case TT_IDENTIFIER : {
             return_node->nt = TT_IDENTIFIER;
-            return_node->node.VarAcess.name = (*res->tokens).value;
+            return_node->node.VarAcess.name = res->tokens->value;
             break;
         }
 
         case TT_NUMBER : {
             return_node->nt = NT_NUMBER;
-            return_node->node.NumberNode.num = (*res->tokens).value;
+            return_node->node.NumberNode.num = res->tokens->value;
             break;
         }
 
         case TT_STR : {
             return_node->nt = NT_STRING;
-            return_node->node.StringNode.str = (*res->tokens).value;
+            return_node->node.StringNode.str = res->tokens->value;
             break;
         }
 
@@ -93,8 +94,9 @@ Node* numerics(ParseResult* res) {
 
 Node* call(ParseResult* res) {
     Node* num = numerics(res);
+
     if (match_tt(*res->tokens, TT_LPAR)) {
-        clean_newlines(&res->tokens, &res->adv_count);
+        clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
         NodeArray args =  separated(res, expr, SEPARATOR);
         
         except(res, TT_RPAR, "(RPAR : ')') EXCEPTED", NULL, NULL);
@@ -178,7 +180,7 @@ Node* statements(ParseResult* res) {
     Node* node = new_node(NT_STATEMENTS);
     NodeArray statementNodes = make_node_array();
 
-    while ((*res->tokens).tt != TT_EOF) {
+    while (res->tokens->tt != TT_EOF) {
         clean_newlines(&res->tokens, &res->adv_count);
         Node* stmnt = statement(res);
 
@@ -231,8 +233,8 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
 }
 
 static inline void except(ParseResult* res, TokenType tt, char* excepted, TValue* value, char* kword) {
-    if ((*res->tokens).tt != tt || !match_keyword(*res->tokens, kword)) SYNTAX_ERROR(excepted);
-    if (value != NULL) *value = (*res->tokens).value;
+    if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) SYNTAX_ERROR(excepted);
+    if (value != NULL) *value = res->tokens->value;
     *res->tokens++;
 }
 
