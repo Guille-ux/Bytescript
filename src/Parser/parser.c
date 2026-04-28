@@ -9,7 +9,7 @@ static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, Par
 
     Node* left = func1(res);
     while (is_correct_operator(*res->tokens, ops, opc)) {
-        Token op = *res->tokens;
+        Token op = *res->tokens; res->tokens++;
         Node* right = func2(res);
 
         Node* n_left = new_node(NT_BIN_OP);
@@ -74,16 +74,19 @@ Node* numerics(ParseResult* res) {
         }
 
         case TT_LPAR : {
+            res->tokens++;
             Node* nexpr = expr(res);
             except(res, TT_RPAR, "(RPAR : ')' ) EXCEPTED", NULL, NULL);
 
             return_node->nt = nexpr->nt;
             return_node->node = nexpr->node;
-            free(nexpr);
+            free(nexpr); res->tokens--;
+            break;
         }
 
         default : {
             res->err = new_error("InvalidSyntaxError", "(INT | STR | OPERATOR) Excepted", 0, 0);
+            free(return_node);
             return NULL;
         }
     }
@@ -168,7 +171,11 @@ Node* expr(ParseResult* res) {
 
 Node* statement(ParseResult* res) {
     if (match_keyword(*res->tokens, "return")) {
-        res->tokens++;
+        res->tokens++; NodeArray values =  separated(res, expr, SEPARATOR);
+        Node* return_node = new_node(NT_RETURN);
+        return_node->node.ReturnNode = values;
+
+        return return_node;
 
     } else if (match_keyword(*res->tokens, "break")) { res->tokens++; return new_node(NT_BREAK); }
     else if (match_keyword(*res->tokens, "continue")) { res->tokens++; return new_node(NT_CONTINUE); }

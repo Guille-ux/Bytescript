@@ -8,6 +8,7 @@
 
 
 TValue print(TValue* argv, size_t argc);
+TValue tfree(TValue* argv, size_t argc);
 
 
 #endif

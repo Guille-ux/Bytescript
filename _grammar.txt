@@ -6,7 +6,6 @@ statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
                 expr
 
 expr :          KEYWORD:"var" IDENTIFIER EQ expr
-                IDENTIFIER LSBRAC expr RSBRAC EQ expr
                 (comparaison ((KEYWORD:"and" | KEYWORD:"or" | || | && | | | &) comparaison)*) (EQ expr)?
                 
 comparaison :   KEYWORD:'not' comparaison

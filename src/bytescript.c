@@ -60,7 +60,6 @@ int main(int argc, char* argv[]) {
 
     Node* ast = parse(tokens, byte_args[filename]);
     printf("%d\n", ast->node.StatementsNode.nodes[0]->nt);
-    //printf("%d", ast->node.StatementsNode.nodes[1]->nt);
 
     return 0;
 }
