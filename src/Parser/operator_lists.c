@@ -2,7 +2,7 @@
 #include "Globals/string.h"
 
 
-Token EXPR_OPERATORS[] = {
+Token LOGICAL_OPERATORS[] = {
     (Token){ .tt = TT_AND, .value = NIL },          // 0
     (Token){ .tt = TT_OR, .value = NIL },           // 1
     (Token){ .tt = TT_BAND, .value = NIL },         // 2
@@ -44,13 +44,13 @@ Token POWER_OPERATORS[] = {
 };
 
 
-size_t EXPR_OPERATORS_SIZE = sizeof(EXPR_OPERATORS) / sizeof(EXPR_OPERATORS[0]);
+size_t LOGICAL_OPERATORS_SIZE = sizeof(LOGICAL_OPERATORS) / sizeof(LOGICAL_OPERATORS[0]);
 size_t COMP_OPERATORS_SIZE = sizeof(COMP_OPERATORS) / sizeof(COMP_OPERATORS[0]);
 size_t ARITHMETIC_OPERATORS_SIZE = sizeof(ARITHMETIC_OPERATORS) / sizeof(ARITHMETIC_OPERATORS[0]);
 size_t TERM_OPERATORS_SIZE = sizeof(TERM_OPERATORS) / sizeof(TERM_OPERATORS[0]);
 size_t FACTOR_OPERATORS_SIZE = sizeof(FACTOR_OPERATORS) / sizeof(FACTOR_OPERATORS[0]);
 size_t POWER_OPERATORS_SIZE = sizeof(POWER_OPERATORS) / sizeof(POWER_OPERATORS[0]);
 void init_operators() {
-    EXPR_OPERATORS[5].value = make_fstring("and");
-    EXPR_OPERATORS[6].value = make_fstring("or");
+    LOGICAL_OPERATORS[5].value = make_fstring("and");
+    LOGICAL_OPERATORS[6].value = make_fstring("or");
 }

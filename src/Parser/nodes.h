@@ -38,7 +38,7 @@ typedef struct BNode {
         NodeArray StatementsNode;
         NodeArray ReturnNode;
         struct { Node* value; TValue var_name; } VarDeclareNode;
-        struct { Node* value; TValue var_name; } AssignementNode;
+        struct { Node* value; Node* lvalue; } AssignementNode;
         struct { Node* left; Node* right; Token op; } BinOpNode;
         struct { Node* target; Token op; } UniOpNode;
         struct { Node* target; NodeArray args; } CallNode;

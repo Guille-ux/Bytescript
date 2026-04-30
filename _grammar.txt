@@ -3,10 +3,19 @@ statements :    NEWLINE* NEWLINE* (statement? NEWLINE+)*
 statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
                 KEYWORD:"break"
                 KEYWORD:"continue"
+                alloc-expr
+                if-expr
+                for-expr
+                while-expr
+                repeat-expr
+                func-expr
+                import-expr
                 expr
 
 expr :          KEYWORD:"var" IDENTIFIER EQ expr
-                (comparaison ((KEYWORD:"and" | KEYWORD:"or" | || | && | | | &) comparaison)*) (EQ expr)?
+                logical (EQ expr)?
+
+logical :       (comparaison ((KEYWORD:"and" | KEYWORD:"or" | "||" | "&&" | "|" | "&") comparaison)*)
                 
 comparaison :   KEYWORD:'not' comparaison
                 arithmetics ((EEQ || NEQ || LT || GT || LTEQ || GTEQ) arithmetics)*
@@ -25,13 +34,6 @@ call :          numerics (LPAR (expr (SEPARATOR expr)*)? RPAR)?
 numerics :      INT | FLOAT | STR | IDENTIFIER (LSBRAC expr RSBRAC)? (DOT IDENTIFIER)*
                 LPAR expr RPAR
                 table-expr
-                alloc-expr
-                if-expr
-                for-expr
-                while-expr
-                repeat-expr
-                func-expr
-                import-expr
 
 
 table-expr :    LCBRAC (expr (SEPARATOR expr)*)? RCBRAC

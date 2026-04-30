@@ -149,6 +149,8 @@ Node* comparaison(ParseResult* res) {
     return bin_op(res, arithmetic, COMP_OPERATORS, COMP_OPERATORS_SIZE, NULL);
 }
 
+Node* logical(ParseResult* res) { return bin_op(res, comparaison, LOGICAL_OPERATORS, LOGICAL_OPERATORS_SIZE, NULL); }
+
 Node* expr(ParseResult* res) {
     if (match_keyword(*res->tokens, "var")) {
         res->tokens++;
@@ -166,7 +168,18 @@ Node* expr(ParseResult* res) {
 
     }
 
-    return bin_op(res, comparaison, EXPR_OPERATORS, EXPR_OPERATORS_SIZE, NULL);
+    Node* log =  logical(res);
+    if (res->tokens->tt == TT_EQ) {
+        res->tokens++;
+        Node* exp = expr(res);
+
+        Node* new = new_node(NT_ASSIGNEMENT);
+        new->node.AssignementNode.lvalue = log;
+        new->node.AssignementNode.value = exp;
+        log = new;
+    }
+
+    return log;
 }
 
 Node* statement(ParseResult* res) {

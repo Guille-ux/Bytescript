@@ -59,7 +59,8 @@ int main(int argc, char* argv[]) {
     free(buff);
 
     Node* ast = parse(tokens, byte_args[filename]);
-    printf("%d\n", ast->node.StatementsNode.nodes[0]->nt);
+    
+    Scope* compile_context = new_scope();
 
     return 0;
 }
