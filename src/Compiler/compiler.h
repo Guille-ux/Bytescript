@@ -114,5 +114,6 @@ static inline int cache_constant(TValue const_v, Scope* context);
 static inline int register_top(Scope* context);
 static inline int register_constant(uint8_t r, Scope* context, int16_t r_);
 static inline int register_register(uint8_t r, Scope* context, int16_t r_);
+static inline int register_specific(uint8_t r, Scope* context);
 
 #endif

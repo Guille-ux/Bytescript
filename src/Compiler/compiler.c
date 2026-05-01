@@ -42,6 +42,45 @@ int compile_return(Node* node, Scope* context) {
     }
 
     node->cc = false;
+    int r0 = free_register(register_top(context), context);
+
+    if (node->node.ReturnNode.len == 1) {
+        Node* nd = node->node.ReturnNode.nodes[0];
+        int return_v = compile(nd, context);
+
+        if (nd->cc) r0 = register_constant(return_v, context, -1); else r0 = register_specific(return_v, context);
+
+    } else if (node->node.ReturnNode.len > 1) {
+        for (int i = 0; i < node->node.ReturnNode.len; i++) register_top(context);
+        for (int i = 0; i < node->node.ReturnNode.len; i++) {
+            Node* nd = node->node.ReturnNode.nodes[i];
+            int return_v = compile(nd, context);
+
+            if (nd->cc) register_constant(return_v, context, r0 + i); else register_register(return_v, context, r0 + i);
+        }
+    }
+
+    emit(RETURN, context);
+    emit(free_multiple(r0, node->node.ReturnNode.len, context), context);
+    emit(node->node.ReturnNode.len, context);
+    emit(0x00, context);
+    return r0;
+}
+
+int compile_break(Node* node, Scope* context) {
+    struct LinkedList current = context->breaks;
+    while (current.next != NULL) current = *current.next;
+
+    current.ptr = context->bytecode.bytes + context->bytecode.len;
+    current.next = malloc(sizeof(struct LinkedList));
+    if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
+
+    emit(JUMP, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
+    return 0;
 }
 
 
@@ -89,9 +128,7 @@ static inline int register_first(Scope* context) {
 
 static inline int free_register(uint8_t idx, Scope* context) {
     if (idx != context->reg_ptr - 1) return (context->free_regs.free_regs[context->free_regs.len++] = idx);
-    context->reg_ptr--;
-
-    return idx;
+    return --context->reg_ptr;
 }
 
 static inline int cache_constant(TValue const_v, Scope* context) {
@@ -120,8 +157,36 @@ static inline int register_constant(uint8_t const_i, Scope* context, int16_t r_)
 
 static inline int register_register(uint8_t r, Scope* context, int16_t r_) {
     uint8_t r2 = r_ + 1 ? r_ : register_first(context);
-    emit(LOAD_RR, context);
-    emit(r, context);
-    emit(r2, context);
-    emit(0x00, context);
+    if (r2 != r) {
+        emit(LOAD_RR, context);
+        emit(r, context);
+        emit(r2, context);
+        emit(0x00, context);
+
+    } else register_specific(r2, context);
+
+    return r2;
+}
+
+static inline int register_specific(uint8_t r, Scope* context) {
+    for (int i = 0; i < context->free_regs.len; i++) {
+        if (r == context->free_regs.free_regs[i]) {
+            for (int i2 = i; i2 < context->free_regs.len - 1; i2++) {
+                context->free_regs.free_regs[i2] = context->free_regs.free_regs[i2 + 1];
+            }
+
+            return r;
+        }
+    }
+
+    if (r == context->reg_ptr) context->reg_ptr++;
+    return r;
+}
+
+static inline free_multiple(uint8_t r0, uint8_t len, Scope* context) {
+    for (int i = len - 1; i >= r0; i++) {
+        free_register(i, context);
+    }
+
+    return r0;
 }

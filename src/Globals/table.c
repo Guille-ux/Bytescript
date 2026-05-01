@@ -289,6 +289,13 @@ TValue free_table(TValue* argv, size_t argc) {
         }
 
         free(ptr->array.array);
+
+        for (int i = 0; i < ptr->hash_table.capacity; i++) {
+            if (ptr->hash_table.array[i].sub.arr != NULL) {
+                free(ptr->hash_table.array[i].sub.arr);
+            }
+        }
+
         free(ptr->hash_table.array);
         free(ptr);
     }
