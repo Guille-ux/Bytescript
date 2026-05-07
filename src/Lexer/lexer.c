@@ -21,19 +21,19 @@ inline bool match_token(Token tok1, Token tok2) {
 
 static inline bool next_match(char* text, char next_match) {return *++text == next_match;}
 
-static inline void emit(Token* tp, TokenType tt, TValue value) {
+static inline void emit_token(Token* tp, TokenType tt, TValue value) {
     Token tk = (Token){.tt = tt, .value = value};
     *tp = tk;
 }
 
 static inline void double_case(char** text, Token* tp, char next_case, TokenType case1, TokenType case2) {
-    if (next_match(*text, next_case)) {emit(tp, case2, NIL); (*text)++;} else emit(tp, case1, NIL);
+    if (next_match(*text, next_case)) {emit_token(tp, case2, NIL); (*text)++;} else emit_token(tp, case1, NIL);
 }
 
 static inline void triple_case(char** text, Token* tp, char next_case, char next_case2, TokenType case1, TokenType case2, TokenType case3) {
-    if (next_match(*text, next_case)) {emit(tp, case2, NIL); (*text)++;}
-    else if (next_match(*text, next_case2)) {emit(tp, case3, NIL); (*text)++;}
-    else emit(tp, case1, NIL);
+    if (next_match(*text, next_case)) {emit_token(tp, case2, NIL); (*text)++;}
+    else if (next_match(*text, next_case2)) {emit_token(tp, case3, NIL); (*text)++;}
+    else emit_token(tp, case1, NIL);
 }
 
 
@@ -48,15 +48,15 @@ static inline void make_word(Token* tp, char** text) {
         TValue keyword = make_string(pst_text, len);
         TStr* keyword_str = AS_STRING(keyword);
 
-        if (!strcmp("not", keyword_str->str)) emit(tp, TT_NOT, NIL);
-        else emit(tp, TT_KWORD, keyword);
+        if (!strcmp("not", keyword_str->str)) emit_token(tp, TT_NOT, NIL);
+        else emit_token(tp, TT_KWORD, keyword);
 
-    } else emit(tp, TT_IDENTIFIER, make_string(pst_text, len));
+    } else emit_token(tp, TT_IDENTIFIER, make_string(pst_text, len));
     *--*text;
 }
 
 static inline void emit_default(Token* tp, char** text) {
-    if (isdigit(**text) || **text == '.') return emit(tp, TT_NUMBER, make_number(text));
+    if (isdigit(**text) || **text == '.') return emit_token(tp, TT_NUMBER, make_number(text));
     else if (isalpha(**text) || **text == '_') return make_word(tp, text);
     else {
         char details[snprintf(NULL, 0, "Unidentified character : %c\n\tCannot Tokenize", **text) + 1];
@@ -128,7 +128,7 @@ Token* make_tokens(char* text) {
 
         switch (*text) {
             case '+': {
-                emit(tp, TT_PLUS, NIL);
+                emit_token(tp, TT_PLUS, NIL);
                 break;
             }
 
@@ -148,7 +148,7 @@ Token* make_tokens(char* text) {
             }
 
             case '%': {
-                emit(tp, TT_MOD, NIL);
+                emit_token(tp, TT_MOD, NIL);
                 break;
             }
 
@@ -158,49 +158,49 @@ Token* make_tokens(char* text) {
             }
 
             case '.': {
-                if (*(text + 1) == '.') {emit(tp, TT_CONCAT, NIL); text++;}
+                if (*(text + 1) == '.') {emit_token(tp, TT_CONCAT, NIL); text++;}
                 else if (isdigit(*(text + 1))) (tp, TT_NUMBER, make_number(&text));
-                else emit(tp, TT_DOT, NIL);
+                else emit_token(tp, TT_DOT, NIL);
                 break;
             }
 
             case '"': {
-                emit(tp, TT_STR, make_string_token(&text, '"'));
+                emit_token(tp, TT_STR, make_string_token(&text, '"'));
                 break;
             }
 
             case '\'': {
-                emit(tp, TT_STR, make_string_token(&text, '\''));
+                emit_token(tp, TT_STR, make_string_token(&text, '\''));
                 break;
             }
 
             case '(': {
-                emit(tp, TT_LPAR, NIL);
+                emit_token(tp, TT_LPAR, NIL);
                 break;
             }
 
             case ')': {
-                emit(tp, TT_RPAR, NIL);
+                emit_token(tp, TT_RPAR, NIL);
                 break;
             }
 
             case '[': {
-                emit(tp, TT_LSBRAC, NIL);
+                emit_token(tp, TT_LSBRAC, NIL);
                 break;
             }
 
             case ']': {
-                emit(tp, TT_RSBRAC, NIL);
+                emit_token(tp, TT_RSBRAC, NIL);
                 break;
             }
 
             case '{': {
-                emit(tp, TT_LCBRAC, NIL);
+                emit_token(tp, TT_LCBRAC, NIL);
                 break;
             }
 
             case '}': {
-                emit(tp, TT_RCBRAC, NIL);
+                emit_token(tp, TT_RCBRAC, NIL);
                 break;
             }
 
@@ -230,26 +230,26 @@ Token* make_tokens(char* text) {
             }
 
             case '^': {
-                emit(tp, TT_BXOR, NIL);
+                emit_token(tp, TT_BXOR, NIL);
                 break;
             }
 
             case ',': {
-                emit(tp, TT_SEPARATOR, NIL);
+                emit_token(tp, TT_SEPARATOR, NIL);
                 break;
             }
 
             case ';':
 
             case '\n': {
-                emit(tp, TT_NEWLINE, NIL);
+                emit_token(tp, TT_NEWLINE, NIL);
                 break;
             }
 
             case EOF:
 
             case '\0': {
-                emit(tp, TT_EOF, NIL);
+                emit_token(tp, TT_EOF, NIL);
                 ++tok_len;
                 goto end;
                 break;

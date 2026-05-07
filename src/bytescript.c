@@ -61,6 +61,19 @@ int main(int argc, char* argv[]) {
     Node* ast = parse(tokens, byte_args[filename]);
     
     Scope* compile_context = new_scope();
+    compile(ast, compile_context);
+
+    printf("\nbytecode. len : %d\n", compile_context->bytecode.len / 4);
+    for (int i = 0; i < compile_context->bytecode.len; i += 4) {
+        printf("%d %d %d %d\n", compile_context->bytecode.bytes[i], compile_context->bytecode.bytes[i + 1], compile_context->bytecode.bytes[i + 2], compile_context->bytecode.bytes[i + 3]);
+    }
+    printf("\n");
+
+    printf("constants. len : %d\n", compile_context->const_pool.len);
+    for (int i = 0; i < compile_context->const_pool.len; i++) {
+        printf("%f, ", AS_NUM(compile_context->const_pool.const_pool[i]));
+    }
+    printf("\n\n");
 
     return 0;
 }

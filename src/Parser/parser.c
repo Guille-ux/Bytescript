@@ -56,7 +56,7 @@ Node* numerics(ParseResult* res) {
 
     switch (res->tokens->tt) {
         case TT_IDENTIFIER : {
-            return_node->nt = TT_IDENTIFIER;
+            return_node->nt = NT_VAR_ACESS;
             return_node->node.VarAcess.name = res->tokens->value;
             break;
         }

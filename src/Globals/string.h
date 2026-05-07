@@ -14,5 +14,6 @@ TValue make_fstring(char* str);
 
 
 TValue compare_string(TValue* argv, size_t argc);
+TValue concat_string(TValue* argv, size_t argc);
 
 #endif

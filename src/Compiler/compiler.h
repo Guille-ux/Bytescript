@@ -1,75 +1,77 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
-
 #include "Values/bytev.h"
 #include "Globals/table.h"
-
+#include "Globals/string.h"
+#include "Parser/nodes.h"
 
 typedef enum {
-    ADD_RC,
-    ADD_RR,
-    SUB_RC,
-    SUB_RR,
-    MUL_RC,
-    MUL_RR,
-    DIV_RC,
-    DIV_CR,
-    DIV_RR,
-    IDIV_RC,
-    IDIV_CR,
-    IDIV_RR,
-    MOD_RC,
-    MOD_CR,
-    MOD_RR,
-    POW_RC,
-    POW_RR,
-    CONCAT_RC,
-    CONCAT_CR,
-    CONCAT_RR,
-    EEQ_RC,
-    EEQ_RR,
-    NEQ_RC,
-    NEQ_RR,
-    LT_RC,
-    LT_RR,
-    GT_RC,
-    GT_RR,
-    LTEQ_RC,
-    LTEQ_RR,
-    GTEQ_RC,
-    GTEQ_RR,
-    RAND_RC,
-    RAND_RR,
-    ROR_RC,
-    ROR_RR,
-    AND_RC,
-    AND_RR,
-    OR_RC,
-    OR_RR,
-    BAND_RC,
-    BAND_RR,
-    BOR_RC,
-    BOR_RR,
-    BXOR_RC,
-    BXOR_RR,
-    BNOT,
-    JUMP,
-    JFALSE,
-    NFOR_INIT,
-    NFOR_LOOP,
-    GFOR_INIT,
-    GFOR_LOOP,
-    LOAD_CR,
-    LOAD_RR,
-    LOAD_UP,
-    CALL,
-    RETURN,
-    NEWTABLE,
-    ADDTABLE,
-    GETTABLE,
-    SETTABLE,
-    T_EOF
+    OP_ADD_RC,
+    OP_ADD_RR,
+    OP_SUB_RC,
+    OP_SUB_CR,
+    OP_SUB_RR,
+    OP_MUL_RC,
+    OP_MUL_RR,
+    OP_DIV_RC,
+    OP_DIV_CR,
+    OP_DIV_RR,
+    OP_IDIV_RC,
+    OP_IDIV_CR,
+    OP_IDIV_RR,
+    OP_MOD_RC,
+    OP_MOD_CR,
+    OP_MOD_RR,
+    OP_POW_RC,
+    OP_POW_CR,
+    OP_POW_RR,
+    OP_CONCAT_RC,
+    OP_CONCAT_CR,
+    OP_CONCAT_RR,
+    OP_EEQ_RC,
+    OP_EEQ_RR,
+    OP_NEQ_RC,
+    OP_NEQ_RR,
+    OP_LT_RC,
+    OP_LT_RR,
+    OP_GT_RC,
+    OP_GT_RR,
+    OP_LTEQ_RC,
+    OP_LTEQ_RR,
+    OP_GTEQ_RC,
+    OP_GTEQ_RR,
+    OP_RAND_RC,
+    OP_RAND_RR,
+    OP_ROR_RC,
+    OP_ROR_RR,
+    OP_AND_RC,
+    OP_AND_RR,
+    OP_OR_RC,
+    OP_OR_RR,
+    OP_BAND_RC,
+    OP_BAND_RR,
+    OP_BOR_RC,
+    OP_BOR_RR,
+    OP_BXOR_RC,
+    OP_BXOR_RR,
+    OP_BNOT,
+    OP_JUMP,
+    OP_JFALSE,
+    OP_NFOR_INIT,
+    OP_NFOR_LOOP,
+    OP_GFOR_INIT,
+    OP_GFOR_LOOP,
+    OP_LOAD_CR,
+    OP_LOAD_RR,
+    OP_LOAD_UP,
+    OP_CALL,
+    OP_RETURN,
+    OP_NEWTABLE,
+    OP_ADDTABLE,
+    OP_GETTABLE,
+    OP_SETTABLE,
+    OP_HALT
 } BytecodeInstruction;
 
 
@@ -78,8 +80,9 @@ struct LinkedList {
     struct LinkedList* next;
 };
 
-typedef struct {
-    Scope* parent;
+struct ContextScope;
+typedef struct ContextScope {
+    struct ContextScope* parent;
     TTable* symbols;
     TTable* const_idx;
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
@@ -87,13 +90,13 @@ typedef struct {
     uint8_t reg_ptr;
     struct LinkedList breaks;
     struct LinkedList continues;
-    struct { uint8_t* bytes; size_t len; size_t cap } bytecode;
+    struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
 } Scope;
 
-typedef uint8_t (*CompileFunction)(Node* node, Scope* context);
+typedef int (*CompileFunction)(Node* node, Scope* context);
 Scope* new_scope();
 
-inline int compile(Node* node, Scope* context);
+int compile(Node* node, Scope* context);
 int compile_statements(Node* node, Scope* context);
 int compile_return(Node* node, Scope* context);
 int compile_break(Node* node, Scope* context);
@@ -111,9 +114,20 @@ static inline int emit(uint8_t instr, Scope* context);
 static inline int register_first(Scope* context);
 static inline int free_register(uint8_t idx, Scope* context);
 static inline int cache_constant(TValue const_v, Scope* context);
+static inline int save_constant(TValue const_v, int idx, Scope* context);
+static inline int save_cached_constant(int idx, Scope* context);
 static inline int register_top(Scope* context);
 static inline int register_constant(uint8_t r, Scope* context, int16_t r_);
 static inline int register_register(uint8_t r, Scope* context, int16_t r_);
 static inline int register_specific(uint8_t r, Scope* context);
+static inline int register_try(uint8_t r, Scope* context);
+static inline int register_try_free(uint8_t r, Scope* context);
+static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context);
+static int assignement_analysis(Node* node);
+static int full_assignement_analysis(Node* node, int* depth, int* var_count);
+static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
+static inline TValue get_constant(int idx, Scope* context);
+static inline void delete_constant(int idx, Scope* context);
+static inline int is_saved(TValue const_v, Scope* context);
 
 #endif

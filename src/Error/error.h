@@ -30,6 +30,8 @@ void call_error(Error* err, char* filetext);
 #define INDEX_OUT_OF_SCOPE_ERROR(details)   (call_error(new_error("IndexOutOfScopeError", (details), 0, 0), NULL))
 #define SYNTAX_ERROR(details)               (call_error(new_error("InvalidSyntaxError", (details), 0, 0), NULL))
 #define STACK_OVERFLOW(details)             (call_error(new_error("StackOverflowError", (details), 0, 0), NULL))
+#define INCORRECT_LVALUE(details)           (call_error(new_error("IncorrectLvalue", (details), 0, 0), NULL))
+#define UNKNOWN_IDENTIFIER(details)         (call_error(new_error("UnknownIdentifier", (details), 0, 0), NULL))
 
 
 #endif

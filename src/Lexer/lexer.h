@@ -62,7 +62,7 @@ bool match_keyword(Token tok, char kword[]);
 bool match_tt(Token tok1, TokenType tt);
 bool match_token(Token tok1, Token tok2);
 static inline bool next_match(char* text, char next_match);
-static inline void emit(Token* tp, TokenType tt, TValue value);
+static inline void emit_token(Token* tp, TokenType tt, TValue value);
 static inline void double_case(char** text, Token* tp, char next_case, TokenType case1, TokenType case2);
 static inline void triple_case(char** text, Token* tp, char next_case, char next_case2, TokenType case1, TokenType case2, TokenType case3);
 
