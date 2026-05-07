@@ -4,6 +4,7 @@
 #include "Lexer/lexer.h"
 #include "Parser/parser.h"
 #include "Compiler/compiler.h"
+#include "utils/disassembler.h"
 
 #include "Error/error.h"
 #include "Values/bytev.h"

@@ -119,8 +119,10 @@ int compile_assignement(Node* node, Scope* context) {
             int analysis_res = assignement_analysis(node->node.AssignementNode.value);
             if (analysis_res) free_register(lvalue, context);
 
-            int value = compile(node->node.AssignementNode.value, context);
+            value = compile(node->node.AssignementNode.value, context);
             if (node->node.AssignementNode.value->cc) value = register_constant(save_cached_constant(value, context), context, lvalue);
+
+            break;
         }
 
         default : INCORRECT_LVALUE("cannot assign value to rvalue");

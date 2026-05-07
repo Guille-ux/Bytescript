@@ -64,10 +64,7 @@ int main(int argc, char* argv[]) {
     compile(ast, compile_context);
 
     printf("\nbytecode. len : %d\n", compile_context->bytecode.len / 4);
-    for (int i = 0; i < compile_context->bytecode.len; i += 4) {
-        printf("%d %d %d %d\n", compile_context->bytecode.bytes[i], compile_context->bytecode.bytes[i + 1], compile_context->bytecode.bytes[i + 2], compile_context->bytecode.bytes[i + 3]);
-    }
-    printf("\n");
+    disassemble(compile_context);
 
     printf("constants. len : %d\n", compile_context->const_pool.len);
     for (int i = 0; i < compile_context->const_pool.len; i++) {
