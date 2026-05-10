@@ -49,4 +49,46 @@ typedef struct BNode {
 } Node;
 
 
+static inline int node_equal(Node* node1, Node* node2) {
+    if (node1->nt != node2->nt) return 0;
+    switch (node1->nt) {
+        case NT_STATEMENTS: {
+            if (node1->node.StatementsNode.len != node2->node.StatementsNode.len) return 0;
+            for (int i = 0; i < node1->node.StatementsNode.len; i++) { if (!node_equal(node1->node.StatementsNode.nodes[i], node2->node.StatementsNode.nodes[i])) return 0; }
+
+            return 1;
+        }
+
+        case NT_RETURN: {
+            if (node1->node.ReturnNode.len != node2->node.ReturnNode.len) return 0;
+            for (int i = 0; i < node1->node.ReturnNode.len; i++) { if (!node_equal(node1->node.ReturnNode.nodes[i], node2->node.ReturnNode.nodes[i])) return 0; }
+
+            return 1;
+        }
+        
+        case NT_BREAK: return 1;
+        case NT_CONTINUE: return 1;
+        case NT_VAR_DECLARE: return AS_TVALUE(node1->node.VarDeclareNode.var_name) == AS_TVALUE(node2->node.VarDeclareNode.var_name) &&
+                                    node_equal(node1->node.VarDeclareNode.value, node2->node.VarDeclareNode.value);
+
+        case NT_ASSIGNEMENT: return node_equal(node1->node.AssignementNode.lvalue, node2->node.AssignementNode.lvalue) &&
+                                    node_equal(node1->node.AssignementNode.value, node2->node.AssignementNode.value);
+
+        case NT_BIN_OP: return  node1->node.BinOpNode.op.tt = node2->node.BinOpNode.op.tt &&
+                                node_equal(node1->node.BinOpNode.left, node2->node.BinOpNode.left) &&
+                                node_equal(node1->node.BinOpNode.right, node2->node.BinOpNode.right);
+
+        case NT_UNI_OP: return  node1->node.UniOpNode.op.tt = node2->node.UniOpNode.op.tt &&
+                                node_equal(node1->node.UniOpNode.target, node2->node.UniOpNode.target);
+
+        case NT_CALL: return 0;
+        case NT_VAR_ACESS: return AS_TVALUE(node1->node.VarAcess.name) == AS_TVALUE(node2->node.VarAcess.name);
+        case NT_NUMBER: return AS_TVALUE(node1->node.NumberNode.num) == AS_TVALUE(node2->node.NumberNode.num);
+        case NT_STRING: return AS_TVALUE(node1->node.StringNode.str) == AS_TVALUE(node2->node.StringNode.str);
+    }
+
+    return 0;
+}
+
+
 #endif

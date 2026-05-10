@@ -124,10 +124,12 @@ static inline int register_try(uint8_t r, Scope* context);
 static inline int register_try_free(uint8_t r, Scope* context);
 static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context);
 static int assignement_analysis(Node* node);
-static int full_assignement_analysis(Node* node, int* depth, int* var_count);
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count);
 static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
+static inline void sure_delete_constant(int idx, Scope* context);
 static inline void delete_constant(int idx, Scope* context);
+static inline void unsave_cached_constant(int idx, Scope* context);
 static inline int is_saved(TValue const_v, Scope* context);
 
 #endif
