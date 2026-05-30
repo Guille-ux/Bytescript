@@ -132,6 +132,6 @@ static inline TValue save_constant(TValue const_v, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
 static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
 static int assignement_analysis(Node* node);
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count);
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);
 
 #endif

@@ -483,32 +483,33 @@ static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context) {
 
 static inline int assignement_analysis(Node* node) {
     int depth = 0;
-    int var_count = 0;
     int target_count = 0;
-    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &var_count, &target_count);
+    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &target_count);
 }
 
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count) {
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count) {
     #define ADD_DEPTH ( ((*depth)++), depth )
+
+    if (node_equal(target, node)) target_count++;
+    if (*depth > 1 && *target_count > 0) return 0;
 
     switch (node->nt) {
         case NT_VAR_DECLARE: return 0;
-        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, var_count, target_count);
+        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, target_count);
 
         case NT_ASSIGNEMENT: return 
-            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, var_count, target_count) &&
-            full_assignement_analysis(node->node.AssignementNode.value, target, depth, var_count, target_count);
+            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, target_count) &&
+            full_assignement_analysis(node->node.AssignementNode.value, target, depth, target_count);
 
-        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, var_count, target_count) &&
-                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, var_count, target_count);
+        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, target_count) &&
+                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, target_count);
             
         case NT_CALL:
             int endv = 1;
             *depth += node->node.CallNode.args.len;
-            for (int i = 0; i < node->node.CallNode.args.len; i++) endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, depth, var_count, target_count);
+            for (int i = 0; i < node->node.CallNode.args.len; i++) endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, depth, target_count);
             return endv;
 
-        case NT_VAR_ACESS: return *depth <= 1 || ++(*var_count);
         default: return 1;
     }
 }
