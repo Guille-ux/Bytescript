@@ -5,6 +5,7 @@
 #include "Globals/table.h"
 #include "Globals/string.h"
 #include "Parser/nodes.h"
+#include "utils/utils.h"
 
 typedef enum {
     OP_ADD_RC,
@@ -84,7 +85,7 @@ struct ContextScope;
 typedef struct ContextScope {
     struct ContextScope* parent;
     TTable* symbols;
-    TTable* const_idx;
+    struct { TValue saved_consts[256]; uint8_t len; } saved_const;
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
     struct { uint8_t free_regs[256]; uint8_t len; } free_regs;
     uint8_t reg_ptr;
@@ -113,9 +114,6 @@ int compile_string(Node* node, Scope* context);
 static inline int emit(uint8_t instr, Scope* context);
 static inline int register_first(Scope* context);
 static inline int free_register(uint8_t idx, Scope* context);
-static inline int cache_constant(TValue const_v, Scope* context);
-static inline int save_constant(TValue const_v, int idx, Scope* context);
-static inline int save_cached_constant(int idx, Scope* context);
 static inline int register_top(Scope* context);
 static inline int register_constant(uint8_t r, Scope* context, int16_t r_);
 static inline int register_register(uint8_t r, Scope* context, int16_t r_);
@@ -123,13 +121,17 @@ static inline int register_specific(uint8_t r, Scope* context);
 static inline int register_try(uint8_t r, Scope* context);
 static inline int register_try_free(uint8_t r, Scope* context);
 static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context);
-static int assignement_analysis(Node* node);
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count);
-static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
-static inline TValue get_constant(int idx, Scope* context);
+static inline int get_constant_idx(TValue const_v, Scope* context);
+static inline int cache_constant(TValue const_v, Scope* context);
+static inline int save_cached_constant(int idx, Scope* context);
+static inline int is_saved(TValue const_v, Scope* context);
 static inline void sure_delete_constant(int idx, Scope* context);
 static inline void delete_constant(int idx, Scope* context);
 static inline void unsave_cached_constant(int idx, Scope* context);
-static inline int is_saved(TValue const_v, Scope* context);
+static inline TValue save_constant(TValue const_v, Scope* context);
+static inline TValue get_constant(int idx, Scope* context);
+static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
+static int assignement_analysis(Node* node);
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count);
 
 #endif

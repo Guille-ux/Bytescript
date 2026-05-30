@@ -21,17 +21,19 @@ CompileFunction compiler_functions[] = {
 };
 
 
-int compile(Node* node, Scope* context) { printf("WHERR ARE U U FUCKING ASSHOLE %d\n", context->free_regs.len); return compiler_functions[node->nt](node, context); }
+int compile(Node* node, Scope* context) { printf("here we go again %d\n", node->nt); return compiler_functions[node->nt](node, context); }
 
 int compile_statements(Node* node, Scope* context) {
     node->cc = false;
+    int res = 0;
     
     for (int i = 0; i < node->node.StatementsNode.len; i++) {
-        printf("next statement\n");
         Node* compile_node = node->node.StatementsNode.nodes[i];
-        compile(compile_node, context);
+        res = compile(compile_node, context);
         free(compile_node);
     }
+
+    return res;
 }
 
 int compile_return(Node* node, Scope* context) {
@@ -111,21 +113,14 @@ int compile_var_declare(Node* node, Scope* context) {
 }
 
 int compile_assignement(Node* node, Scope* context) {
-    for (int i = 0; i < context->free_regs.len; i++) {
-        printf("pre free : %d\n", (int)(context->free_regs.free_regs[i]));
-    }
-
     node->cc = false;
     int lvalue = compile(node->node.AssignementNode.lvalue, context);
     int value = -1;
 
-    for (int i = 0; i < context->free_regs.len; i++) {
-        printf("post free : %d\n", (int)(context->free_regs.free_regs[i]));
-    }
-
     switch (node->node.AssignementNode.lvalue->nt) {
         case NT_VAR_ACESS: {
             int analysis_res = assignement_analysis(node);
+            printf("assignement %d\n", analysis_res);
             if (analysis_res) free_register(lvalue, context);
 
             value = compile(node->node.AssignementNode.value, context);
@@ -145,8 +140,6 @@ int compile_bin_op(Node* node, Scope* context) {
     bool leftCC = node->node.BinOpNode.left->cc;
 
     int free_left = leftCC ? 0 : register_try_free(left, context) + 1;
-    int saved_left = leftCC ? is_saved(get_constant(left, context), context) : 1;
-    if (leftCC && !saved_left) save_cached_constant(left, context);
 
     int right = compile(node->node.BinOpNode.right, context);
     bool rightCC = node->node.BinOpNode.right->cc;
@@ -156,7 +149,7 @@ int compile_bin_op(Node* node, Scope* context) {
     if (free_left) free_register(left, context);
     if (leftCC && rightCC) {
         TValue folded = operation_fold(left, op, right, context);
-        if (!saved_left) unsave_cached_constant(left, context);
+        delete_constant(left, context);
         delete_constant(right, context);
 
         node->cc = true;
@@ -164,6 +157,7 @@ int compile_bin_op(Node* node, Scope* context) {
     }
 
     bool CC = leftCC || rightCC;
+    if (leftCC) left = save_cached_constant(left, context); if (rightCC) right = save_cached_constant(right, context);
     if (leftCC) { int temp = left; left = right; right = temp; }
 
     switch (op) {
@@ -275,11 +269,11 @@ Scope* new_scope() {
     Scope* scope = malloc(sizeof(Scope));
     scope->parent = NULL;
     scope->symbols = AS_TABLE(new_table((TValue[1]){ NIL }, 0));
-    scope->const_idx = AS_TABLE(new_table((TValue[1]){ NIL }, 0));
 
     size_t CONST_POOL_SIZE = sizeof(scope->const_pool.const_pool) / TVALUESIZE;
     for (int i = 0; i < CONST_POOL_SIZE; i++) { scope->const_pool.const_pool[i] = NIL; }
     scope->const_pool.len = 0;
+    scope->saved_const.len = 0;
 
     scope->free_regs.len = 0;
     scope->reg_ptr = 0;
@@ -315,23 +309,16 @@ static inline int register_first(Scope* context) {
 }
 
 static inline int free_register(uint8_t idx, Scope* context) {
-    if (idx != context->reg_ptr - 1) return (context->free_regs.free_regs[context->free_regs.len++] = idx);
+    if (idx != context->reg_ptr - 1) {
+        for (int i = 0; i < context->free_regs.len; i++) {
+            if (context->free_regs.free_regs[i] == idx) return idx;
+        }
+
+        return (context->free_regs.free_regs[context->free_regs.len++] = idx);
+    }
+
     return --context->reg_ptr;
 }
-
-static inline int cache_constant(TValue const_v, Scope* context) {
-    TValue idx = get_value_from_hashtable(TBL_TO_TVALUE(context->const_idx), const_v);
-    if (AS_TVALUE(idx) != AS_TVALUE(NIL)) return AS_NUM(idx);
-
-    if (context->const_pool.len == 0xff) STACK_OVERFLOW("Fatal Error : Constant overflow, exceeded constants limit");
-    context->const_pool.const_pool[context->const_pool.len++] = const_v;
-
-    return context->const_pool.len - 1;
-}
-
-static inline int save_constant(TValue const_v, int idx, Scope* context) { add_value_to_hashtable(TBL_TO_TVALUE(context->const_idx), const_v, NUM_AS_TVALUE(idx)); return idx; }
-
-static inline int save_cached_constant(int idx, Scope* context) { save_constant(get_constant(idx, context), idx, context); return idx; }
 
 static inline int register_top(Scope* context) {
     if (context->reg_ptr == 0xff) STACK_OVERFLOW("Fatal Error : Register overflow, exceeded register limit");
@@ -350,10 +337,6 @@ static inline int register_constant(uint8_t const_i, Scope* context, int16_t r_)
 
 static inline int register_register(uint8_t r, Scope* context, int16_t r_) {
     uint8_t r2 = r_ + 1 ? r_ : register_first(context);
-    for (int i = 0; i < context->free_regs.len; i++) {
-        printf("pre regfree : %d\n", (int)(context->free_regs.free_regs[i]));
-    }
-    printf("r, r2 %d, %d\n", (int)(r), (int)(r2));
     if (r2 != r) {
         emit(OP_LOAD_RR, context);
         emit(r, context);
@@ -361,10 +344,6 @@ static inline int register_register(uint8_t r, Scope* context, int16_t r_) {
         emit(0x00, context);
 
     } else register_specific(r2, context);
-
-    for (int i = 0; i < context->free_regs.len; i++) {
-        printf("reg free : %d\n", (int)(context->free_regs.free_regs[i]));
-    }
 
     return r2;
 }
@@ -386,6 +365,7 @@ static inline int register_try_free(uint8_t r, Scope* context) {
                 context->free_regs.free_regs[i2] = context->free_regs.free_regs[i2 + 1];
             }
 
+            context->free_regs.len--;
             return r;
         }
     }
@@ -402,37 +382,65 @@ static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
     return r0;
 }
 
-static inline int assignement_analysis(Node* node) {
-    int depth = 0;
-    int var_count = 0;
-    int target_count = 0;
-    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &var_count, &target_count);
-}
-
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count) {
-    #define ADD_DEPTH ( ((*depth)++), depth )
-
-    switch (node->nt) {
-        case NT_VAR_DECLARE: return 0;
-        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, var_count, target_count);
-
-        case NT_ASSIGNEMENT: return 
-            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, var_count, target_count) &&
-            full_assignement_analysis(node->node.AssignementNode.value, target, depth, var_count, target_count);
-
-        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, var_count, target_count) &&
-                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, var_count, target_count);
-            
-        case NT_CALL:
-            int endv = 1;
-            *depth += node->node.CallNode.args.len;
-            for (int i = 0; i < node->node.CallNode.args.len; i++) endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, depth, var_count, target_count);
-            return endv;
-
-        //case NT_VAR_ACESS: return *depth <= 1 || ++(*var_count);
-        default: return 1;
+static inline int get_constant_idx(TValue const_v, Scope* context) {
+    for (int i = 0; i < context->const_pool.len; i++) {
+        if (AS_TVALUE(context->const_pool.const_pool[i]) == AS_TVALUE(const_v)) return i;
     }
+
+    return -1;
 }
+
+static inline int cache_constant(TValue const_v, Scope* context) {
+    int idx = get_constant_idx(const_v, context);
+    if (idx != -1) return idx;
+
+    if (context->const_pool.len == 0xff) STACK_OVERFLOW("Fatal Error : Constant overflow, exceeded constants limit");
+    context->const_pool.const_pool[context->const_pool.len++] = const_v;
+
+    return context->const_pool.len - 1;
+}
+
+static inline int save_cached_constant(int idx, Scope* context) { save_constant(get_constant(idx, context), context); return idx; }
+
+static inline int is_saved(TValue const_v, Scope* context) { 
+    for (int i = 0; i < context->saved_const.len; i++) {
+        if (AS_TVALUE(context->saved_const.saved_consts[i]) == AS_TVALUE(const_v)) return true;
+    }
+
+    return false;
+}
+
+static inline void sure_delete_constant(int idx, Scope* context) {
+    shift_tvalue_array(context->const_pool.const_pool, context->const_pool.len, idx);
+    context->const_pool.len--;
+}
+
+static inline void delete_constant(int idx, Scope* context) {
+    TValue const_v = get_constant(idx, context);
+    if (is_saved(const_v, context)) return;
+
+    sure_delete_constant(idx, context);
+}
+
+static inline void unsave_cached_constant(int idx, Scope* context) {
+    TValue target = get_constant(idx, context);
+
+    for (int i = 0; i < context->saved_const.len; i++) {
+        TValue cst = context->saved_const.saved_consts[i];
+
+        if (AS_TVALUE(cst) == AS_TVALUE(target)) {
+            shift_tvalue_array(context->saved_const.saved_consts, 256, i);
+            context->saved_const.len--;
+            break;
+        }
+    }
+
+    sure_delete_constant(idx, context);
+}
+
+static inline TValue save_constant(TValue const_v, Scope* context) { context->saved_const.saved_consts[context->saved_const.len++] = const_v; return const_v; }
+
+static inline TValue get_constant(int idx, Scope* context) { return context->const_pool.const_pool[idx]; }
 
 static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context) {
     TValue v1 = get_constant(idx1, context);
@@ -473,25 +481,34 @@ static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context) {
     }
 }
 
-static inline TValue get_constant(int idx, Scope* context) { return context->const_pool.const_pool[idx]; }
+static inline int assignement_analysis(Node* node) {
+    int depth = 0;
+    int var_count = 0;
+    int target_count = 0;
+    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &var_count, &target_count);
+}
 
-static inline void sure_delete_constant(int idx, Scope* context) {
-    context->const_pool.len--;
-    for (int i = idx; i <= context->const_pool.len; i++) {
-        context->const_pool.const_pool[i] = context->const_pool.const_pool[i + 1];
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* var_count, int* target_count) {
+    #define ADD_DEPTH ( ((*depth)++), depth )
+
+    switch (node->nt) {
+        case NT_VAR_DECLARE: return 0;
+        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, var_count, target_count);
+
+        case NT_ASSIGNEMENT: return 
+            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, var_count, target_count) &&
+            full_assignement_analysis(node->node.AssignementNode.value, target, depth, var_count, target_count);
+
+        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, var_count, target_count) &&
+                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, var_count, target_count);
+            
+        case NT_CALL:
+            int endv = 1;
+            *depth += node->node.CallNode.args.len;
+            for (int i = 0; i < node->node.CallNode.args.len; i++) endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, depth, var_count, target_count);
+            return endv;
+
+        case NT_VAR_ACESS: return *depth <= 1 || ++(*var_count);
+        default: return 1;
     }
 }
-
-static inline void delete_constant(int idx, Scope* context) {
-    TValue const_v = get_constant(idx, context);
-    if (is_saved(const_v, context)) return;
-
-    sure_delete_constant(idx, context);
-}
-
-static inline void unsave_cached_constant(int idx, Scope* context) {
-    add_value_to_hashtable(TBL_TO_TVALUE(context->const_idx), get_constant(idx, context), NIL);
-    sure_delete_constant(idx, context);
-}
-
-static inline int is_saved(TValue const_v, Scope* context) { !IS_NIL(get_value_from_hashtable(TBL_TO_TVALUE(context->const_idx), const_v)); }
