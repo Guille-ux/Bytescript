@@ -21,7 +21,7 @@ CompileFunction compiler_functions[] = {
 };
 
 
-int compile(Node* node, Scope* context) { printf("here we go again %d\n", node->nt); return compiler_functions[node->nt](node, context); }
+int compile(Node* node, Scope* context) { return compiler_functions[node->nt](node, context); }
 
 int compile_statements(Node* node, Scope* context) {
     node->cc = false;
@@ -120,7 +120,6 @@ int compile_assignement(Node* node, Scope* context) {
     switch (node->node.AssignementNode.lvalue->nt) {
         case NT_VAR_ACESS: {
             int analysis_res = assignement_analysis(node);
-            printf("assignement %d\n", analysis_res);
             if (analysis_res) free_register(lvalue, context);
 
             value = compile(node->node.AssignementNode.value, context);
@@ -151,7 +150,7 @@ int compile_bin_op(Node* node, Scope* context) {
         TValue folded = operation_fold(left, op, right, context);
         delete_constant(left, context);
         delete_constant(right, context);
-
+        
         node->cc = true;
         return cache_constant(folded, context);
     }
@@ -410,6 +409,8 @@ static inline int is_saved(TValue const_v, Scope* context) {
     return false;
 }
 
+static inline int correct_constant_idx(int idx, Scope* context) { return idx < context->const_pool.len ? 1 : 0; }
+
 static inline void sure_delete_constant(int idx, Scope* context) {
     shift_tvalue_array(context->const_pool.const_pool, context->const_pool.len, idx);
     context->const_pool.len--;
@@ -417,7 +418,7 @@ static inline void sure_delete_constant(int idx, Scope* context) {
 
 static inline void delete_constant(int idx, Scope* context) {
     TValue const_v = get_constant(idx, context);
-    if (is_saved(const_v, context)) return;
+    if (is_saved(const_v, context) || !correct_constant_idx(idx, context)) return;
 
     sure_delete_constant(idx, context);
 }

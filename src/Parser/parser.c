@@ -75,7 +75,9 @@ Node* numerics(ParseResult* res) {
 
         case TT_LPAR : {
             res->tokens++;
+            //printf("\n\nentering expr\n");
             Node* nexpr = expr(res);
+            //printf("token : %d\n\n", res->tokens->tt);
             except(res, TT_RPAR, "(RPAR : ')' ) EXCEPTED", NULL, NULL);
 
             return_node->nt = nexpr->nt;
@@ -168,7 +170,10 @@ Node* expr(ParseResult* res) {
 
     }
 
+    //printf("pre_token : %d\n", res->tokens->tt);
+    Token* pret = res->tokens;
     Node* log =  logical(res);
+    //printf("post_token : %d, advanced : %d\n", res->tokens->tt, res->tokens - pret);
     if (res->tokens->tt == TT_EQ) {
         res->tokens++;
         Node* exp = expr(res);

@@ -263,7 +263,6 @@ Token* make_tokens(char* text) {
 
         tp++;
         if (++tok_len >= cap) {
-            if (cap >= 64) break;
             cap *= 2;
             tokens = realloc(tokens, sizeof(Token) * cap);
             if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");

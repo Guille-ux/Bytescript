@@ -84,7 +84,7 @@ void disassemble(Scope* context) {
 
     printf("\ndisassembling :\n");
     for (int i = 0; i < context->bytecode.len; i+= 4) {
-        printf("%s %d %d %d\n", opcodes_names[context->bytecode.bytes[i]], context->bytecode.bytes[i + 1], context->bytecode.bytes[i + 2], context->bytecode.bytes[i + 3]);
+        printf("%s\t %d %d %d\n", opcodes_names[context->bytecode.bytes[i]], context->bytecode.bytes[i + 1], context->bytecode.bytes[i + 2], context->bytecode.bytes[i + 3]);
     }
     printf("\n");
 
