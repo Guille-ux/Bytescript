@@ -52,6 +52,7 @@ int compile_return(Node* node, Scope* context) {
         int return_v = compile(nd, context);
 
         if (nd->cc) r0 = register_constant(save_cached_constant(return_v, context), context, -1); else r0 = register_specific(return_v, context);
+        free(nd);
 
     } else if (node->node.ReturnNode.len > 1) {
         for (int i = 0; i < node->node.ReturnNode.len; i++) register_top(context);
@@ -60,6 +61,7 @@ int compile_return(Node* node, Scope* context) {
             int return_v = compile(nd, context);
 
             if (nd->cc) register_constant(save_cached_constant(return_v, context), context, r0 + i); else register_register(return_v, context, r0 + i);
+            free(nd);
         }
     }
 
@@ -107,8 +109,9 @@ int compile_var_declare(Node* node, Scope* context) {
     int value = compile(node->node.VarDeclareNode.value, context);
 
     if (node->node.VarDeclareNode.value->cc) r = register_constant(save_cached_constant(value, context), context, -1); else r = register_try(value, context);
-
     add_value_to_hashtable(TBL_TO_TVALUE(context->symbols), node->node.VarDeclareNode.var_name, NUM_AS_TVALUE(r));
+
+    free(node->node.VarDeclareNode.value);
     return r;
 }
 
@@ -131,6 +134,8 @@ int compile_assignement(Node* node, Scope* context) {
         default : INCORRECT_LVALUE("cannot assign value to rvalue");
     }
 
+    free(node->node.AssignementNode.lvalue);
+    free(node->node.AssignementNode.value);
     return register_register(value, context, lvalue);
 }
 
@@ -192,10 +197,14 @@ int compile_bin_op(Node* node, Scope* context) {
     emit(right, context);
 
     node->cc = false;
+
+    free(node->node.BinOpNode.left);
+    free(node->node.BinOpNode.right);
     return r;
 }
 
 int compile_uni_op(Node* node, Scope* context) {
+    int r = 0;
     int target = compile(node->node.UniOpNode.target, context);
     node->cc = node->node.UniOpNode.target->cc;
 
@@ -209,13 +218,11 @@ int compile_uni_op(Node* node, Scope* context) {
                 return cache_constant(NUM_AS_TVALUE(-AS_NUM(v)), context);
             }
 
-            int r = free_register(register_first(context), context);
+            r = free_register(register_first(context), context);
             emit(OP_MUL_RC, context);
             emit(r, context);
             emit(target, context);
             emit(save_cached_constant(cache_constant(NUM_AS_TVALUE(-1), context), context), context);
-
-            return r;
         }
 
         case TT_NOT: {
@@ -226,12 +233,11 @@ int compile_uni_op(Node* node, Scope* context) {
             emit(r, context);
             emit(target, context);
             emit(0x000, context);
-
-            return r;
         }
-
-
     }
+
+    free(node->node.UniOpNode.target);
+    return r;
 }
 
 int compile_call(Node* node, Scope* context) {
@@ -289,7 +295,7 @@ Scope* new_scope() {
     return scope;
 }
 
-static inline int emit(uint8_t instr, Scope* context) {
+static int emit(uint8_t instr, Scope* context) {
     context->bytecode.bytes[context->bytecode.len++] = instr;
     if (context->bytecode.len == context->bytecode.cap) {
         uint8_t* new = realloc(context->bytecode.bytes, (context->bytecode.cap *= 2));
@@ -301,13 +307,12 @@ static inline int emit(uint8_t instr, Scope* context) {
     return instr;
 }
 
-static inline int register_first(Scope* context) {
+static int register_first(Scope* context) {
     if (context->free_regs.len > 0) return context->free_regs.free_regs[context->free_regs.len - 1];
-
     return register_top(context);
 }
 
-static inline int free_register(uint8_t idx, Scope* context) {
+static int free_register(uint8_t idx, Scope* context) {
     if (idx != context->reg_ptr - 1) {
         for (int i = 0; i < context->free_regs.len; i++) {
             if (context->free_regs.free_regs[i] == idx) return idx;
@@ -319,12 +324,7 @@ static inline int free_register(uint8_t idx, Scope* context) {
     return --context->reg_ptr;
 }
 
-static inline int register_top(Scope* context) {
-    if (context->reg_ptr == 0xff) STACK_OVERFLOW("Fatal Error : Register overflow, exceeded register limit");
-    return context->reg_ptr++;
-}
-
-static inline int register_constant(uint8_t const_i, Scope* context, int16_t r_) {
+static int register_constant(uint8_t const_i, Scope* context, int16_t r_) {
     uint8_t r = r_ + 1 ? r_ : register_first(context);
     emit(OP_LOAD_CR, context);
     emit(const_i, context);
@@ -334,7 +334,7 @@ static inline int register_constant(uint8_t const_i, Scope* context, int16_t r_)
     return r;
 }
 
-static inline int register_register(uint8_t r, Scope* context, int16_t r_) {
+static int register_register(uint8_t r, Scope* context, int16_t r_) {
     uint8_t r2 = r_ + 1 ? r_ : register_first(context);
     if (r2 != r) {
         emit(OP_LOAD_RR, context);
@@ -347,17 +347,7 @@ static inline int register_register(uint8_t r, Scope* context, int16_t r_) {
     return r2;
 }
 
-static inline int register_specific(uint8_t r, Scope* context) {
-    register_try_free(r, context);
-    return r;
-}
-
-static inline int register_try(uint8_t r, Scope* context) {
-    int new_r = register_try_free(r, context);
-    if (!(new_r + 1)) register_first(context); else return r;
-}
-
-static inline int register_try_free(uint8_t r, Scope* context) {
+static int register_try_free(uint8_t r, Scope* context) {
     for (int i = 0; i < context->free_regs.len; i++) {
         if (r == context->free_regs.free_regs[i]) {
             for (int i2 = i; i2 < context->free_regs.len - 1; i2++) {
@@ -373,7 +363,7 @@ static inline int register_try_free(uint8_t r, Scope* context) {
     return -1;
 }
 
-static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
+static int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
     for (int i = len - 1; i >= r0; i++) {
         free_register(i, context);
     }
@@ -381,7 +371,7 @@ static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
     return r0;
 }
 
-static inline int get_constant_idx(TValue const_v, Scope* context) {
+static int get_constant_idx(TValue const_v, Scope* context) {
     for (int i = 0; i < context->const_pool.len; i++) {
         if (AS_TVALUE(context->const_pool.const_pool[i]) == AS_TVALUE(const_v)) return i;
     }
@@ -389,7 +379,7 @@ static inline int get_constant_idx(TValue const_v, Scope* context) {
     return -1;
 }
 
-static inline int cache_constant(TValue const_v, Scope* context) {
+static int cache_constant(TValue const_v, Scope* context) {
     int idx = get_constant_idx(const_v, context);
     if (idx != -1) return idx;
 
@@ -399,15 +389,30 @@ static inline int cache_constant(TValue const_v, Scope* context) {
     return context->const_pool.len - 1;
 }
 
-static inline int save_cached_constant(int idx, Scope* context) { save_constant(get_constant(idx, context), context); return idx; }
-
-static inline int is_saved(TValue const_v, Scope* context) { 
+static int is_saved(TValue const_v, Scope* context) { 
     for (int i = 0; i < context->saved_const.len; i++) {
         if (AS_TVALUE(context->saved_const.saved_consts[i]) == AS_TVALUE(const_v)) return true;
     }
 
     return false;
 }
+
+static inline int register_top(Scope* context) {
+    if (context->reg_ptr == 0xff) STACK_OVERFLOW("Fatal Error : Register overflow, exceeded register limit");
+    return context->reg_ptr++;
+}
+
+static inline int register_specific(uint8_t r, Scope* context) {
+    register_try_free(r, context);
+    return r;
+}
+
+static inline int register_try(uint8_t r, Scope* context) {
+    int new_r = register_try_free(r, context);
+    if (!(new_r + 1)) register_first(context); else return r;
+}
+
+static inline int save_cached_constant(int idx, Scope* context) { save_constant(get_constant(idx, context), context); return idx; }
 
 static inline int correct_constant_idx(int idx, Scope* context) { return idx < context->const_pool.len ? 1 : 0; }
 
@@ -416,14 +421,14 @@ static inline void sure_delete_constant(int idx, Scope* context) {
     context->const_pool.len--;
 }
 
-static inline void delete_constant(int idx, Scope* context) {
+static void delete_constant(int idx, Scope* context) {
     TValue const_v = get_constant(idx, context);
     if (is_saved(const_v, context) || !correct_constant_idx(idx, context)) return;
 
     sure_delete_constant(idx, context);
 }
 
-static inline void unsave_cached_constant(int idx, Scope* context) {
+static void unsave_cached_constant(int idx, Scope* context) {
     TValue target = get_constant(idx, context);
 
     for (int i = 0; i < context->saved_const.len; i++) {

@@ -111,27 +111,29 @@ int compile_var_access(Node* node, Scope* context);
 int compile_number(Node* node, Scope* context);
 int compile_string(Node* node, Scope* context);
 
-static inline int emit(uint8_t instr, Scope* context);
-static inline int register_first(Scope* context);
-static inline int free_register(uint8_t idx, Scope* context);
+static int emit(uint8_t instr, Scope* context);
+static int register_first(Scope* context);
+static int free_register(uint8_t idx, Scope* context);
+static int register_constant(uint8_t const_i, Scope* context, int16_t r_);
+static int register_register(uint8_t r, Scope* context, int16_t r_);
+static int register_try_free(uint8_t r, Scope* context);
+static int free_multiple(uint8_t r0, uint8_t len, Scope* context);
+static int get_constant_idx(TValue const_v, Scope* context);
+static int cache_constant(TValue const_v, Scope* context);
+static int is_saved(TValue const_v, Scope* context);
 static inline int register_top(Scope* context);
-static inline int register_constant(uint8_t r, Scope* context, int16_t r_);
-static inline int register_register(uint8_t r, Scope* context, int16_t r_);
 static inline int register_specific(uint8_t r, Scope* context);
 static inline int register_try(uint8_t r, Scope* context);
-static inline int register_try_free(uint8_t r, Scope* context);
-static inline int free_multiple(uint8_t r0, uint8_t len, Scope* context);
-static inline int get_constant_idx(TValue const_v, Scope* context);
-static inline int cache_constant(TValue const_v, Scope* context);
 static inline int save_cached_constant(int idx, Scope* context);
-static inline int is_saved(TValue const_v, Scope* context);
+static inline int correct_constant_idx(int idx, Scope* context);
 static inline void sure_delete_constant(int idx, Scope* context);
-static inline void delete_constant(int idx, Scope* context);
-static inline void unsave_cached_constant(int idx, Scope* context);
+static void delete_constant(int idx, Scope* context);
+static void unsave_cached_constant(int idx, Scope* context);
 static inline TValue save_constant(TValue const_v, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
 static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
-static int assignement_analysis(Node* node);
+static inline int assignement_analysis(Node* node);
 static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);
+
 
 #endif
