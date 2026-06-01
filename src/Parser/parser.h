@@ -21,6 +21,13 @@ typedef Node* (*ParseFunc)(ParseResult* res);
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2);
 
 Node* parse(Token* tokens, char filename[]);
+Node* alloc_expr(ParseResult* res);
+Node* if_expr(ParseResult* res);
+Node* for_expr(ParseResult* res);
+Node* while_expr(ParseResult* res);
+Node* repeat_expr(ParseResult* res);
+Node* import_expr(ParseResult* res);
+Node* func_expr(ParseResult* res);
 Node* numerics(ParseResult* res);
 Node* call(ParseResult* res);
 Node* power(ParseResult* res);
@@ -43,7 +50,7 @@ static NodeArray make_node_array();
 static Node* append_to_node_array(NodeArray* nda, Node* node);
 
 static inline bool is_correct_operator(Token op, Token ops[], int opc);
-static inline void except(ParseResult* res, TokenType tt, char* excepted, TValue* value, char* kword);
+static inline void expect(ParseResult* res, TokenType tt, char* expect, TValue* value, char* kword);
 
 extern Token LOGICAL_OPERATORS[];
 extern Token COMP_OPERATORS[];

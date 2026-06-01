@@ -56,6 +56,8 @@ TValue insert_table(TValue* argv, size_t argc);
 TValue hash_value_table(TValue* argv, size_t argc);
 TValue append_key_table(TValue* argv, size_t argc);
 TValue get_key_table(TValue* argv, size_t argc);
+TValue clean_table(TValue* argv, size_t argc);
+TValue reset_table(TValue* argv, size_t argc);
 
 
 static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {

@@ -5,15 +5,15 @@ statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
                 KEYWORD:"continue"
                 alloc-expr
                 if-expr
-                for-expr
+                nfor-expr
+                gfor-expr
                 while-expr
                 repeat-expr
-                func-expr
-                import-expr
                 expr
 
 expr :          KEYWORD:"var" IDENTIFIER EQ expr
                 logical (EQ expr)?
+                import-expr
 
 logical :       (comparaison ((KEYWORD:"and" | KEYWORD:"or" | "||" | "&&" | "|" | "&") comparaison)*)
                 
@@ -34,11 +34,12 @@ call :          numerics (LPAR (expr (SEPARATOR expr)*)? RPAR)?
 numerics :      INT | FLOAT | STR | IDENTIFIER (LSBRAC expr RSBRAC)? (DOT IDENTIFIER)*
                 LPAR expr RPAR
                 table-expr
+                func-expr
 
 
 table-expr :    LCBRAC (expr (SEPARATOR expr)*)? RCBRAC
 
-alloc-expr :    KEYWORD:"alloc" IDENTIFIER ARROW (expr (SEPARATOR expr)*)? end
+alloc-expr :    KEYWORD:"alloc" expr ARROW (expr (SEPARATOR expr)*)? KEYWORD:"end"
 
 
 if-expr :       KEYWORD:"if" expr KEYWORD:"then" statements
@@ -47,8 +48,14 @@ if-expr :       KEYWORD:"if" expr KEYWORD:"then" statements
                 KEYWORD:"end"
 
 
-for-expr :      KEYWORD:"for" IDENTIFIER EQ expr SEPARATOR expr
+nfor-expr :     KEYWORD:"for" IDENTIFIER EQ expr SEPARATOR expr
                 (SEPARATOR expr)?
+                KEYWORD:"repeat"
+                statements
+                KEYWORD:"end"
+
+gfor-expr :     KEYWORD:"for" IDENTIFIER (SEPARATOR IDENTIFIER)?
+                KEYWORD:"in" expr
                 KEYWORD:"repeat"
                 statements
                 KEYWORD:"end"
@@ -62,9 +69,9 @@ repeat-expr :   KEYWORD:"repeat"
                 statements
                 KEYWORD:"while" expr
 
+import-expr :   KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
+
 func-expr :     KEYWORD:"func" IDENTIFIER?
                 LPAR (IDENTIFIER (SEPARATOR IDENTIFIER)*)? RPAR
                 statements
                 KEYWORD:"end"
-
-import-expr :   KEYWORD:"import" STR KEYWORD:"as" IDENTIFIER KEYWORD:"end"

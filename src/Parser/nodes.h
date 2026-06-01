@@ -19,6 +19,14 @@ typedef enum {
     NT_VAR_ACESS,
     NT_NUMBER,
     NT_STRING,
+    NT_ALLOCATION,
+    NT_IF,
+    NT_NFOR,
+    NT_GFOR,
+    NT_WHILE,
+    NT_REPEAT,
+    NT_IMPORT,
+    NT_FUNCDEF,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -45,6 +53,13 @@ typedef struct BNode {
         struct { TValue name; } VarAcess;
         struct { TValue num; } NumberNode;
         struct { TValue str; } StringNode;
+        struct { Node* target; NodeArray args; } AllocNode;
+        struct { NodeArray cases; NodeArray statements; } IfNode;
+        struct { TValue identifier; Node* values[3]; Node* statements; } nForNode;
+        struct { TValue identifiers[2]; Node* target; Node* statements; } gForNode;
+        struct { Node* condition; Node* statements; } whileNode;
+        struct { Node* condition; Node* statements; } repeatNode;
+        struct { TValue module; TValue identifier; } importNode;
     } node;
 } Node;
 
