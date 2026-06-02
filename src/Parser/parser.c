@@ -55,12 +55,12 @@ Node* alloc_expr(ParseResult* res) {
     res->tokens++;
 
     Node* target = expr(res);
-    expect(res, TT_ARROW, "(ARROW) EXPECTED", NULL, NULL);
+    EXPECTED(expect(res, TT_ARROW, "(ARROW) EXPECTED", NULL, NULL))
 
     clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
     NodeArray args =  separated(res, expr, SEPARATOR);
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     
     Node* return_node = new_node(NT_ALLOCATION);
     return_node->node.AllocNode.args = args;
@@ -70,21 +70,26 @@ Node* alloc_expr(ParseResult* res) {
 }
 
 Node* if_expr(ParseResult* res) {
-    res->tokens++;
-
     NodeArray cases = make_node_array();
     NodeArray stments = make_node_array();
 
     do {
+        res->tokens++;
+
         Node* condition = expr(res);
-        expect(res, TT_KWORD, "(KEYWORD:'then') EXPECTED", NULL, "then");
-        Node* thenStatements = statements(res);
+        EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'then') EXPECTED", NULL, "then"))
+        Node* thenStatements = get_statements(res, ELSEIF_TOKEN);
         
         append_to_node_array(&cases, condition);
         append_to_node_array(&stments, thenStatements);
-    } while( match_keyword(*res->tokens++, "elseif") );
+    } while( match_keyword(*res->tokens, "elseif") );
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    if (match_keyword(*res->tokens, "else")) {
+        Node* thenStatements = get_statements(res, ELSEIF_TOKEN);
+        append_to_node_array(&stments, thenStatements);
+    }
+
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     Node* ifNode = new_node(NT_IF);
     ifNode->node.IfNode.cases = cases;
@@ -99,21 +104,20 @@ Node* for_expr(ParseResult* res) {
     
     TValue i;
     TValue v = NIL;
-    expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &i, NULL);
+    EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &i, NULL))
     
     switch (res->tokens++->tt) {
         case TT_EQ: {
             Node* baseValue = expr(res);
-            expect(res, TT_SEPARATOR, "(SEPARATOR:',') EXPECTED", NULL, NULL);
+            EXPECTED(expect(res, TT_SEPARATOR, "(SEPARATOR:',') EXPECTED", NULL, NULL))
             Node* endValue = expr(res);
 
             Node* stepValue;
-            if (res->tokens++->tt == TT_SEPARATOR) stepValue = expr(res);
+            if (res->tokens->tt == TT_SEPARATOR) { res->tokens++; stepValue = expr(res); }
             else (stepValue = new_node(NT_NUMBER))->node.NumberNode.num = NUM_AS_TVALUE(1);
 
-            expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat");
-            Node* stments = statements(res);
-            expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, NULL);
+            EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
+            Node* stments = get_statements(res, END_TOKEN);
 
             Node* nfor_node = new_node(NT_NFOR);
             nfor_node->node.nForNode.identifier = i;
@@ -128,12 +132,12 @@ Node* for_expr(ParseResult* res) {
 
         case TT_SEPARATOR:
         case TT_KWORD: {
-            if (res->tokens++->tt == TT_SEPARATOR) expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &v, NULL);
-            expect(res, TT_KWORD, "(KEYWORD:'in') EXPECTED", NULL, "in");
+            if (res->tokens++->tt == TT_SEPARATOR) EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &v, NULL))
+            EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'in') EXPECTED", NULL, "in"))
 
             Node* target = expr(res);
-            expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat");
-            Node* stments = statements(res);
+            EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
+            Node* stments = get_statements(res, END_TOKEN);
 
             Node* gfor_node = new_node(NT_GFOR);
             gfor_node->node.gForNode.identifiers[0] = i;
@@ -148,7 +152,7 @@ Node* for_expr(ParseResult* res) {
         default: SYNTAX_ERROR("(EQ:'=' || SEPARATOR:',') EXPECTED");
     }
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     return return_node;
 }
 
@@ -156,29 +160,29 @@ Node* while_expr(ParseResult* res) {
     res->tokens++;
 
     Node* condition = expr(res);
-    expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat");
-    Node* stments = statements(res);
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
+    Node* stments = get_statements(res, END_TOKEN);
 
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     Node* while_node = new_node(NT_WHILE);
     while_node->node.whileNode.condition = condition;
     while_node->node.whileNode.statements = stments;
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
     return while_node;
 }
 
 Node* repeat_expr(ParseResult* res) {
     res->tokens++;
 
-    Node* stments = statements(res);
-    expect(res, TT_KWORD, "(KEYWORD:'while') EXPECTED", NULL, "while");
+    Node* stments = get_statements(res, WHILE_TOKEN);
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'while') EXPECTED", NULL, "while"))
     Node* condition = expr(res);
 
     Node* repeat_node = new_node(NT_REPEAT);
     repeat_node->node.whileNode.condition = condition;
     repeat_node->node.whileNode.statements = stments;
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     return repeat_node;
 }
 
@@ -187,10 +191,10 @@ Node* import_expr(ParseResult* res) {
 
     TValue module;
     TValue identifier = NIL;
-    expect(res, TT_STR, "(STR) EXPECTED", &module, NULL);
+    EXPECTED(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
 
-    if (match_keyword(*res->tokens++, "as")) expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL);
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    if (match_keyword(*res->tokens++, "as")) EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL))
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     Node* import_node = new_node(NT_IMPORT);
     import_node->node.importNode.module = module;
@@ -205,7 +209,7 @@ Node* func_expr(ParseResult* res) {
     TValue func_name = NIL;
     if (res->tokens->tt == TT_IDENTIFIER) func_name = res->tokens++->value;
 
-    expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL);
+    EXPECTED(expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL))
     Node* func_node = new_node(NT_FUNCDEF);
     func_node->node.funcDefNode.name = func_name;
     func_node->node.funcDefNode.args.value = NIL;
@@ -219,17 +223,17 @@ Node* func_expr(ParseResult* res) {
 
     while (res->tokens->tt == TT_SEPARATOR) {
         struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
-        expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL);
+        EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
 
         new->next =  func_node->node.funcDefNode.args.next;
         func_node->node.funcDefNode.args.next = new;
     }
 
-    expect(res, TT_RPAR, "(LPAR : ')') EXPECTED", NULL, NULL);
-    Node* stments = statements(res);
+    EXPECTED(expect(res, TT_RPAR, "(LPAR : ')') EXPECTED", NULL, NULL))
+    Node* stments = get_statements(res, END_TOKEN);
     func_node->node.funcDefNode.statements = stments;
 
-    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     return func_node;
 }
@@ -259,7 +263,7 @@ Node* numerics(ParseResult* res) {
         case TT_LPAR : {
             res->tokens++;
             Node* nexpr = expr(res);
-            expect(res, TT_RPAR, "(RPAR : ')' ) EXPECTED", NULL, NULL);
+            EXPECTED(expect(res, TT_RPAR, "(RPAR : ')' ) EXPECTED", NULL, NULL))
 
             return_node->nt = nexpr->nt;
             return_node->node = nexpr->node;
@@ -268,8 +272,7 @@ Node* numerics(ParseResult* res) {
         }
 
         case TT_KWORD : {
-            free(return_node);
-            if (match_keyword(*res->tokens, "func")) return func_expr(res);
+            if (match_keyword(*res->tokens, "func")) { free(return_node); return func_expr(res); }
         }
 
         default : {
@@ -290,7 +293,7 @@ Node* call(ParseResult* res) {
         clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
         NodeArray args =  separated(res, expr, SEPARATOR);
         
-        expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL);
+        EXPECTED(expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL))
         Node* return_node = new_node(NT_CALL);
         return_node->node.CallNode.args = args;
         return_node->node.CallNode.target = num;
@@ -344,8 +347,8 @@ Node* expr(ParseResult* res) {
         res->tokens++;
 
         TValue var_name;
-        expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL);
-        expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL);
+        EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL))
+        EXPECTED(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
 
         Node* nexpr = expr(res);
         Node* return_node = new_node(NT_VAR_DECLARE);
@@ -389,15 +392,19 @@ Node* statement(ParseResult* res) {
     return expr(res);
 }
 
-Node* statements(ParseResult* res) {
+Node* statements(ParseResult* res) { return get_statements(res, EOF_TOKEN); }
+
+Node* get_statements(ParseResult* res, Token stopToken) {
     Node* node = new_node(NT_STATEMENTS);
     NodeArray statementNodes = make_node_array();
 
-    while (res->tokens->tt != TT_EOF) {
+    while (res->tokens->tt != TT_EOF && match_token(*res->tokens, stopToken)) {
         clean_newlines(&res->tokens, &res->adv_count);
+
+        Token* pre = res->tokens;
         Node* stmnt = statement(res);
 
-        if (stmnt == NULL || res->err != NULL) break;
+        if (stmnt == NULL || res->err != NULL) { if (pre == res->tokens) res->err = NULL; break; }
         append_to_node_array(&statementNodes, stmnt);
     }
 
@@ -446,7 +453,7 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
 }
 
 static inline void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
-    if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) SYNTAX_ERROR(expected);
+    if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err = new_error("InvalidSyntaxError", expected, 0, 0);
     if (value != NULL) *value = res->tokens->value;
     *res->tokens++;
 }

@@ -1,11 +1,39 @@
-var a = 1 + 1
-var b = 4
+alloc a -> 5 end
 
-a = a + 1
-a = a + a
-a = a + a + 1
-a = (a + 2) + 3
-a = (a * 2) + 1
-a = (a - 1) - 1
-a = (a * a) + 5
-a = (a / 2) + 3
+if a then
+
+elseif a then
+
+else
+
+end
+
+for i = 0, 5 repeat
+
+end
+
+for i = 0, 5, 1 repeat
+
+end
+
+for i, v in a repeat
+
+end
+
+while a repeat
+
+end
+
+repeat
+
+while a end
+
+import "yes.bs" as a end
+
+func a(b, c)
+
+end
+
+func ()
+
+end

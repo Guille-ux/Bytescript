@@ -10,6 +10,12 @@
 
 
 #define SEPARATOR       ((Token){ .tt = TT_SEPARATOR, .value = NIL })
+#define EOF_TOKEN       ((Token){ .tt = TT_EOF, .value = NIL })
+#define END_TOKEN       ((Token){ .tt = TT_KWORD, .value = make_fstring("end") })
+#define WHILE_TOKEN     ((Token){ .tt = TT_KWORD, .value = make_fstring("while") })
+#define ELSEIF_TOKEN    ((Token){ .tt = TT_KWORD, .value = make_fstring("elseif") })
+#define EXPECTED(exc) do { (exc); if (res->err) return NULL; } while (0);
+
 
 typedef struct {
     Token* tokens;
@@ -40,6 +46,7 @@ Node* logical(ParseResult* res);
 Node* expr(ParseResult* res);
 Node* statement(ParseResult* res);
 Node* statements(ParseResult* res);
+Node* get_statements(ParseResult* res, Token stopToken);
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count);
 static inline Node* register_node(Node* node, ParseResult* res);
