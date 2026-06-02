@@ -2,6 +2,7 @@
 #define COMPILER_H
 
 #include "Values/bytev.h"
+#include "Values/helper_structs.h"
 #include "Globals/table.h"
 #include "Globals/string.h"
 #include "Parser/nodes.h"
@@ -76,11 +77,6 @@ typedef enum {
 } BytecodeInstruction;
 
 
-struct LinkedList {
-    uint8_t* ptr;
-    struct LinkedList* next;
-};
-
 struct ContextScope;
 typedef struct ContextScope {
     struct ContextScope* parent;
@@ -89,8 +85,8 @@ typedef struct ContextScope {
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
     struct { uint8_t free_regs[256]; uint8_t len; } free_regs;
     uint8_t reg_ptr;
-    struct LinkedList breaks;
-    struct LinkedList continues;
+    struct uint8LinkedList breaks;
+    struct uint8LinkedList continues;
     struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
 } Scope;
 

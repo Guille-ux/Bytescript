@@ -200,7 +200,38 @@ Node* import_expr(ParseResult* res) {
 }
 
 Node* func_expr(ParseResult* res) {
+    res->tokens++;
 
+    TValue func_name = NIL;
+    if (res->tokens->tt == TT_IDENTIFIER) func_name = res->tokens++->value;
+
+    expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL);
+    Node* func_node = new_node(NT_FUNCDEF);
+    func_node->node.funcDefNode.name = func_name;
+    func_node->node.funcDefNode.args.value = NIL;
+    func_node->node.funcDefNode.args.next = NULL;
+
+    if (res->tokens->tt == TT_IDENTIFIER) {
+        func_node->node.funcDefNode.args.next = malloc(sizeof(struct TValueLinkedList));
+        func_node->node.funcDefNode.args.next->value = res->tokens++->value;
+        func_node->node.funcDefNode.args.next->next = NULL;
+    }
+
+    while (res->tokens->tt == TT_SEPARATOR) {
+        struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
+        expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL);
+
+        new->next =  func_node->node.funcDefNode.args.next;
+        func_node->node.funcDefNode.args.next = new;
+    }
+
+    expect(res, TT_RPAR, "(LPAR : ')') EXPECTED", NULL, NULL);
+    Node* stments = statements(res);
+    func_node->node.funcDefNode.statements = stments;
+
+    expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end");
+
+    return func_node;
 }
 
 Node* numerics(ParseResult* res) {
@@ -237,6 +268,7 @@ Node* numerics(ParseResult* res) {
         }
 
         case TT_KWORD : {
+            free(return_node);
             if (match_keyword(*res->tokens, "func")) return func_expr(res);
         }
 

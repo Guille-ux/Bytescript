@@ -73,11 +73,11 @@ int compile_return(Node* node, Scope* context) {
 }
 
 int compile_break(Node* node, Scope* context) {
-    struct LinkedList current = context->breaks;
+    struct uint8LinkedList current = context->breaks;
     while (current.next != NULL) current = *current.next;
 
     current.ptr = context->bytecode.bytes + context->bytecode.len;
-    current.next = malloc(sizeof(struct LinkedList));
+    current.next = malloc(sizeof(struct uint8LinkedList));
     if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
 
     emit(OP_JUMP, context);
@@ -89,11 +89,11 @@ int compile_break(Node* node, Scope* context) {
 }
 
 int compile_continue(Node* node, Scope* context) {
-    struct LinkedList current = context->breaks;
+    struct uint8LinkedList current = context->breaks;
     while (current.next != NULL) current = *current.next;
 
     current.ptr = context->bytecode.bytes + context->bytecode.len;
-    current.next = malloc(sizeof(struct LinkedList));
+    current.next = malloc(sizeof(struct uint8LinkedList));
     if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
 
     emit(OP_JUMP, context);

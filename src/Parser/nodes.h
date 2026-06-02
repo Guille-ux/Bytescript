@@ -60,6 +60,7 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } whileNode;
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue identifier; } importNode;
+        struct { TValue name; struct TValueLinkedList args; Node* statements; } funcDefNode;
     } node;
 } Node;
 

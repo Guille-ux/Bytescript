@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "Values/helper_structs.h"
 #include "Error/error.h"
 #include "Lexer/lexer.h"
 #include "Parser/nodes.h"
