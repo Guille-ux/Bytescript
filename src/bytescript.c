@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     Node* ast = parse(tokens, byte_args[filename]);
     
     Scope* compile_context = new_scope();
-    //compile(ast, compile_context);
+    compile(ast, compile_context);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
 

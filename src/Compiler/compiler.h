@@ -106,6 +106,14 @@ int compile_call(Node* node, Scope* context);
 int compile_var_access(Node* node, Scope* context);
 int compile_number(Node* node, Scope* context);
 int compile_string(Node* node, Scope* context);
+int compile_allocation(Node* node, Scope* context);
+int compile_if_statement(Node* node, Scope* context);
+int compile_nfor_loop(Node* node, Scope* context);
+int compile_gfor_loop(Node* node, Scope* context);
+int compile_while_loop(Node* node, Scope* context);
+int compile_repeat_loop(Node* node, Scope* context);
+int compile_import(Node* node, Scope* context);
+int compile_func_def(Node* node, Scope* context);
 
 static int emit(uint8_t instr, Scope* context);
 static int register_first(Scope* context);

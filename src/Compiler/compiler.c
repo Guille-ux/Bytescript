@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <math.h>
+
 #include "Compiler/compiler.h"
+#include "labeler.h"
 
 #define false 0
 #define true 1
@@ -17,7 +19,15 @@ CompileFunction compiler_functions[] = {
     [NT_CALL]           = compile_call,
     [NT_VAR_ACESS]      = compile_var_access,
     [NT_NUMBER]         = compile_number,
-    [NT_STRING]         = compile_string
+    [NT_STRING]         = compile_string,
+    [NT_ALLOCATION]     = compile_allocation,
+    [NT_IF]             = compile_if_statement,
+    [NT_NFOR]           = compile_nfor_loop,
+    [NT_GFOR]           = compile_gfor_loop,
+    [NT_WHILE]          = compile_while_loop,
+    [NT_REPEAT]         = compile_repeat_loop,
+    [NT_IMPORT]         = compile_import,
+    [NT_FUNCDEF]        = compile_func_def
 };
 
 
@@ -268,6 +278,83 @@ int compile_string(Node* node, Scope* context) {
     node->cc = true;
     return cache_constant(node->node.StringNode.str, context);
 }
+
+int compile_allocation(Node* node, Scope* context) {
+    //
+}
+
+int compile_if_statement(Node* node, Scope* context) {
+    NodeArray cases = node->node.IfNode.cases;
+    NodeArray stments = node->node.IfNode.statements;
+    uint8_t* next = NULL;
+
+    struct { uint8_t ptr[cases.len]; size_t len; } ends;
+    ends.len = 0;
+
+    node->cc = false;
+    for (int i = 0; i < cases.len; i++) {
+        int condition = compile(cases.nodes[i], context);
+
+        if (cases.nodes[i]->cc) {
+            if (AS_NUM(get_constant(condition, context))) {
+                node->cc = true;
+                compile(stments.nodes[i], context);
+                break;
+
+            } else continue;
+        }
+
+        emit(OP_JFALSE, context);
+        emit(condition, context);
+        emit(0x00, context);
+        emit(0x00, context);
+        next = context->bytecode.bytes + context->bytecode.len;
+
+        compile(stments.nodes[i], context);
+        emit(OP_JUMP, context);
+        emit(0x00, context);
+        emit(0x00, context);
+        emit(0x00, context);
+        ends.ptr[ends.len++] = context->bytecode.bytes + context->bytecode.len;
+
+        patch_single_jfalse_label(&next, context->bytecode.bytes + context->bytecode.len - next);
+    }
+
+
+    if (!node->cc) {
+        if (node->node.IfNode.cases.len < node->node.IfNode.statements.len) {
+            compile(stments.nodes[stments.len], context);
+            
+        } else context->bytecode.len -= 4;
+
+        patch_array_jump_label(ends, context->bytecode.bytes + context->bytecode.len);
+    }
+}
+
+int compile_nfor_loop(Node* node, Scope* context) {
+
+}
+
+int compile_gfor_loop(Node* node, Scope* context) {
+
+}
+
+int compile_while_loop(Node* node, Scope* context) {
+
+}
+
+int compile_repeat_loop(Node* node, Scope* context) {
+
+}
+
+int compile_import(Node* node, Scope* context) {
+
+}
+
+int compile_func_def(Node* node, Scope* context) {
+
+}
+
 
 
 Scope* new_scope() {

@@ -10,13 +10,14 @@
 #include <string.h>
 
 
-#define HIHI_TO32_T(hihi)       ( ( (int32_t)(hihi) << 16 ) )
-#define HI_TO32_T(hi)           ( ( (int16_t)(hi) << 8 ) )
-#define LO_TO32_T(lo)           ( (int8_t)(lo) )
+#define INT32_TO_HIHI(input)            ( (uint8_t)((input) | 0xff0000) )
+#define INT32_TO_HI(input)              ( (uint8_t)((input) | 0x00ff00) )
+#define INT32_TO_LO(input)              ( (uint8_t)((input) | 0x0000ff) )
 
-#define OFF24_TO_INT32(hihi, hi, lo)                                      \
-    ( ((HIHI_TO32_T(hihi) | HI_TO32_T(hi) | LO_TO32_T(lo))) |             \
-      (((hihi) & 0x80) ? 0xFF000000 : 0) )
+static inline int32_t off24_to_int32(uint8_t hihi, uint8_t hi, uint8_t lo) {
+    int32_t x = (hihi << 16) | (hi << 8) | lo;
+    return (x << 8) >> 8;
+}
 
 
 TValue to_return_value(TValue returnv[], size_t returnc);
