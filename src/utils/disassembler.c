@@ -1,4 +1,6 @@
 #include "utils/disassembler.h"
+#include "Globals/table.h"
+#include "Globals/string.h"
 
 const char* opcodes_names[] = {
     [OP_ADD_RC] = "ADD_RC",
@@ -68,15 +70,32 @@ const char* opcodes_names[] = {
     [OP_HALT] = "HALT",
 };
 
+int get_jump_lenght(Scope* context, uint8_t* instr) {
+    uint8_t op = instr[0];
+
+    uint8_t hi = instr[2];
+    uint8_t lo = instr[3];
+    uint8_t hihi = op != OP_JUMP ? (int16_t)(hi << 8) >> 8 : instr[1];
+
+    return off24_to_int32(hihi, hi, lo);
+}
+
 void disassemble(Scope* context) {
     // collecting labels
 
-    int* labels = malloc(sizeof(int) * 64);
+    TValue L = make_fstring("L");
+    TValue labels = new_table(NULL, 0);
+    int current_label_number = 0;
+
     for (int i = 0; i < context->bytecode.len; i+= 4) {
         uint8_t op = context->bytecode.bytes[i];
 
-        if (op = OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP) {
-            
+        if (op == OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP) {
+            int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
+            TValue cached = get_value_from_hashtable(labels, NUM_AS_TVALUE(i + jump_lenght));
+            TValue label_name = IS_NIL(cached) ? to_string(( TValue[2] ){ L, NUM_AS_TVALUE(current_label_number++) }, 2) : cached;
+
+            add_value_to_hashtable(labels, NUM_AS_TVALUE(i + jump_lenght), label_name);
         }
     }
 
@@ -84,9 +103,26 @@ void disassemble(Scope* context) {
 
     printf("\ndisassembling :\n");
     for (int i = 0; i < context->bytecode.len; i+= 4) {
-        printf("%s %d %d %d\n", opcodes_names[context->bytecode.bytes[i]], context->bytecode.bytes[i + 1], context->bytecode.bytes[i + 2], context->bytecode.bytes[i + 3]);
-    }
-    printf("\n");
+        uint8_t instr = context->bytecode.bytes[i];
+        uint8_t arg1 = context->bytecode.bytes[i + 1];
+        uint8_t arg2 = context->bytecode.bytes[i + 2];
+        uint8_t arg3 = context->bytecode.bytes[i + 3];
 
-    free(labels);
+        const char* opcode = opcodes_names[instr];
+        TValue current_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i));
+
+        if (!IS_NIL(current_label)) printf("\n%s\n", AS_STRING(current_label)->str);
+
+        printf("%s\t", opcode);
+        if (instr == OP_JUMP || instr == OP_JFALSE || instr == OP_GFOR_LOOP || instr == OP_NFOR_LOOP) {
+            int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
+            TValue target_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i + jump_lenght));
+            
+            if (instr == OP_JUMP) printf("%s\n", AS_STRING(target_label)->str);
+            else printf("%d %s\n", arg1, AS_STRING(target_label)->str);
+
+        } else printf("%d %d %d\n", arg1, arg2, arg3);
+    }
+
+    printf("\n");
 }

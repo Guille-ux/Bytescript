@@ -42,7 +42,7 @@ TValue compare_string(TValue* argv, size_t argc) {
         TValue value = argv[i];
         if (!IS_STRING(value)) TYPE_ERROR("function <String.compare> take type <String> as arguments");
 
-        TTable* ptr = AS_TABLE(value);
+        TTable* ptr = AS_TABLE(value);  // ??????????????????
         free(ptr->array.array);
         free(ptr->hash_table.array);
         free(ptr);
@@ -65,4 +65,48 @@ TValue concat_string(TValue* argv, size_t argc) {
     new->str[new->len] = '\0';
 
     return cache_string(new);
+}
+
+TValue to_string(TValue* argv, size_t argc) {
+    TValue str1 = NIL;
+
+    for (int i = 0; i < argc; i++) {
+        TValue v = argv[i];
+        TValue object;
+        void* ptr;
+
+        switch (TYPE(v)) {
+            case STRING: {
+                str1 = IS_NIL(str1) ? v : concat_string(( TValue[2] ){ str1, v }, 2);
+                break;
+            }
+
+            case TABLE:
+            case FUNC: {
+                object = TYPE(v) == FUNC ? make_fstring("function at") : make_fstring("table at");;
+                void* ptr = (void*)PAYLOAD(v);
+
+
+                int needed = snprintf(NULL, 0, "<%p>", ptr);
+                char buffer[needed + 1];
+                snprintf(buffer, needed + 1, "<%p>", ptr);
+
+                TValue str = make_fstring(buffer);
+                str = concat_string(( TValue[2] ){ object, str }, 2);
+
+                str1 = IS_NIL(str1) ? str : concat_string(( TValue[2] ){ str1, str }, 2);
+                break;
+            }
+
+            default:
+                int needed = snprintf(NULL, 0, "%.15g", AS_NUM(v));
+                char buffer[needed + 1];
+                snprintf(buffer, needed + 1, "%.15g", AS_NUM(v));
+
+                str1 = IS_NIL(str1) ? make_fstring(buffer) : concat_string(( TValue[2] ){ str1, make_fstring(buffer) }, 2);
+                break;
+        }
+    }
+
+    return to_return_value(&str1, 1);
 }

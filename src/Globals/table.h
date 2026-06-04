@@ -60,6 +60,11 @@ TValue clean_table(TValue* argv, size_t argc);
 TValue reset_table(TValue* argv, size_t argc);
 
 
+static inline void append_to_table(TValue table, TValue value) {
+    TValue args[2] = { table, value };
+    insert_table(args, 2);
+}
+
 static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
     TValue args[3] = { table, key, value };
     append_key_table(args, 3);

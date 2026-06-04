@@ -16,7 +16,7 @@
 
 static inline int32_t off24_to_int32(uint8_t hihi, uint8_t hi, uint8_t lo) {
     int32_t x = (hihi << 16) | (hi << 8) | lo;
-    return (x << 8) >> 8;
+    return (int32_t)(x << 8) >> 8;
 }
 
 
