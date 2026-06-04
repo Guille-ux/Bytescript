@@ -317,7 +317,7 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(0x00, context);
         ends.ptr[ends.len++] = context->bytecode.bytes + context->bytecode.len;
 
-        patch_single_jfalse_label(&next, context->bytecode.bytes + context->bytecode.len - next);
+        patch_single_jfalse_label(&next, (ends.ptr[ends.len - 1] - next) / 4);
     }
 
 
@@ -384,7 +384,7 @@ Scope* new_scope() {
     return scope;
 }
 
-static int emit(uint8_t instr, Scope* context) {
+int emit(uint8_t instr, Scope* context) {
     context->bytecode.bytes[context->bytecode.len++] = instr;
     if (context->bytecode.len == context->bytecode.cap) {
         uint8_t* new = realloc(context->bytecode.bytes, (context->bytecode.cap *= 2));

@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
-
+    emit(OP_HALT, compile_context);
 
     printf("\nbytecode. len : %d\n", compile_context->bytecode.len / 4);
     disassemble(compile_context);

@@ -21,7 +21,7 @@ struct ArrayLabel { uint8_t** ptr; size_t len; };
 static void patch_array_jump_label(struct ArrayLabel label, uint8_t* pos) {
     for (int i = 0; i < label.len; i++) {
         uint8_t* lab = label.ptr[i];
-        patch_single_jump_label(&lab, pos - lab);
+        patch_single_jump_label(&lab, (pos - lab) / 4);
     }
 }
 

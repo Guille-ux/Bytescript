@@ -115,7 +115,7 @@ int compile_repeat_loop(Node* node, Scope* context);
 int compile_import(Node* node, Scope* context);
 int compile_func_def(Node* node, Scope* context);
 
-static int emit(uint8_t instr, Scope* context);
+int emit(uint8_t instr, Scope* context);
 static int register_first(Scope* context);
 static int free_register(uint8_t idx, Scope* context);
 static int register_constant(uint8_t const_i, Scope* context, int16_t r_);
