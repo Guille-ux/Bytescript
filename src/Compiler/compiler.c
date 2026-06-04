@@ -288,7 +288,7 @@ int compile_if_statement(Node* node, Scope* context) {
     NodeArray stments = node->node.IfNode.statements;
     uint8_t* next = NULL;
 
-    struct { uint8_t ptr[cases.len]; size_t len; } ends;
+    struct { uint8_t* ptr[cases.len]; size_t len; } ends;
     ends.len = 0;
 
     node->cc = false;
@@ -323,12 +323,14 @@ int compile_if_statement(Node* node, Scope* context) {
 
     if (!node->cc) {
         if (node->node.IfNode.cases.len < node->node.IfNode.statements.len) {
-            compile(stments.nodes[stments.len], context);
+            compile(stments.nodes[stments.len - 1], context);
             
         } else context->bytecode.len -= 4;
 
-        patch_array_jump_label(ends, context->bytecode.bytes + context->bytecode.len);
+        patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, context->bytecode.bytes + context->bytecode.len);
     }
+
+    return 0;
 }
 
 int compile_nfor_loop(Node* node, Scope* context) {

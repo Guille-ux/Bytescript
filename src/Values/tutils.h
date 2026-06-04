@@ -10,9 +10,9 @@
 #include <string.h>
 
 
-#define INT32_TO_HIHI(input)            ( (uint8_t)((input) | 0xff0000) )
-#define INT32_TO_HI(input)              ( (uint8_t)((input) | 0x00ff00) )
-#define INT32_TO_LO(input)              ( (uint8_t)((input) | 0x0000ff) )
+#define INT32_TO_HIHI(input)            ( (uint8_t)(((input) & 0xff0000) >> 16) )
+#define INT32_TO_HI(input)              ( (uint8_t)(((input) & 0x00ff00) >> 8) )
+#define INT32_TO_LO(input)              ( (uint8_t)((input) & 0x0000ff) )
 
 static inline int32_t off24_to_int32(uint8_t hihi, uint8_t hi, uint8_t lo) {
     int32_t x = (hihi << 16) | (hi << 8) | lo;

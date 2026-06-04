@@ -85,7 +85,8 @@ Node* if_expr(ParseResult* res) {
     } while( match_keyword(*res->tokens, "elseif") );
 
     if (match_keyword(*res->tokens, "else")) {
-        Node* thenStatements = get_statements(res, ELSEIF_TOKEN);
+        res->tokens++;
+        Node* thenStatements = get_statements(res, END_TOKEN);
         append_to_node_array(&stments, thenStatements);
     }
 
@@ -398,7 +399,7 @@ Node* get_statements(ParseResult* res, Token stopToken) {
     Node* node = new_node(NT_STATEMENTS);
     NodeArray statementNodes = make_node_array();
 
-    while (res->tokens->tt != TT_EOF && match_token(*res->tokens, stopToken)) {
+    while (res->tokens->tt != TT_EOF && !match_token(*res->tokens, stopToken)) {
         clean_newlines(&res->tokens, &res->adv_count);
 
         Token* pre = res->tokens;

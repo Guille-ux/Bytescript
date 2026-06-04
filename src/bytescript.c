@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 
-    reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
+    printf("new hello\n");
 
     printf("\nbytecode. len : %d\n", compile_context->bytecode.len / 4);
     disassemble(compile_context);
@@ -73,6 +73,9 @@ int main(int argc, char* argv[]) {
         printf("%f, ", AS_NUM(compile_context->const_pool.const_pool[i]));
     }
     printf("\n\n");
+
+    reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
+
 
     return 0;
 }
