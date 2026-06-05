@@ -80,14 +80,15 @@ typedef enum {
 struct ContextScope;
 typedef struct ContextScope {
     struct ContextScope* parent;
-    TTable* symbols;
     struct { TValue saved_consts[256]; uint8_t len; } saved_const;
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
     struct { uint8_t free_regs[256]; uint8_t len; } free_regs;
-    uint8_t reg_ptr;
+    struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
     struct uint8LinkedList breaks;
     struct uint8LinkedList continues;
-    struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
+    TTable* symbol_stack;
+    TTable* symbols;
+    uint8_t reg_ptr;
 } Scope;
 
 typedef int (*CompileFunction)(Node* node, Scope* context);
@@ -139,5 +140,10 @@ static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
 static inline int assignement_analysis(Node* node);
 static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);
 
+static void open_scope(Scope* context);
+static void close_scope(Scope* context);
+static inline int compile_in_scope(Node* node, Scope* context);
+static inline void update_symbols(Scope* context);
+static TValue get_symbol_register(Scope* context, TValue name);
 
 #endif

@@ -31,7 +31,7 @@ CompileFunction compiler_functions[] = {
 };
 
 
-int compile(Node* node, Scope* context) { return compiler_functions[node->nt](node, context); }
+int compile(Node* node, Scope* context) { printf("%d\n", node->nt); return compiler_functions[node->nt](node, context); }
 
 int compile_statements(Node* node, Scope* context) {
     node->cc = false;
@@ -256,7 +256,7 @@ int compile_call(Node* node, Scope* context) {
 
 int compile_var_access(Node* node, Scope* context) {
     node->cc = false;
-    TValue tidx = get_value_from_hashtable(TBL_TO_TVALUE(context->symbols), node->node.VarAcess.name);
+    TValue tidx = get_symbol_register(context, node->node.VarAcess.name);
 
     if (IS_NIL(tidx)) {
         TStr* name = AS_STRING(node->node.VarAcess.name);
@@ -298,7 +298,9 @@ int compile_if_statement(Node* node, Scope* context) {
         if (cases.nodes[i]->cc) {
             if (AS_NUM(get_constant(condition, context))) {
                 node->cc = true;
-                compile(stments.nodes[i], context);
+                
+                compile_in_scope(stments.nodes[i], context);
+
                 break;
 
             } else continue;
@@ -310,14 +312,15 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(0x00, context);
         next = context->bytecode.bytes + context->bytecode.len;
 
-        compile(stments.nodes[i], context);
+        compile_in_scope(stments.nodes[i], context);
+
         emit(OP_JUMP, context);
         emit(0x00, context);
         emit(0x00, context);
         emit(0x00, context);
         ends.ptr[ends.len++] = context->bytecode.bytes + context->bytecode.len;
 
-        patch_single_jfalse_label(&next, (ends.ptr[ends.len - 1] - next) / 4);
+        patch_single_jfalse_label(next, (ends.ptr[ends.len - 1] - next) / 4);
     }
 
 
@@ -325,7 +328,7 @@ int compile_if_statement(Node* node, Scope* context) {
         if (node->node.IfNode.cases.len < node->node.IfNode.statements.len) {
             compile(stments.nodes[stments.len - 1], context);
             
-        } else context->bytecode.len -= 4;
+        } else { context->bytecode.len -= 4; patch_single_jfalse_label(next, (context->bytecode.bytes + context->bytecode.len - next) / 4); }
 
         patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, context->bytecode.bytes + context->bytecode.len);
     }
@@ -362,7 +365,9 @@ int compile_func_def(Node* node, Scope* context) {
 Scope* new_scope() {
     Scope* scope = malloc(sizeof(Scope));
     scope->parent = NULL;
-    scope->symbols = AS_TABLE(new_table((TValue[1]){ NIL }, 0));
+    scope->symbol_stack = AS_TABLE(new_table(NULL, 0));
+    open_scope(scope);
+    printf("hello here %zu\n", scope->symbol_stack->array.len);
 
     size_t CONST_POOL_SIZE = sizeof(scope->const_pool.const_pool) / TVALUESIZE;
     for (int i = 0; i < CONST_POOL_SIZE; i++) { scope->const_pool.const_pool[i] = NIL; }
@@ -607,4 +612,40 @@ static int full_assignement_analysis(Node* node, Node* target, int* depth, int* 
 
         default: return 1;
     }
+}
+
+
+static void open_scope(Scope* context) {
+    append_to_table(TBL_TO_TVALUE(context->symbol_stack), new_table(NULL, 0));
+    update_symbols(context);
+}
+
+static void close_scope(Scope* context) {
+    TValue last_scope = get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
+    free_table(&last_scope, 1);
+    remove_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
+
+    update_symbols(context);
+}
+
+static inline int compile_in_scope(Node* node, Scope* context) {
+    open_scope(context);
+    int res = compile(node, context);
+    close_scope(context);
+
+    return res;
+}
+
+static inline void update_symbols(Scope* context) {
+    context->symbols = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1)));
+}
+
+static TValue get_symbol_register(Scope* context, TValue name) {
+    for (int i = context->symbol_stack->array.len - 1; i >= 0; i--) {
+        TValue symbol_table = context->symbol_stack->array.array[i];
+        TValue tidx = get_value_from_hashtable(symbol_table, name);
+        if (!IS_NIL(tidx)) return tidx;
+    }
+
+    return NIL;
 }

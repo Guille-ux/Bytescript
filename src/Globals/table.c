@@ -448,9 +448,10 @@ TValue insert_table(TValue* argv, size_t argc) {
     TValue value = argv[1];
     size_t idx = argc > 2 ? AS_NUM(argv[2]) : ptr->array.len;
 
-    if (ptr->array.len + 1 > ptr->array.capacity) expand_table(argv, 1);
+    if (ptr->array.len > ptr->array.capacity) expand_table(argv, 1);
     shift_table_right(ptr, idx);
 
+    ptr->array.len++;
     ptr->array.array[idx] = value;
     return value;
 }

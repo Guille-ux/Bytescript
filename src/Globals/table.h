@@ -60,9 +60,20 @@ TValue clean_table(TValue* argv, size_t argc);
 TValue reset_table(TValue* argv, size_t argc);
 
 
+static inline TValue get_from_table(TValue table, TValue index) {
+    printf("here\n");
+    TTable* tb = AS_TABLE(table);
+    return tb->array.array[(size_t)AS_NUM(index)];
+}
+
 static inline void append_to_table(TValue table, TValue value) {
     TValue args[2] = { table, value };
     insert_table(args, 2);
+}
+
+static inline void remove_from_table(TValue table, TValue index) {
+    TValue args[2] = { table, index };
+    pop_table(args, 2);
 }
 
 static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
