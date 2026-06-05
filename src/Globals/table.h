@@ -61,7 +61,6 @@ TValue reset_table(TValue* argv, size_t argc);
 
 
 static inline TValue get_from_table(TValue table, TValue index) {
-    printf("here\n");
     TTable* tb = AS_TABLE(table);
     return tb->array.array[(size_t)AS_NUM(index)];
 }

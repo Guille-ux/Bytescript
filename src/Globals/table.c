@@ -242,7 +242,7 @@ TTable* shift_table(TTable* table, size_t dead_values) {
 }
 
 TTable* shift_table_right(TTable* table, size_t idx) {
-    for (int i = table->array.len; i > idx; i--) {
+    for (int i = table->array.len++; i > idx; i--) {
         table->array.array[i] = table->array.array[i - 1];
     }
 
@@ -288,13 +288,6 @@ TValue free_table(TValue* argv, size_t argc) {
     }
 
     free(ptr->array.array);
-
-    for (int i = 0; i < ptr->hash_table.capacity; i++) {
-        if (ptr->hash_table.array[i].sub.arr != NULL) {
-            free(ptr->hash_table.array[i].sub.arr);
-        }
-    }
-
     free(ptr->hash_table.array);
     free(ptr);
 
@@ -448,10 +441,9 @@ TValue insert_table(TValue* argv, size_t argc) {
     TValue value = argv[1];
     size_t idx = argc > 2 ? AS_NUM(argv[2]) : ptr->array.len;
 
-    if (ptr->array.len > ptr->array.capacity) expand_table(argv, 1);
+    if (ptr->array.len >= ptr->array.capacity) expand_table(argv, 1);
     shift_table_right(ptr, idx);
 
-    ptr->array.len++;
     ptr->array.array[idx] = value;
     return value;
 }

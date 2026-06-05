@@ -31,7 +31,7 @@ CompileFunction compiler_functions[] = {
 };
 
 
-int compile(Node* node, Scope* context) { printf("%d\n", node->nt); return compiler_functions[node->nt](node, context); }
+int compile(Node* node, Scope* context) { return compiler_functions[node->nt](node, context); }
 
 int compile_statements(Node* node, Scope* context) {
     node->cc = false;
@@ -367,7 +367,6 @@ Scope* new_scope() {
     scope->parent = NULL;
     scope->symbol_stack = AS_TABLE(new_table(NULL, 0));
     open_scope(scope);
-    printf("hello here %zu\n", scope->symbol_stack->array.len);
 
     size_t CONST_POOL_SIZE = sizeof(scope->const_pool.const_pool) / TVALUESIZE;
     for (int i = 0; i < CONST_POOL_SIZE; i++) { scope->const_pool.const_pool[i] = NIL; }

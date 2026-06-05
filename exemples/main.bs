@@ -1,7 +1,8 @@
 var a = 1
 
 if a == 5 then
-    a = 4
+    var b = 4
+    a = b
 elseif a == 1 then
     a = 3
 end
