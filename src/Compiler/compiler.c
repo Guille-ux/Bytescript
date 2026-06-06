@@ -337,7 +337,11 @@ int compile_if_statement(Node* node, Scope* context) {
 }
 
 int compile_nfor_loop(Node* node, Scope* context) {
+    node->cc = false;
 
+    open_scope(context);
+
+    int start_value = compile(node->node.nForNode.values[0], context);
 }
 
 int compile_gfor_loop(Node* node, Scope* context) {
@@ -621,9 +625,14 @@ static void open_scope(Scope* context) {
 
 static void close_scope(Scope* context) {
     TValue last_scope = get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
-    free_table(&last_scope, 1);
-    remove_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
+    TValue registers = hashed_values_table((TValue[1]){ last_scope }, 1);
+    TTable* registers_tbl = AS_TABLE(registers);
 
+    for (int i = 0; i < registers_tbl->array.len; i++) { free_register((uint8_t)AS_NUM(registers_tbl->array.array[i]), context); }
+    
+    free_table(&last_scope, 1);
+    free_table(&registers, 1);
+    remove_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
     update_symbols(context);
 }
 

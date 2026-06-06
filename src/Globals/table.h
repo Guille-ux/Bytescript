@@ -19,6 +19,29 @@
 #define MAX_TOMBSTONE_FACTOR        (0.18)
 
 
+TValue new_table(TValue* argv, size_t argc);
+TValue free_table(TValue* argv, size_t argc);
+TValue pop_table(TValue* argv, size_t argc);
+TValue shrink_table(TValue* argv, size_t argc);
+TValue expand_table(TValue* argv, size_t argc);
+TValue len_table(TValue* argv, size_t argc);
+TValue reserve_table(TValue* argv, size_t argc);
+TValue print_table(TValue* argv, size_t argc);
+TValue slice_table(TValue* argv, size_t argc);
+TValue fill_table(TValue* argv, size_t argc);
+TValue copy_table(TValue* argv, size_t argc);
+TValue insert_table(TValue* argv, size_t argc);
+TValue hash_value_table(TValue* argv, size_t argc);
+TValue append_key_table(TValue* argv, size_t argc);
+TValue get_key_table(TValue* argv, size_t argc);
+TValue clean_table(TValue* argv, size_t argc);
+TValue reset_table(TValue* argv, size_t argc);
+TValue hashed_keys_table(TValue* argv, size_t argc);
+TValue hashed_values_table(TValue* argv, size_t argc);
+TValue buckets_table(TValue* argv, size_t argc);
+
+
+
 static inline uint64_t hash_single_value(TValue value);
 static inline void empty_pairs(Pair* pairs, size_t count);
 static inline void empty_buckets(Bucket* bucks, size_t count);
@@ -41,23 +64,11 @@ TTable* shift_table(TTable* table, size_t dead_values);
 TTable* shift_table_right(TTable* table, size_t idx);
 
 
-TValue new_table(TValue* argv, size_t argc);
-TValue free_table(TValue* argv, size_t argc);
-TValue pop_table(TValue* argv, size_t argc);
-TValue shrink_table(TValue* argv, size_t argc);
-TValue expand_table(TValue* argv, size_t argc);
-TValue len_table(TValue* argv, size_t argc);
-TValue reserve_table(TValue* argv, size_t argc);
-TValue print_table(TValue* argv, size_t argc);
-TValue slice_table(TValue* argv, size_t argc);
-TValue fill_table(TValue* argv, size_t argc);
-TValue copy_table(TValue* argv, size_t argc);
-TValue insert_table(TValue* argv, size_t argc);
-TValue hash_value_table(TValue* argv, size_t argc);
-TValue append_key_table(TValue* argv, size_t argc);
-TValue get_key_table(TValue* argv, size_t argc);
-TValue clean_table(TValue* argv, size_t argc);
-TValue reset_table(TValue* argv, size_t argc);
+typedef void (*BucketCollector)(TValue res, Pair* pair);
+
+void collect_key(TValue res, Pair* pair);
+void collect_value(TValue res, Pair* pair);
+TValue collect_bucket(TTable* ptr, BucketCollector bc);
 
 
 static inline TValue get_from_table(TValue table, TValue index) {
