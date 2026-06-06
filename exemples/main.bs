@@ -1,5 +1,5 @@
-var a = 5
+var i = 0
 
-for i, v in a repeat
-
-end
+repeat
+    i = i + 1
+while i < 5 end

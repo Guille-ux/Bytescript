@@ -176,6 +176,7 @@ Node* repeat_expr(ParseResult* res) {
     res->tokens++;
 
     Node* stments = get_statements(res, WHILE_TOKEN);
+
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'while') EXPECTED", NULL, "while"))
     Node* condition = expr(res);
 
@@ -399,14 +400,14 @@ Node* get_statements(ParseResult* res, Token stopToken) {
     Node* node = new_node(NT_STATEMENTS);
     NodeArray statementNodes = make_node_array();
 
+    clean_newlines(&res->tokens, &res->adv_count);
     while (res->tokens->tt != TT_EOF && !match_token(*res->tokens, stopToken)) {
-        clean_newlines(&res->tokens, &res->adv_count);
-
         Token* pre = res->tokens;
         Node* stmnt = statement(res);
 
         if (stmnt == NULL || res->err != NULL) { if (pre == res->tokens) res->err = NULL; break; }
         append_to_node_array(&statementNodes, stmnt);
+        clean_newlines(&res->tokens, &res->adv_count);
     }
 
     node->node.StatementsNode = statementNodes;

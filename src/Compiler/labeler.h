@@ -2,7 +2,9 @@
 #define LABELER_H
 
 #include <stdint.h>
-#include "Values/tutils.h" 
+#include "Values/tutils.h"
+
+#define CURRENT_INSTR       (context->bytecode.bytes + context->bytecode.len)
 
 static void patch_single_jfalse_label(uint8_t* label, int32_t pos) {
     *(label - 2) = INT32_TO_HI(pos);

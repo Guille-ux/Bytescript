@@ -86,7 +86,7 @@ int compile_break(Node* node, Scope* context) {
     struct uint8LinkedList current = context->breaks;
     while (current.next != NULL) current = *current.next;
 
-    current.ptr = context->bytecode.bytes + context->bytecode.len;
+    current.ptr = CURRENT_INSTR;
     current.next = malloc(sizeof(struct uint8LinkedList));
     if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
 
@@ -102,7 +102,7 @@ int compile_continue(Node* node, Scope* context) {
     struct uint8LinkedList current = context->breaks;
     while (current.next != NULL) current = *current.next;
 
-    current.ptr = context->bytecode.bytes + context->bytecode.len;
+    current.ptr = CURRENT_INSTR;
     current.next = malloc(sizeof(struct uint8LinkedList));
     if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
 
@@ -184,9 +184,9 @@ int compile_bin_op(Node* node, Scope* context) {
         case TT_BXOR:   emit(CC ? OP_BXOR_RC : OP_BXOR_RR, context); break;
         case TT_EEQ:    emit(CC ? OP_EEQ_RC  : OP_EEQ_RR, context); break;
         case TT_GT:     emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
-        case TT_LT:     emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
-        case TT_GTEQ:   emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
-        case TT_LTEQ:   emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
+        case TT_LT:     emit(leftCC ? OP_GT_RC : rightCC ? OP_LT_RC : OP_GT_RR, context); break;
+        case TT_GTEQ:   emit(leftCC ? OP_LTEQ_RC : rightCC ? OP_GTEQ_RC : OP_GTEQ_RR, context); break;
+        case TT_LTEQ:   emit(leftCC ? OP_GTEQ_RC : rightCC ? OP_LTEQ_RC : OP_LTEQ_RR, context); break;
 
         default :
             if (leftCC) { int temp = left; left = right; right = temp; }
@@ -310,7 +310,7 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(condition, context);
         emit(0x00, context);
         emit(0x00, context);
-        next = context->bytecode.bytes + context->bytecode.len;
+        next = CURRENT_INSTR;
 
         compile_in_scope(stments.nodes[i], context);
 
@@ -318,7 +318,7 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(0x00, context);
         emit(0x00, context);
         emit(0x00, context);
-        ends.ptr[ends.len++] = context->bytecode.bytes + context->bytecode.len;
+        ends.ptr[ends.len++] = CURRENT_INSTR;
 
         patch_single_jfalse_label(next, get_jump_lenght(next, context));
     }
@@ -330,7 +330,7 @@ int compile_if_statement(Node* node, Scope* context) {
             
         } else { context->bytecode.len -= 4; patch_single_jfalse_label(next, get_jump_lenght(next, context)); }
 
-        patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, context->bytecode.bytes + context->bytecode.len);
+        patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, CURRENT_INSTR);
     }
 
     return 0;
@@ -359,7 +359,7 @@ int compile_nfor_loop(Node* node, Scope* context) {
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* init = context->bytecode.bytes + context->bytecode.len;
+    uint8_t* init = CURRENT_INSTR;
 
     compile(node->node.nForNode.statements, context);
     patch_single_jfalse_label(init, get_jump_lenght(init, context));
@@ -369,7 +369,7 @@ int compile_nfor_loop(Node* node, Scope* context) {
     emit(0x00, context);
     emit(0x00, context);
 
-    uint8_t* loop = context->bytecode.bytes + context->bytecode.len;
+    uint8_t* loop = CURRENT_INSTR;
     patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
 
     close_scope(context);
@@ -393,7 +393,7 @@ int compile_gfor_loop(Node* node, Scope* context) {
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* init = context->bytecode.bytes + context->bytecode.len;
+    uint8_t* init = CURRENT_INSTR;
 
     compile(node->node.gForNode.statements, context);
     patch_single_jfalse_label(init, get_jump_lenght(init, context));
@@ -403,18 +403,55 @@ int compile_gfor_loop(Node* node, Scope* context) {
     emit(0x00, context);
     emit(0x00, context);
 
-    uint8_t* loop = context->bytecode.bytes + context->bytecode.len;
+    uint8_t* loop = CURRENT_INSTR;
     patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
 
     close_scope(context);
 }
 
 int compile_while_loop(Node* node, Scope* context) {
+    node->cc = false;
 
+    uint8_t* pre_condition = CURRENT_INSTR;
+    int condition = compile(node->node.whileNode.condition, context);
+    
+    emit(OP_JFALSE, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    uint8_t* condition_label = CURRENT_INSTR;
+
+    compile_in_scope(node->node.whileNode.statements, context);
+
+    emit(OP_JUMP, context);
+    emit(condition, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
+    patch_single_jump_label(CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, context, pre_condition));
+    patch_single_jfalse_label(condition_label, get_jump_lenght(condition_label, context));
 }
 
 int compile_repeat_loop(Node* node, Scope* context) {
+    node->cc = false;
 
+    uint8_t* pre_statement = CURRENT_INSTR;
+    compile_in_scope(node->node.whileNode.statements, context);
+    int condition = compile(node->node.whileNode.condition, context);
+    
+    emit(OP_JFALSE, context);
+    emit(condition, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    uint8_t* condition_label = CURRENT_INSTR;
+
+    emit(OP_JUMP, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
+    patch_single_jump_label(CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, context, pre_statement));
+    patch_single_jfalse_label(condition_label, get_jump_lenght(condition_label, context));
 }
 
 int compile_import(Node* node, Scope* context) {
