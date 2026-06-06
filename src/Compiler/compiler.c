@@ -376,7 +376,37 @@ int compile_nfor_loop(Node* node, Scope* context) {
 }
 
 int compile_gfor_loop(Node* node, Scope* context) {
+    node->cc = false;
 
+    open_scope(context);
+
+    int target = compile(node->node.gForNode.target, context);
+
+    int r0 = register_top(context);
+    int r1 = register_top(context);
+    int r2 = register_register(target, context, register_top(context));
+
+    append_symbol(context, node->node.gForNode.identifiers[0], r0);
+    if (!IS_NIL(node->node.gForNode.identifiers[1])) append_symbol(context, node->node.gForNode.identifiers[1], r0);
+
+    emit(OP_GFOR_INIT, context);
+    emit(r0, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    uint8_t* init = context->bytecode.bytes + context->bytecode.len;
+
+    compile(node->node.gForNode.statements, context);
+    patch_single_jfalse_label(init, get_jump_lenght(init, context));
+
+    emit(OP_GFOR_LOOP, context);
+    emit(r0, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
+    uint8_t* loop = context->bytecode.bytes + context->bytecode.len;
+    patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
+
+    close_scope(context);
 }
 
 int compile_while_loop(Node* node, Scope* context) {

@@ -1,7 +1,5 @@
-for i = 0, 5 repeat
-    var a = i
+var a = 5
 
-    if i == 3 then
-        a = 0
-    end
+for i, v in a repeat
+
 end
