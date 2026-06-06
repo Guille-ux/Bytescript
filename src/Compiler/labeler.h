@@ -23,5 +23,7 @@ static void patch_array_jump_label(struct ArrayLabel label, uint8_t* pos) {
     }
 }
 
+static inline int get_jump_lenght_to(uint8_t* label, Scope* context, uint8_t* target) { return (target - label) / 4; }
+static inline int get_jump_lenght(uint8_t* label, Scope* context) { return get_jump_lenght_to(label, context, context->bytecode.bytes + context->bytecode.len); }
 
 #endif

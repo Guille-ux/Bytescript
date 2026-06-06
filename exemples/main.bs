@@ -1,8 +1,7 @@
-var a = 1
+for i = 0, 5 repeat
+    var a = i
 
-if a == 5 then
-    var b = 4
-    a = b
-elseif a == 1 then
-    a = 3
+    if i == 3 then
+        a = 0
+    end
 end

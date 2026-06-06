@@ -90,7 +90,7 @@ void disassemble(Scope* context) {
     for (int i = 0; i < context->bytecode.len; i+= 4) {
         uint8_t op = context->bytecode.bytes[i];
 
-        if (op == OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP) {
+        if (op == OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP || op == OP_NFOR_INIT || op == OP_GFOR_INIT) {
             int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
             TValue cached = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
             TValue label_name = IS_NIL(cached) ? to_string(( TValue[2] ){ L, NUM_AS_TVALUE(current_label_number++) }, 2) : cached;
@@ -113,8 +113,8 @@ void disassemble(Scope* context) {
 
         if (!IS_NIL(current_label)) printf("\n%s\n", AS_STRING(current_label)->str);
 
-        printf("%s\t", opcode);
-        if (instr == OP_JUMP || instr == OP_JFALSE || instr == OP_GFOR_LOOP || instr == OP_NFOR_LOOP) {
+        printf("%-12s", opcode);
+        if (instr == OP_JUMP || instr == OP_JFALSE || instr == OP_GFOR_LOOP || instr == OP_NFOR_LOOP || instr == OP_NFOR_INIT || instr == OP_GFOR_INIT) {
             int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
             TValue target_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
             

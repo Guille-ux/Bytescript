@@ -118,8 +118,8 @@ int compile_var_declare(Node* node, Scope* context) {
     int r = -1;
     int value = compile(node->node.VarDeclareNode.value, context);
 
-    if (node->node.VarDeclareNode.value->cc) r = register_constant(save_cached_constant(value, context), context, -1); else r = register_try(value, context);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->symbols), node->node.VarDeclareNode.var_name, NUM_AS_TVALUE(r));
+    if (node->node.VarDeclareNode.value->cc) r = register_constant(save_cached_constant(value, context), context, -1); else r = register_register(value, context, -1);
+    append_symbol(context, node->node.VarDeclareNode.var_name, r);
 
     free(node->node.VarDeclareNode.value);
     return r;
@@ -320,7 +320,7 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(0x00, context);
         ends.ptr[ends.len++] = context->bytecode.bytes + context->bytecode.len;
 
-        patch_single_jfalse_label(next, (ends.ptr[ends.len - 1] - next) / 4);
+        patch_single_jfalse_label(next, get_jump_lenght(next, context));
     }
 
 
@@ -328,7 +328,7 @@ int compile_if_statement(Node* node, Scope* context) {
         if (node->node.IfNode.cases.len < node->node.IfNode.statements.len) {
             compile(stments.nodes[stments.len - 1], context);
             
-        } else { context->bytecode.len -= 4; patch_single_jfalse_label(next, (context->bytecode.bytes + context->bytecode.len - next) / 4); }
+        } else { context->bytecode.len -= 4; patch_single_jfalse_label(next, get_jump_lenght(next, context)); }
 
         patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, context->bytecode.bytes + context->bytecode.len);
     }
@@ -341,7 +341,38 @@ int compile_nfor_loop(Node* node, Scope* context) {
 
     open_scope(context);
 
+    Node* start_value_node = node->node.nForNode.values[0];
+    Node* end_value_node = node->node.nForNode.values[1];
+    Node* step_value_node = node->node.nForNode.values[2];
+
     int start_value = compile(node->node.nForNode.values[0], context);
+    int r0 = start_value_node->cc ? register_constant(start_value, context, register_top(context)) : register_try_newtop(start_value, context);
+    int r1 = register_top(context);
+    int r2 = register_top(context);
+
+    assign_to_reg(step_value_node, r2, context);
+    assign_to_reg(end_value_node, r1, context);
+
+    append_symbol(context, node->node.nForNode.identifier, r0);
+
+    emit(OP_NFOR_INIT, context);
+    emit(r0, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    uint8_t* init = context->bytecode.bytes + context->bytecode.len;
+
+    compile(node->node.nForNode.statements, context);
+    patch_single_jfalse_label(init, get_jump_lenght(init, context));
+
+    emit(OP_NFOR_LOOP, context);
+    emit(r0, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
+    uint8_t* loop = context->bytecode.bytes + context->bytecode.len;
+    patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
+
+    close_scope(context);
 }
 
 int compile_gfor_loop(Node* node, Scope* context) {
@@ -425,7 +456,7 @@ static int register_constant(uint8_t const_i, Scope* context, int16_t r_) {
     uint8_t r = r_ + 1 ? r_ : register_first(context);
     emit(OP_LOAD_CR, context);
     emit(const_i, context);
-    emit(r, context);
+    emit(register_specific(r, context), context);
     emit(0x00, context);
 
     return r;
@@ -458,6 +489,11 @@ static int register_try_free(uint8_t r, Scope* context) {
 
     if (r == context->reg_ptr) return context->reg_ptr++;
     return -1;
+}
+
+static int register_try_newtop(uint8_t r, Scope* context) {
+    if (r == context->reg_ptr) return context->reg_ptr++;
+    else return register_register(r, context, register_top(context));
 }
 
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
@@ -590,6 +626,17 @@ static inline int assignement_analysis(Node* node) {
     return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &target_count);
 }
 
+static inline int assign_to_reg(Node* node, uint8_t r, Scope* context) {
+    int depth = 0; int target_count = 0;
+    int analysis = full_assignement_analysis(node, (Node[1]){ (Node){ .nt = NT_PLACEHOLDER } }, &depth, &target_count);
+    if (analysis) free_register(r, context);
+
+    int end_value = compile(node, context);
+    if (node->cc) register_constant(end_value, context, r); else register_register(end_value, context, r);
+
+    return r;
+}
+
 static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count) {
     #define ADD_DEPTH ( ((*depth)++), depth )
 
@@ -647,6 +694,8 @@ static inline int compile_in_scope(Node* node, Scope* context) {
 static inline void update_symbols(Scope* context) {
     context->symbols = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1)));
 }
+
+static TValue append_symbol(Scope* context, TValue name, int r) { add_value_to_hashtable(TBL_TO_TVALUE(context->symbols), name, NUM_AS_TVALUE(r)); }
 
 static TValue get_symbol_register(Scope* context, TValue name) {
     for (int i = context->symbol_stack->array.len - 1; i >= 0; i--) {

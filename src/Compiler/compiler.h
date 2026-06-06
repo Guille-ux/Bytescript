@@ -122,6 +122,7 @@ static int free_register(uint8_t idx, Scope* context);
 static int register_constant(uint8_t const_i, Scope* context, int16_t r_);
 static int register_register(uint8_t r, Scope* context, int16_t r_);
 static int register_try_free(uint8_t r, Scope* context);
+static int register_try_newtop(uint8_t r, Scope* context);
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context);
 static int get_constant_idx(TValue const_v, Scope* context);
 static int cache_constant(TValue const_v, Scope* context);
@@ -138,12 +139,14 @@ static inline TValue save_constant(TValue const_v, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
 static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
 static inline int assignement_analysis(Node* node);
+static inline int assign_to_reg(Node* node, uint8_t r, Scope* context);
 static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);
 
 static void open_scope(Scope* context);
 static void close_scope(Scope* context);
 static inline int compile_in_scope(Node* node, Scope* context);
 static inline void update_symbols(Scope* context);
+static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
 
 #endif
