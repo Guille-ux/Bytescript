@@ -455,10 +455,15 @@ int compile_repeat_loop(Node* node, Scope* context) {
 }
 
 int compile_import(Node* node, Scope* context) {
+    node->cc = true;
+
 
 }
 
 int compile_func_def(Node* node, Scope* context) {
+    node->cc = true;
+
+    Scope* func_context = new_scope();
 
 }
 
@@ -759,6 +764,7 @@ static inline int compile_in_scope(Node* node, Scope* context) {
 }
 
 static inline void update_symbols(Scope* context) {
+    if (!context->symbol_stack->array.len) return;
     context->symbols = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1)));
 }
 
@@ -772,4 +778,21 @@ static TValue get_symbol_register(Scope* context, TValue name) {
     }
 
     return NIL;
+}
+
+TValue close_context(Scope* context) {
+    uint8_t* bytecode = realloc(context->bytecode.bytes, context->bytecode.len);
+    if (!bytecode) FAILED_ALLOCATION_ERROR("Failed allocation while closing compile context");
+
+    TValue* const_pool = malloc(BSIZE(context->const_pool.len));
+    memcpy(const_pool, context->const_pool.const_pool, BSIZE(context->const_pool.len));
+
+    TFunc* func = malloc(sizeof(TFunc));
+    func->isCfunc = 0;
+    func->bytescriptFunction.bytecode = bytecode;
+    func->bytescriptFunction.constPool = const_pool;
+
+    close_scope(context);
+    free_table((TValue[1]){ TBL_TO_TVALUE(context->symbol_stack) }, 1);
+    return FNC_TO_TVALUE(func);
 }

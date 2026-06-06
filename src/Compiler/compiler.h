@@ -149,4 +149,6 @@ static inline void update_symbols(Scope* context);
 static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
 
+TValue close_context(Scope* context);
+
 #endif

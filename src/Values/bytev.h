@@ -25,9 +25,15 @@ typedef LJ_ALIGN(8) union BValue {
 typedef TValue (*CFunc)(TValue* argv, size_t argc);
 
 typedef struct Func {
-    const uint8_t* bytecode;
-    const TValue* constPool;
-    TValue* const * upvalues;
+    uint8_t isCfunc;
+    union {
+        struct {
+            const uint8_t* bytecode;
+            const TValue* constPool;
+            TValue* const * upvalues;
+        } bytescriptFunction;
+        CFunc* cfunc;
+    };
 } TFunc;
 
 typedef struct Str {
@@ -134,7 +140,7 @@ typedef TValue* TStack;
 #define BSIZE(v)        (TVALUESIZE * v)
 
 
-static inline int compare_tvalues(TValue tv1, TValue tv2) {
+static int compare_tvalues(TValue tv1, TValue tv2) {
     if (TYPE(tv1) != TYPE(tv2)) return AS_TVALUE(tv1) == AS_TVALUE(tv2);
 
     switch (TYPE(tv1)) {
@@ -143,7 +149,7 @@ static inline int compare_tvalues(TValue tv1, TValue tv2) {
     }
 }
 
-static inline TValue copy_tvalue(TValue tv1) {
+static TValue copy_tvalue(TValue tv1) {
     switch (TYPE(tv1)) {
         case STRING: {
             TStr* str = AS_STRING(tv1);
@@ -157,5 +163,22 @@ static inline TValue copy_tvalue(TValue tv1) {
     }
 }
 
+static TValue new_func(const uint8_t* bytecode, const TValue* constPool, TValue* const* upvalues) {
+    TFunc* func = malloc(sizeof(TFunc));
+    func->isCfunc = 0;
+    func->bytescriptFunction.bytecode = bytecode;
+    func->bytescriptFunction.constPool = constPool;
+    func->bytescriptFunction.upvalues = upvalues;
+
+    return FNC_TO_TVALUE(func);
+}
+
+static TValue new_cfunc(CFunc* cfunc) {
+    TFunc* func = malloc(sizeof(TFunc));
+    func->isCfunc = 1;
+    func->cfunc = cfunc;
+
+    return FNC_TO_TVALUE(func);
+}
 
 #endif
