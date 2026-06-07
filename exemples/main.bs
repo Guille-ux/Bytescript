@@ -2,5 +2,7 @@
 
 
 func a(b, c)
-
+    return (b + c) * 2
 end
+
+a(5, 6)

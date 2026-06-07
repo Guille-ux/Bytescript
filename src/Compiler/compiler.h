@@ -123,6 +123,7 @@ static int register_constant(uint8_t const_i, Scope* context, int16_t r_);
 static int register_register(uint8_t r, Scope* context, int16_t r_);
 static int register_try_free(uint8_t r, Scope* context);
 static int register_try_newtop(uint8_t r, Scope* context);
+static int register_specific_top(uint8_t r, Scope* context);
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context);
 static int get_constant_idx(TValue const_v, Scope* context);
 static int cache_constant(TValue const_v, Scope* context);

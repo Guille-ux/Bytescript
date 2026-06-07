@@ -251,7 +251,21 @@ int compile_uni_op(Node* node, Scope* context) {
 }
 
 int compile_call(Node* node, Scope* context) {
-    //
+    node->cc = false;
+
+    int target = compile(node->node.CallNode.target, context);
+    int target_cc = node->node.CallNode.target->cc;
+    int pre = target;
+
+    if (target_cc) target = register_constant(target, context, register_top(context)); else target = register_specific_top(target, context);
+
+    for (int i = 0; i < node->node.CallNode.args.len; i++) assign_to_reg(node->node.CallNode.args.nodes[i], register_top(context), context);
+    free_multiple(!target_cc && pre == target ? target + 1 : target, node->node.CallNode.args.len, context);
+
+    emit(OP_CALL, context);
+    emit(target, context);
+    emit(node->node.CallNode.args.len, context);
+    return free_register(emit(register_first(context), context), context);
 }
 
 int compile_var_access(Node* node, Scope* context) {
@@ -464,6 +478,7 @@ int compile_func_def(Node* node, Scope* context) {
     node->cc = true;
 
     Scope* func_context = new_scope();
+    func_context->parent = context;
 
     struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
     while (arg) {
@@ -478,7 +493,11 @@ int compile_func_def(Node* node, Scope* context) {
     TValue func = close_context(func_context);
 
     int idx = save_cached_constant(cache_constant(func, context), context);
-    if (!IS_NIL(node->node.funcDefNode.name)) { idx = register_constant(idx, context, -1); node->cc = false; }
+    if (!IS_NIL(node->node.funcDefNode.name)) {
+        idx = register_constant(idx, context, -1);
+        append_symbol(context, node->node.funcDefNode.name, idx);
+        node->cc = false;
+    }
 
     return idx;
 }
@@ -584,8 +603,14 @@ static int register_try_newtop(uint8_t r, Scope* context) {
     else return register_register(r, context, register_top(context));
 }
 
+static int register_specific_top(uint8_t r, Scope* context) {
+    if (r == context->reg_ptr - 1) return r;
+    else if (r == context->reg_ptr) return context->reg_ptr++;
+    else return register_register(r, context, register_top(context));
+}
+
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
-    for (int i = len - 1; i >= r0; i++) {
+    for (int i = len - 1; i >= r0; i--) {
         free_register(i, context);
     }
 
