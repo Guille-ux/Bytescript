@@ -1,5 +1,6 @@
-var i = 0
 
-repeat
-    i = i + 1
-while i < 5 end
+
+
+func a(b, c)
+
+end

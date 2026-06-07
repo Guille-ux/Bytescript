@@ -63,19 +63,8 @@ int main(int argc, char* argv[]) {
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 
-    emit(OP_HALT, compile_context);
-    emit(0x00, compile_context);
-    emit(0x00, compile_context);
-    emit(0x00, compile_context);
-
-    printf("\nbytecode. len : %d\n", compile_context->bytecode.len / 4);
-    disassemble(compile_context);
-
-    printf("constants. len : %d\n", compile_context->const_pool.len);
-    for (int i = 0; i < compile_context->const_pool.len; i++) {
-        printf("%f, ", AS_NUM(compile_context->const_pool.const_pool[i]));
-    }
-    printf("\n\n");
+    TValue main = close_context(compile_context);
+    disassemble(main);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
 

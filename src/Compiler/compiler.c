@@ -465,6 +465,22 @@ int compile_func_def(Node* node, Scope* context) {
 
     Scope* func_context = new_scope();
 
+    struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
+    while (arg) {
+        int r = register_first(func_context);
+        append_symbol(func_context, arg->value, r);
+
+        struct TValueLinkedList* new = arg->next;
+        free(arg); arg = new;
+    }
+
+    compile(node->node.funcDefNode.statements, func_context);
+    TValue func = close_context(func_context);
+
+    int idx = save_cached_constant(cache_constant(func, context), context);
+    if (!IS_NIL(node->node.funcDefNode.name)) { idx = register_constant(idx, context, -1); node->cc = false; }
+
+    return idx;
 }
 
 
@@ -781,6 +797,11 @@ static TValue get_symbol_register(Scope* context, TValue name) {
 }
 
 TValue close_context(Scope* context) {
+    emit(OP_HALT, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    emit(0x00, context);
+
     uint8_t* bytecode = realloc(context->bytecode.bytes, context->bytecode.len);
     if (!bytecode) FAILED_ALLOCATION_ERROR("Failed allocation while closing compile context");
 

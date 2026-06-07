@@ -224,6 +224,8 @@ Node* func_expr(ParseResult* res) {
     }
 
     while (res->tokens->tt == TT_SEPARATOR) {
+        res->tokens++;
+
         struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
         EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
 

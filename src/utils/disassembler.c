@@ -70,7 +70,7 @@ const char* opcodes_names[] = {
     [OP_HALT] = "HALT",
 };
 
-int get_jump_lenght(Scope* context, uint8_t* instr) {
+int get_instr_jump_lenght(const uint8_t* instr) {
     uint8_t op = instr[0];
 
     uint8_t hi = instr[2];
@@ -80,33 +80,42 @@ int get_jump_lenght(Scope* context, uint8_t* instr) {
     return off24_to_int32(hihi, hi, lo);
 }
 
-void disassemble(Scope* context) {
+void disassemble(TValue tfunc) {
     // collecting labels
+
+    TFunc* func = AS_FUNC(tfunc);
+    const uint8_t* bytecode = func->bytescriptFunction.bytecode;
 
     TValue L = make_fstring("L");
     TValue labels = new_table(NULL, 0);
     int current_label_number = 0;
 
-    for (int i = 0; i < context->bytecode.len; i+= 4) {
-        uint8_t op = context->bytecode.bytes[i];
+    while (*bytecode != OP_HALT) {
+        int i = bytecode - func->bytescriptFunction.bytecode;
+        uint8_t op = *bytecode;
 
         if (op == OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP || op == OP_NFOR_INIT || op == OP_GFOR_INIT) {
-            int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
+            int jump_lenght = get_instr_jump_lenght(bytecode);
             TValue cached = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
             TValue label_name = IS_NIL(cached) ? to_string(( TValue[2] ){ L, NUM_AS_TVALUE(current_label_number++) }, 2) : cached;
 
-            add_value_to_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1), label_name);
+            add_value_to_hashtable(labels, NUM_AS_TVALUE(i / 4+ jump_lenght + 1), label_name);
         }
+
+        bytecode += 4;
     }
 
     // printing
 
-    printf("\ndisassembling :\n");
-    for (int i = 0; i < context->bytecode.len; i+= 4) {
-        uint8_t instr = context->bytecode.bytes[i];
-        uint8_t arg1 = context->bytecode.bytes[i + 1];
-        uint8_t arg2 = context->bytecode.bytes[i + 2];
-        uint8_t arg3 = context->bytecode.bytes[i + 3];
+    printf("\ndisassembling :\n\n");
+
+    bytecode = func->bytescriptFunction.bytecode;
+    while (*bytecode != OP_HALT) {
+        int i = bytecode - func->bytescriptFunction.bytecode;
+        uint8_t instr = *bytecode;
+        uint8_t arg1 = bytecode[1];
+        uint8_t arg2 = bytecode[2];
+        uint8_t arg3 = bytecode[3];
 
         const char* opcode = opcodes_names[instr];
         TValue current_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4));
@@ -115,14 +124,20 @@ void disassemble(Scope* context) {
 
         printf("%-12s", opcode);
         if (instr == OP_JUMP || instr == OP_JFALSE || instr == OP_GFOR_LOOP || instr == OP_NFOR_LOOP || instr == OP_NFOR_INIT || instr == OP_GFOR_INIT) {
-            int jump_lenght = get_jump_lenght(context, context->bytecode.bytes + i);
+            int jump_lenght = get_instr_jump_lenght(bytecode);
             TValue target_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
             
             if (instr == OP_JUMP) printf("%s\n", AS_STRING(target_label)->str);
             else printf("%d %s\n", arg1, AS_STRING(target_label)->str);
 
         } else printf("%d %d %d\n", arg1, arg2, arg3);
+
+        bytecode += 4;
     }
 
-    printf("\n");
+    printf("%-12s %d %d %d\n\n", opcodes_names[*bytecode], bytecode[1], bytecode[2], bytecode[3]);
+}
+
+void disassemble_constants(TValue tfunc, size_t len) {
+
 }
