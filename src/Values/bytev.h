@@ -27,12 +27,13 @@ typedef TValue (*CFunc)(TValue* argv, size_t argc);
 typedef struct Func {
     uint8_t isCfunc;
     union {
+        CFunc* cfunc;
         struct {
             const uint8_t* bytecode;
-            const TValue* constPool;
             TValue* const * upvalues;
+            uint8_t const_len;
+            const TValue constPool[];
         } bytescriptFunction;
-        CFunc* cfunc;
     };
 } TFunc;
 
@@ -163,12 +164,13 @@ static TValue copy_tvalue(TValue tv1) {
     }
 }
 
-static TValue new_func(const uint8_t* bytecode, const TValue* constPool, TValue* const* upvalues) {
-    TFunc* func = malloc(sizeof(TFunc));
+static TValue new_func(const uint8_t* bytecode, const TValue* const_pool, uint8_t const_len, TValue* const* upvalues) {
+    TFunc* func = malloc(sizeof(TFunc) + BSIZE(const_len));
     func->isCfunc = 0;
     func->bytescriptFunction.bytecode = bytecode;
-    func->bytescriptFunction.constPool = constPool;
     func->bytescriptFunction.upvalues = upvalues;
+    func->bytescriptFunction.const_len = const_len;
+    memcpy((void*)func->bytescriptFunction.constPool, const_pool, BSIZE(const_len));
 
     return FNC_TO_TVALUE(func);
 }

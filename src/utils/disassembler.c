@@ -138,6 +138,28 @@ void disassemble(TValue tfunc) {
     printf("%-12s %d %d %d\n\n", opcodes_names[*bytecode], bytecode[1], bytecode[2], bytecode[3]);
 }
 
-void disassemble_constants(TValue tfunc, size_t len) {
+void disassemble_constants(TValue tfunc) {
+    printf("disassembling constants :\n\n");
 
+    TFunc* func = AS_FUNC(tfunc);
+    size_t len = func->bytescriptFunction.const_len;
+    TValue buffer[len];
+    memcpy(buffer, func->bytescriptFunction.constPool, BSIZE(len));
+
+    print(buffer, len);
+    printf("\n");
+}
+
+void full_disassemble(TValue tfunc) {
+    disassemble(tfunc);
+    disassemble_constants(tfunc);
+
+    TFunc* func = AS_FUNC(tfunc);
+    for (int i = 0; i < func->bytescriptFunction.const_len; i++) {
+        TValue v = func->bytescriptFunction.constPool[i];
+        if (TYPE(v) == FUNC) {
+            printf("anonymous");
+            full_disassemble(v);
+        }
+    }
 }

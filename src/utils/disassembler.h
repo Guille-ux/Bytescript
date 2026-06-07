@@ -5,6 +5,7 @@
 
 int get_instr_jump_lenght(const uint8_t* instr);
 void disassemble(TValue tfunc);
-void disassemble_constants(TValue tfunc, size_t len);
+void disassemble_constants(TValue tfunc);
+void full_disassemble(TValue tfunc);
 
 #endif

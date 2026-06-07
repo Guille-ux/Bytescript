@@ -63,8 +63,11 @@ int main(int argc, char* argv[]) {
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 
+    size_t const_len = compile_context->const_pool.len;
+
     TValue main = close_context(compile_context);
-    disassemble(main);
+    printf("main");
+    full_disassemble(main);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
 

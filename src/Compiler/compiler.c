@@ -805,15 +805,9 @@ TValue close_context(Scope* context) {
     uint8_t* bytecode = realloc(context->bytecode.bytes, context->bytecode.len);
     if (!bytecode) FAILED_ALLOCATION_ERROR("Failed allocation while closing compile context");
 
-    TValue* const_pool = malloc(BSIZE(context->const_pool.len));
-    memcpy(const_pool, context->const_pool.const_pool, BSIZE(context->const_pool.len));
-
-    TFunc* func = malloc(sizeof(TFunc));
-    func->isCfunc = 0;
-    func->bytescriptFunction.bytecode = bytecode;
-    func->bytescriptFunction.constPool = const_pool;
+    TValue func = new_func(bytecode, context->const_pool.const_pool, context->const_pool.len, NULL);
 
     close_scope(context);
     free_table((TValue[1]){ TBL_TO_TVALUE(context->symbol_stack) }, 1);
-    return FNC_TO_TVALUE(func);
+    return func;
 }
