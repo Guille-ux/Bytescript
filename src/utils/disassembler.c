@@ -97,7 +97,7 @@ void disassemble(TValue tfunc) {
         if (op == OP_JUMP || op == OP_JFALSE || op == OP_GFOR_LOOP || op == OP_NFOR_LOOP || op == OP_NFOR_INIT || op == OP_GFOR_INIT) {
             int jump_lenght = get_instr_jump_lenght(bytecode);
             TValue cached = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
-            TValue label_name = IS_NIL(cached) ? to_string(( TValue[2] ){ L, NUM_AS_TVALUE(current_label_number++) }, 2) : cached;
+            TValue label_name = IS_NIL(cached) ? to_string_string(( TValue[2] ){ L, NUM_AS_TVALUE(current_label_number++) }, 2) : cached;
 
             add_value_to_hashtable(labels, NUM_AS_TVALUE(i / 4+ jump_lenght + 1), label_name);
         }

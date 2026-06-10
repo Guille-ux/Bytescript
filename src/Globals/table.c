@@ -1,6 +1,48 @@
-#include "Globals/table.h"
 #include <stdbool.h>
 #include <inttypes.h>
+
+#include "Values/oop.h"
+#include "Globals/table.h"
+#include "Globals/string.h"
+#include "Globals/globals.h"
+
+
+TValue initialize_table_class() {
+    TValue Table_methods[][2] = {
+        NEW_METHOD(new, table),
+        NEW_METHOD(free, table),
+        NEW_METHOD(pop, table),
+        NEW_METHOD(shrink, table),
+        NEW_METHOD(expand, table),
+        NEW_METHOD(len, table),
+        NEW_METHOD(reserve, table),
+        NEW_METHOD(print, table),
+        NEW_METHOD(slice, table),
+        NEW_METHOD(fill, table),
+        NEW_METHOD(copy, table),
+        NEW_METHOD(insert, table),
+        NEW_METHOD(hash_value, table),
+        NEW_METHOD(append_hash, table),
+        NEW_METHOD(get_key, table),
+        NEW_METHOD(clean, table),
+        NEW_METHOD(reset, table),
+        NEW_METHOD(hashed_keys, table),
+        NEW_METHOD(hashed_values, table),
+        NEW_METHOD(buckets, table)
+    };
+
+    size_t fields_size = sizeof(Table_methods) / sizeof(Table_methods[0]);
+    TValue Table_fields[fields_size];
+    for (int i = 0; i < fields_size; i++) Table_fields[i] = Table_methods[i][1];
+
+    TValue Table_map = new_table(NULL, 0);
+    TValue Table_class = new_class(NULL, Table_fields, 0, fields_size);
+    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("Table"), Table_class);
+    add_value_to_hashtable(TBL_TO_TVALUE(globals_maps), make_fstring("Table"), Table_map);
+
+    for (int i = 0; i < fields_size; i++) add_value_to_hashtable(Table_map, Table_methods[i][0], NUM_AS_TVALUE(i));
+    return Table_class;
+}
 
 
 TValue new_table(TValue* argv, size_t argc) {
@@ -213,7 +255,7 @@ TValue hash_value_table(TValue* argv, size_t argc) {
     return to_return_value(returnv, returnc);
 }
 
-TValue append_key_table(TValue* argv, size_t argc) {
+TValue append_hash_table(TValue* argv, size_t argc) {
     if (argc < 3) return NIL;
     if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
 
@@ -540,7 +582,7 @@ static inline void resize_hash_table(TTable* table) {
         if (!TOMBSTONE_PAIR(buck.pair) && !EMPTY_PAIR(buck.pair)) {
             args[1] = buck.pair.key;
             args[2] = buck.pair.value;
-            append_key_table(args, 3);
+            append_hash_table(args, 3);
         }
 
         if (buck.sub.arr != NULL) {
@@ -549,7 +591,7 @@ static inline void resize_hash_table(TTable* table) {
                 if (!TOMBSTONE_PAIR(pr) && !EMPTY_PAIR(pr)) {
                     args[1] = pr.key;
                     args[2] = pr.value;
-                    append_key_table(args, 3);
+                    append_hash_table(args, 3);
                 }
             }
         }

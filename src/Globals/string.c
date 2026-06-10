@@ -1,39 +1,33 @@
 #include "Globals/string.h"
 #include "Globals/table.h"
+#include "Values/oop.h"
+
 #include <stdbool.h>
 
 
 const TTable* string_cache = NULL;
 
 
-inline TValue cache_string(TStr* str) {
-    TValue tstr = STR_TO_TVALUE(str);
+TValue initialize_string_class() {
+    string_cache = AS_TABLE(new_table(NULL, 0));
 
-    if (string_cache == NULL) string_cache = AS_TABLE(new_table(NULL, 0));
-    else {
-        TValue cached =  get_value_from_hashtable(TBL_TO_TVALUE(string_cache), tstr);
+    TValue String_methods[][2] = {
+        NEW_METHOD(compare, string),
+        NEW_METHOD(concat, string),
+        NEW_METHOD(to_string, string)
+    };
 
-        if (!IS_NIL(cached)) {
-            free(str);
-            return cached;
-        }
-    }
+    size_t fields_size = sizeof(String_methods) / sizeof(String_methods[0]);
+    TValue String_fields[fields_size];
+    for (int i = 0; i < fields_size; i++) String_fields[i] = String_methods[i][1];
 
-    add_value_to_hashtable(TBL_TO_TVALUE(string_cache), tstr, tstr);
-    return tstr;
-}
+    TValue String_map = new_table(NULL, 0);
+    TValue String_class = new_class(NULL, String_fields, 0, fields_size);
+    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("String"), String_class);
+    add_value_to_hashtable(TBL_TO_TVALUE(globals_maps), make_fstring("String"), String_map);
 
-inline TValue make_string(char* string, size_t len) {
-    TStr* str = malloc(sizeof(TStr) + len + 1);
-    strncpy(str->str, string, len);
-
-    str->str[len] = '\0';
-    str->len = len;
-    return cache_string(str);
-}
-
-inline TValue make_fstring(char* str) {
-    return make_string(str, strlen(str));
+    for (int i = 0; i < fields_size; i++) add_value_to_hashtable(String_map, String_methods[i][0], NUM_AS_TVALUE(i));
+    return String_class;
 }
 
 
@@ -67,7 +61,7 @@ TValue concat_string(TValue* argv, size_t argc) {
     return cache_string(new);
 }
 
-TValue to_string(TValue* argv, size_t argc) {
+TValue to_string_string(TValue* argv, size_t argc) {
     TValue str1 = NIL;
 
     for (int i = 0; i < argc; i++) {
@@ -109,4 +103,31 @@ TValue to_string(TValue* argv, size_t argc) {
     }
 
     return to_return_value(&str1, 1);
+}
+
+
+inline TValue cache_string(TStr* str) {
+    TValue tstr = STR_TO_TVALUE(str);
+    TValue cached =  get_value_from_hashtable(TBL_TO_TVALUE(string_cache), tstr);
+
+    if (!IS_NIL(cached)) {
+        free(str);
+        return cached;
+    }
+
+    add_value_to_hashtable(TBL_TO_TVALUE(string_cache), tstr, tstr);
+    return tstr;
+}
+
+inline TValue make_string(char* string, size_t len) {
+    TStr* str = malloc(sizeof(TStr) + len + 1);
+    strncpy(str->str, string, len);
+
+    str->str[len] = '\0';
+    str->len = len;
+    return cache_string(str);
+}
+
+inline TValue make_fstring(char* str) {
+    return make_string(str, strlen(str));
 }

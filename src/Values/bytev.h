@@ -81,6 +81,31 @@ typedef struct Table {
 } TTable;
 
 
+// OOP
+
+
+typedef struct {
+    uint8_t inherited_count;
+    TValue fields[];
+} TClass;
+
+typedef struct {
+    TClass* class;
+    TValue fields[];
+} TObject;
+
+
+// CDATA
+
+
+typedef struct {
+    char* name;
+    // add stuff later
+} TCDataType;
+
+typedef TCDataType* TCData;
+
+
 // NAN BOXING
 
 
@@ -109,6 +134,9 @@ typedef TValue* TStack;
 #define TYPE_STRING     (0x01ULL << TYPE_SHIFT)
 #define TYPE_FUNC       (0x02ULL << TYPE_SHIFT)
 #define TYPE_TABLE      (0x03ULL << TYPE_SHIFT)
+#define TYPE_CLASS      (0x04ULL << TYPE_SHIFT)
+#define TYPE_OBJECT     (0x05ULL << TYPE_SHIFT)
+#define TYPE_CDATA      (0x06ULL << TYPE_SHIFT)
 
 #define PAYLOAD_MASK    (~(QNaN | TYPE_MASK | 0x01ULL << 63))
 
@@ -117,12 +145,18 @@ typedef TValue* TStack;
 #define STRING          (TYPE_STRING | QNaN)
 #define FUNC            (TYPE_FUNC | QNaN)
 #define TABLE           (TYPE_TABLE | QNaN)
+#define CLASS           (TYPE_CLASS | QNaN)
+#define OBJECT          (TYPE_OBJECT | QNaN)
+#define CDATA           (TYPE_CDATA | QNaN)
 
 #define IS_NIL(v)       (AS_TVALUE(v) == AS_TVALUE(NIL))
 #define IS_NUM(v)       ((AS_TVALUE(v) & NaN) != NaN)
 #define IS_STRING(v)    ((AS_TVALUE(v) & ~PAYLOAD_MASK) == STRING)
 #define IS_FUNC(v)      ((AS_TVALUE(v) & ~PAYLOAD_MASK) == FUNC)
 #define IS_TABLE(v)     ((AS_TVALUE(v) & ~PAYLOAD_MASK) == TABLE)
+#define IS_CLASS(v)     ((AS_TVALUE(v) & ~PAYLOAD_MASK) == CLASS)
+#define IS_OBJECT(v)    ((AS_TVALUE(v) & ~PAYLOAD_MASK) == OBJECT)
+#define IS_CDATA(v)     ((AS_TVALUE(v) & ~PAYLOAD_MASK) == CDATA)
 
 #define PAYLOAD(v)      (AS_TVALUE(v) & PAYLOAD_MASK)
 #define TYPE(v)         (AS_TVALUE(v) & (TYPE_MASK | QNaN))
@@ -130,10 +164,16 @@ typedef TValue* TStack;
 #define AS_STRING(v)    ( ( TStr* )( PAYLOAD(v) ) )
 #define AS_FUNC(v)      ( ( TFunc* )( PAYLOAD(v) ) )
 #define AS_TABLE(v)     ( ( TTable* )( PAYLOAD(v) ) )
+#define AS_CLASS(v)     ( ( TClass* )( PAYLOAD(v) ) )
+#define AS_OBJECT(v)    ( ( TObject* )( PAYLOAD(v) ) )
+#define AS_CDATA(v)     ( ( TCData* )( PAYLOAD(v) ) )
 
 #define STR_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | STRING) )
 #define FNC_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | FUNC) )
 #define TBL_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | TABLE) )
+#define CLS_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | CLASS) )
+#define OBJ_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | OBJECT) )
+#define CDT_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | CDATA) )
 
 #define TRUTHY(v)       ( AS_NUM(v) && !IS_NIL(v) )
 #define FALSY(v)        ( !AS_NUM(v) || IS_NIL(v) )

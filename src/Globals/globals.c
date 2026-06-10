@@ -1,6 +1,8 @@
-#include "Globals/builtins.h"
+#include "Globals/globals.h"
+#include "Globals/string.h"
 
-
+TTable* globals_maps;
+TTable* globals_namespace;
 
 
 TValue print(TValue* argv, size_t argc) {
@@ -58,14 +60,25 @@ TValue tfree(TValue* argv, size_t argc) {
 
             case FUNC : {
                 TFunc* ptr = AS_FUNC(v);
-                //free(ptr->bytecode);
-                //free(ptr->constPool);
-                //free(ptr->upvalues);
-                //free(ptr);
+                if (ptr->isCfunc) {
+                    free((void*)ptr->bytescriptFunction.bytecode);
+                    free((void*)ptr->bytescriptFunction.upvalues);
+
+                } else free(ptr->cfunc);
+
+                free(ptr);
                 break;
             }
         }
     }
 
     return NIL;
+}
+
+void initialize_globals() {
+    globals_maps = AS_TABLE(new_table(NULL, 0));
+    globals_namespace = AS_TABLE(new_table(NULL, 0));
+
+    initialize_string_class();
+    initialize_table_class();
 }

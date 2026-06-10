@@ -1,77 +1,89 @@
 statements :    NEWLINE* NEWLINE* (statement? NEWLINE+)*
 
-statement :     KEYWORD:"return" (expr (SEPARATOR expr)*)?
-                KEYWORD:"break"
-                KEYWORD:"continue"
-                alloc-expr
-                if-expr
-                nfor-expr
-                gfor-expr
-                while-expr
-                repeat-expr
-                expr
+statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
+                    KEYWORD:"break"
+                    KEYWORD:"continue"
+                    alloc-expr
+                    if-expr
+                    nfor-expr
+                    gfor-expr
+                    while-expr
+                    repeat-expr
+                    expr
 
-expr :          KEYWORD:"var" IDENTIFIER EQ expr
-                logical (EQ expr)?
-                import-expr
+expr :              KEYWORD:"var" IDENTIFIER EQ expr
+                    logical (EQ expr)?
+                    import-expr
 
-logical :       (comparaison ((KEYWORD:"and" | KEYWORD:"or" | "||" | "&&" | "|" | "&") comparaison)*)
+logical :           (comparaison ((KEYWORD:"and" | KEYWORD:"or" | "||" | "&&" | "|" | "&") comparaison)*)
                 
-comparaison :   KEYWORD:'not' comparaison
-                arithmetics ((EEQ || NEQ || LT || GT || LTEQ || GTEQ) arithmetics)*
+comparaison :       KEYWORD:'not' comparaison
+                    arithmetics ((EEQ || NEQ || LT || GT || LTEQ || GTEQ) arithmetics)*
         
-arithmetics :   term ((PLUS|MINUS|CONCAT) term)*
+arithmetics :       term ((PLUS|MINUS|CONCAT) term)*
 
-term :          factor ((MUL|DIV|IDIV|MOD) factor)*
+term :              factor ((MUL|DIV|IDIV|MOD) factor)*
 
-factor :        (PLUS|MINUS) factor
-                power
+factor :            (PLUS|MINUS) factor
+                    power
 
-power :         call ((POW) factor)*
+power :             call ((POW) factor)*
 
-call :          numerics (LPAR (expr (SEPARATOR expr)*)? RPAR)?
+postfix :           numerics ( postfix_op )*
 
-numerics :      INT | FLOAT | STR | IDENTIFIER (LSBRAC expr RSBRAC)? (DOT IDENTIFIER)*
-                LPAR expr RPAR
-                table-expr
-                func-expr
+postfix_op :        LPAR (expr (SEPARATOR expr)*)? RPAR
+                    LSBRAC logical RSBRAC
+                    DOT postfix
 
-
-table-expr :    LCBRAC (expr (SEPARATOR expr)*)? RCBRAC
-
-alloc-expr :    KEYWORD:"alloc" expr ARROW (expr (SEPARATOR expr)*)? KEYWORD:"end"
-
-
-if-expr :       KEYWORD:"if" expr KEYWORD:"then" statements
-                (KEYWORD:"elseif" expr KEYWORD:"then" statements)*
-                (KEYWORD:"else" statements)*
-                KEYWORD:"end"
+numerics :          FLOAT
+                    STR
+                    IDENTIFIER
+                    LPAR expr RPAR
+                    table-expr
+                    func-expr
 
 
-nfor-expr :     KEYWORD:"for" IDENTIFIER EQ expr SEPARATOR expr
-                (SEPARATOR expr)?
-                KEYWORD:"repeat"
-                statements
-                KEYWORD:"end"
+table-expr :        LCBRAC (expr (SEPARATOR expr)*)? RCBRAC
 
-gfor-expr :     KEYWORD:"for" IDENTIFIER (SEPARATOR IDENTIFIER)?
-                KEYWORD:"in" expr
-                KEYWORD:"repeat"
-                statements
-                KEYWORD:"end"
+alloc-expr :        KEYWORD:"alloc" expr ARROW (expr (SEPARATOR expr)*)? KEYWORD:"end"
 
 
-while-expr :    KEYWORD:"while" expr KEYWORD:"repeat"
-                statements
-                KEYWORD:"end"
+if-expr :           KEYWORD:"if" expr KEYWORD:"then" statements
+                    (KEYWORD:"elseif" expr KEYWORD:"then" statements)*
+                    (KEYWORD:"else" statements)*
+                    KEYWORD:"end"
 
-repeat-expr :   KEYWORD:"repeat"
-                statements
-                KEYWORD:"while" expr
 
-import-expr :   KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
+nfor-expr :         KEYWORD:"for" IDENTIFIER EQ expr SEPARATOR expr
+                    (SEPARATOR expr)?
+                    KEYWORD:"repeat"
+                    statements
+                    KEYWORD:"end"
 
-func-expr :     KEYWORD:"func" IDENTIFIER?
-                LPAR (IDENTIFIER (SEPARATOR IDENTIFIER)*)? RPAR
-                statements
-                KEYWORD:"end"
+gfor-expr :         KEYWORD:"for" IDENTIFIER (SEPARATOR IDENTIFIER)?
+                    KEYWORD:"in" expr
+                    KEYWORD:"repeat"
+                    statements
+                    KEYWORD:"end"
+
+
+while-expr :        KEYWORD:"while" expr KEYWORD:"repeat"
+                    statements
+                    KEYWORD:"end"
+
+repeat-expr :       KEYWORD:"repeat"
+                    statements
+                    KEYWORD:"while" expr
+
+import-expr :       KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
+
+func-expr :         KEYWORD:"func" IDENTIFIER?
+                    LPAR (IDENTIFIER (SEPARATOR IDENTIFIER)*)? RPAR
+                    statements
+                    KEYWORD:"end"
+
+type-specifiers :   KEYWORD:"var"
+                    KEYWORD:"num"
+                    KEYWORD:"str"
+                    KEYWORD:"table"
+                    IDENTIFIER

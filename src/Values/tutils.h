@@ -3,7 +3,7 @@
 
 #include "Values/bytev.h"
 #include "Globals/table.h"
-#include "Globals/builtins.h"
+#include "Globals/globals.h"
 #include "Lexer/lexer.h"
 #include <stdio.h>
 #include <stdlib.h>

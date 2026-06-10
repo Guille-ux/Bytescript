@@ -39,7 +39,6 @@ int main(int argc, char* argv[]) {
     char* byte_args[argc];
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;
 
-
     get_flags(argc, argv, byte_args);
     if (byte_args[filename] == NULL) call_error(new_error("Unspecified filename", "must specify filename", 0, 0), NULL);
 
@@ -54,6 +53,8 @@ int main(int argc, char* argv[]) {
 
     size_t file_size = 0;
     char* buff = read_file(pFile, &file_size);
+
+    initialize_globals();
 
     Token* tokens = make_tokens(buff);
     free(buff);
@@ -70,7 +71,6 @@ int main(int argc, char* argv[]) {
     full_disassemble(main);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
-
 
     return 0;
 }

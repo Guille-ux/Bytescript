@@ -1,10 +1,11 @@
 #ifndef TABLE_H
 #define TABLE_H
 
+#include "utils/utils.h"
 #include "Values/bytev.h"
 #include "Values/tutils.h"
 #include "Error/error.h"
-#include "Globals/builtins.h"
+#include "Globals/globals.h"
 #include "Globals/rapidhash.h"
 
 
@@ -19,6 +20,9 @@
 #define MAX_TOMBSTONE_FACTOR        (0.18)
 
 
+extern TValue Table_map;
+TValue initialize_table_class();
+
 TValue new_table(TValue* argv, size_t argc);
 TValue free_table(TValue* argv, size_t argc);
 TValue pop_table(TValue* argv, size_t argc);
@@ -32,7 +36,7 @@ TValue fill_table(TValue* argv, size_t argc);
 TValue copy_table(TValue* argv, size_t argc);
 TValue insert_table(TValue* argv, size_t argc);
 TValue hash_value_table(TValue* argv, size_t argc);
-TValue append_key_table(TValue* argv, size_t argc);
+TValue append_hash_table(TValue* argv, size_t argc);
 TValue get_key_table(TValue* argv, size_t argc);
 TValue clean_table(TValue* argv, size_t argc);
 TValue reset_table(TValue* argv, size_t argc);
@@ -88,7 +92,7 @@ static inline void remove_from_table(TValue table, TValue index) {
 
 static inline void add_value_to_hashtable(TValue table, TValue key, TValue value) {
     TValue args[3] = { table, key, value };
-    append_key_table(args, 3);
+    append_hash_table(args, 3);
 }
 
 static inline TValue get_value_from_hashtable(TValue table, TValue key) {
