@@ -41,6 +41,32 @@ static NodeArray separated(ParseResult* res, ParseFunc func, Token separator) {
     return nda;
 }
 
+static Node* postfix_op(ParseResult* res, Node* num) {
+    switch (res->tokens->tt) {
+        case TT_LPAR: {
+            clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
+            NodeArray args =  separated(res, expr, SEPARATOR);
+            
+            EXPECTED(expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL))
+            Node* return_node = new_node(NT_CALL);
+            return_node->node.CallNode.args = args;
+            return_node->node.CallNode.target = num;
+
+            return return_node;
+        }
+
+        case TT_LSBRAC: {
+
+        }
+
+        case TT_DOT: {
+            
+        }
+    }
+
+    return NULL;
+}
+
 
 Node* parse(Token* tokens, char filename[]) {
     init_operators();
@@ -290,25 +316,18 @@ Node* numerics(ParseResult* res) {
     return return_node;
 }
 
-Node* call(ParseResult* res) {
-    Node* num = numerics(res);
+Node* postfix(ParseResult* res) {
+    Node* postfix_node = numerics(res);
 
-    if (match_tt(*res->tokens, TT_LPAR)) {
-        clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
-        NodeArray args =  separated(res, expr, SEPARATOR);
-        
-        EXPECTED(expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL))
-        Node* return_node = new_node(NT_CALL);
-        return_node->node.CallNode.args = args;
-        return_node->node.CallNode.target = num;
-
-        return return_node;
+    for (;;) {
+        Node* op_node = postfix_op(res, postfix_node);
+        if (!op_node) break; else postfix_node = op_node;
     }
 
-    return num;
+    return postfix_node;
 }
 
-Node* power(ParseResult* res) { return bin_op(res, call, POWER_OPERATORS, POWER_OPERATORS_SIZE, factor); }
+Node* power(ParseResult* res) { return bin_op(res, postfix, POWER_OPERATORS, POWER_OPERATORS_SIZE, factor); }
 
 Node* factor(ParseResult* res) {
     if (is_correct_operator(*res->tokens, FACTOR_OPERATORS, FACTOR_OPERATORS_SIZE)) {

@@ -26,6 +26,8 @@ typedef struct {
 typedef Node* (*ParseFunc)(ParseResult* res);
 
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2);
+static NodeArray separated(ParseResult* res, ParseFunc func, Token separator);
+static Node* postfix_op(ParseResult* res, Node* num);
 
 Node* parse(Token* tokens, char filename[]);
 Node* alloc_expr(ParseResult* res);
@@ -36,7 +38,7 @@ Node* repeat_expr(ParseResult* res);
 Node* import_expr(ParseResult* res);
 Node* func_expr(ParseResult* res);
 Node* numerics(ParseResult* res);
-Node* call(ParseResult* res);
+Node* postfix(ParseResult* res);
 Node* power(ParseResult* res);
 Node* factor(ParseResult* res);
 Node* term(ParseResult* res);
@@ -49,7 +51,6 @@ Node* statements(ParseResult* res);
 Node* get_statements(ParseResult* res, Token stopToken);
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count);
-static inline Node* register_node(Node* node, ParseResult* res);
 static inline ParseResult new_res(Token* tokens);
 static inline Node* new_node(NodeType nt);
 
