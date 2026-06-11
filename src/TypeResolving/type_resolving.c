@@ -66,8 +66,10 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
-    TValue ldesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), op);
-    TValue rdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rop);
+    TValue lmap = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), ltype);
+    TValue rmap = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rtype);
+    TValue ldesc = get_value_from_hashtable(lmap, op);
+    TValue rdesc = get_value_from_hashtable(rmap, rop);
     OperationDescriptor* ldescPtr = (OperationDescriptor*)PAYLOAD(ldesc);
     OperationDescriptor* rdescPtr = (OperationDescriptor*)PAYLOAD(rdesc);
 
