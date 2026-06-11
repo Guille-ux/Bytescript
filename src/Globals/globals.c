@@ -1,7 +1,7 @@
 #include "Globals/globals.h"
 #include "Globals/string.h"
 
-TTable* globals_maps;
+
 TTable* globals_namespace;
 
 
@@ -76,7 +76,6 @@ TValue tfree(TValue* argv, size_t argc) {
 }
 
 void initialize_globals() {
-    globals_maps = AS_TABLE(new_table(NULL, 0));
     globals_namespace = AS_TABLE(new_table(NULL, 0));
 
     initialize_string_class();

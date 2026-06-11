@@ -104,6 +104,7 @@ typedef struct {
 } TCDataType;
 
 typedef TCDataType* TCData;
+#define CDATA_HEADER                TCData cdata_type
 
 
 // NAN BOXING
@@ -175,10 +176,14 @@ typedef TValue* TStack;
 #define OBJ_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | OBJECT) )
 #define CDT_TO_TVALUE(v)( NAN_AS_TVALUE(( (uint64_t)(v) ) | CDATA) )
 
+#define EQUAL(tv1, tv2) ( AS_TVALUE(tv1) == AS_TVALUE(tv2) )
 #define TRUTHY(v)       ( AS_NUM(v) && !IS_NIL(v) )
 #define FALSY(v)        ( !AS_NUM(v) || IS_NIL(v) )
+#define TRUE_TVALUE     ( NUM_AS_TVALUE(1) )
+#define FALSE_TVALUE    ( NUM_AS_TVALUE(0) )
 
 #define BSIZE(v)        (TVALUESIZE * v)
+#define READ_CDATA(tv)  ( *AS_CDATA(tv) )
 
 
 static int compare_tvalues(TValue tv1, TValue tv2) {

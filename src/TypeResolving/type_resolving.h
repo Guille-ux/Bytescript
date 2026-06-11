@@ -1,0 +1,50 @@
+#ifndef TYPE_RESOLVING_H
+#define TYPE_RESOLVING_H
+
+#include "Parser/nodes.h"
+
+typedef struct {
+    TTable* type_namespace;
+} TypesContext;
+
+typedef struct {
+    CDATA_HEADER;
+    TValue valid_table;
+    TValue return_type;
+} OperationDescriptor;
+
+typedef TValue (*TypeResolver)(Node* node, TypesContext* context);
+extern TValue varType;
+extern TValue operation_methods;
+extern TCDataType OperationDescriptor_Type, *OperationDescriptorType;
+
+#define IS_VAR(tv)      ( EQUAL(tv, varType) )
+
+TValue resolve_type(Node* node, TypesContext* context);
+TValue resolve_type_statements(Node* node, TypesContext* context);
+TValue resolve_type_return(Node* node, TypesContext* context);
+TValue resolve_type_break(Node* node, TypesContext* context);
+TValue resolve_type_continue(Node* node, TypesContext* context);
+TValue resolve_type_var_declare(Node* node, TypesContext* context);
+TValue resolve_type_assignement(Node* node, TypesContext* context);
+TValue resolve_type_bin_op(Node* node, TypesContext* context);
+TValue resolve_type_uni_op(Node* node, TypesContext* context);
+TValue resolve_type_call(Node* node, TypesContext* context);
+TValue resolve_type_var_access(Node* node, TypesContext* context);
+TValue resolve_type_number(Node* node, TypesContext* context);
+TValue resolve_type_string(Node* node, TypesContext* context);
+TValue resolve_type_allocation(Node* node, TypesContext* context);
+TValue resolve_type_if_statement(Node* node, TypesContext* context);
+TValue resolve_type_nfor_loop(Node* node, TypesContext* context);
+TValue resolve_type_gfor_loop(Node* node, TypesContext* context);
+TValue resolve_type_while_loop(Node* node, TypesContext* context);
+TValue resolve_type_repeat_loop(Node* node, TypesContext* context);
+TValue resolve_type_import(Node* node, TypesContext* context);
+TValue resolve_type_func_def(Node* node, TypesContext* context);
+
+TValue new_resolve_context(Node* node);
+TValue right_operation_method(TokenType op);
+TValue make_operation_descriptor(TValue valids[], TValue return_type, size_t valid_num);
+
+
+#endif

@@ -23,7 +23,7 @@ TValue initialize_table_class() {
         NEW_METHOD(insert, table),
         NEW_METHOD(hash_value, table),
         NEW_METHOD(append_hash, table),
-        NEW_METHOD(get_key, table),
+        NEW_METHOD(get, table),
         NEW_METHOD(clean, table),
         NEW_METHOD(reset, table),
         NEW_METHOD(hashed_keys, table),
@@ -32,15 +32,18 @@ TValue initialize_table_class() {
     };
 
     size_t fields_size = sizeof(Table_methods) / sizeof(Table_methods[0]);
-    TValue Table_fields[fields_size];
-    for (int i = 0; i < fields_size; i++) Table_fields[i] = Table_methods[i][1];
-
     TValue Table_map = new_table(NULL, 0);
-    TValue Table_class = new_class(NULL, Table_fields, 0, fields_size);
-    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("Table"), Table_class);
-    add_value_to_hashtable(TBL_TO_TVALUE(globals_maps), make_fstring("Table"), Table_map);
+    TValue Table_fields[fields_size];
 
-    for (int i = 0; i < fields_size; i++) add_value_to_hashtable(Table_map, Table_methods[i][0], NUM_AS_TVALUE(i));
+    for (int i = 0; i < fields_size; i++) {
+        Table_fields[i] = Table_methods[i][1];
+        add_value_to_hashtable(Table_map, Table_methods[i][0], NUM_AS_TVALUE(i));
+    }
+
+    TValue Table_class = new_class(NULL, Table_fields, 0, fields_size);
+    TValue Table_namespace = new_namespace_entry(Table_class, AS_TABLE(Table_map));
+
+    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("Table"), Table_namespace);
     return Table_class;
 }
 
@@ -280,9 +283,9 @@ TValue append_hash_table(TValue* argv, size_t argc) {
     return value;
 }
 
-TValue get_key_table(TValue* argv, size_t argc) {
+TValue get_table(TValue* argv, size_t argc) {
     if (argc < 2) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.get> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue key = argv[1];
@@ -304,7 +307,7 @@ TValue get_key_table(TValue* argv, size_t argc) {
 
 TValue clean_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.cleanTable> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
 
@@ -337,13 +340,13 @@ TValue reset_table(TValue* argv, size_t argc) {
     if (arr_cap == 0) arr_cap = 4;
 
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.resetTable> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
 
     TValue* newarray = realloc(ptr->array.array, BSIZE(arr_cap));
     Bucket* newhasharray = realloc(ptr->hash_table.array, sizeof(Bucket) * hash_cap);
-    if (newarray == NULL || newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.new>");
+    if (newarray == NULL || newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.resetTable>");
 
     ptr->array.array = newarray;      
     ptr->array.capacity = arr_cap;         
@@ -362,7 +365,7 @@ TValue reset_table(TValue* argv, size_t argc) {
 
 TValue hashed_keys_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.hashedKeys> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     return to_return_value((TValue[1]){ collect_bucket(ptr, collect_key) }, 1);
@@ -370,7 +373,7 @@ TValue hashed_keys_table(TValue* argv, size_t argc) {
 
 TValue hashed_values_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.hashedValues> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     return to_return_value((TValue[1]){ collect_bucket(ptr, collect_value) }, 1);
@@ -383,6 +386,16 @@ TValue buckets_table(TValue* argv, size_t argc) {
     //
 }
 
+TValue in_array_table(TValue*  argv, size_t argc) {
+    if (argc < 2) return NIL;
+    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.inArray> take type <Table> as first argument");
+
+    TTable* ptr = AS_TABLE(argv[0]);
+    TValue value = argv[1];
+    for (int i = 0; i < ptr->array.len; i++) if (EQUAL(ptr->array.array[i], value)) return TRUE_TVALUE;
+
+    return FALSE_TVALUE;
+}
 
 
 

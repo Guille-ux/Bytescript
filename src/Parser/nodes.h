@@ -1,6 +1,7 @@
 #ifndef NODES_H
 #define NODES_H
 
+#include "Values/helper_structs.h"
 #include "Lexer/lexer.h"
 #include <stdbool.h>
 
@@ -41,6 +42,7 @@ typedef struct {
 
 typedef struct BNode {
     NodeType nt;
+    TValue type;
     bool cc;
     union {
         NodeArray StatementsNode;

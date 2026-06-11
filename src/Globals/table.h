@@ -37,12 +37,13 @@ TValue copy_table(TValue* argv, size_t argc);
 TValue insert_table(TValue* argv, size_t argc);
 TValue hash_value_table(TValue* argv, size_t argc);
 TValue append_hash_table(TValue* argv, size_t argc);
-TValue get_key_table(TValue* argv, size_t argc);
+TValue get_table(TValue* argv, size_t argc);
 TValue clean_table(TValue* argv, size_t argc);
 TValue reset_table(TValue* argv, size_t argc);
 TValue hashed_keys_table(TValue* argv, size_t argc);
 TValue hashed_values_table(TValue* argv, size_t argc);
 TValue buckets_table(TValue* argv, size_t argc);
+TValue in_array_table(TValue*  argv, size_t argc);
 
 
 
@@ -97,7 +98,12 @@ static inline void add_value_to_hashtable(TValue table, TValue key, TValue value
 
 static inline TValue get_value_from_hashtable(TValue table, TValue key) {
     TValue args[2] = { table, key };
-    return get_key_table(args, 2);
+    return get_table(args, 2);
+}
+
+static inline int in_table(TValue table, TValue value) {
+    TValue args[2] = { table, value };
+    return TRUTHY(in_array_table(args, 2)) ? 1 : 0;
 }
 
 

@@ -31,6 +31,8 @@ typedef enum {
     TT_GT,
     TT_LTEQ,
     TT_GTEQ,
+    TT_RAND,
+    TT_ROR,
     TT_AND,
     TT_OR,
     TT_BAND,

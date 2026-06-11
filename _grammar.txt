@@ -1,4 +1,4 @@
-statements :    NEWLINE* NEWLINE* (statement? NEWLINE+)*
+statements :        NEWLINE* NEWLINE* (statement? NEWLINE+)*
 
 statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
                     KEYWORD:"break"
@@ -11,7 +11,7 @@ statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
                     repeat-expr
                     expr
 
-expr :              KEYWORD:"var" IDENTIFIER EQ expr
+expr :              type-specifiers IDENTIFIER EQ expr
                     logical (EQ expr)?
                     import-expr
 
@@ -77,8 +77,8 @@ repeat-expr :       KEYWORD:"repeat"
 
 import-expr :       KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
 
-func-expr :         KEYWORD:"func" IDENTIFIER?
-                    LPAR (IDENTIFIER (SEPARATOR IDENTIFIER)*)? RPAR
+func-expr :         type-specifiers? KEYWORD:"func" IDENTIFIER?
+                    LPAR (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)? RPAR
                     statements
                     KEYWORD:"end"
 
