@@ -36,7 +36,9 @@ TValue resolve_type(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_statements(Node* node, TypesContext* context) {
-
+    for (int i = 0; i < node->node.StatementsNode.len; i++) {
+        resolve_type(node->node.StatementsNode.nodes[i], context);
+    }
 }
 
 TValue resolve_type_return(Node* node, TypesContext* context) {
@@ -70,11 +72,11 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue rmap = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rtype);
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
-    OperationDescriptor* ldescPtr = (OperationDescriptor*)PAYLOAD(ldesc);
-    OperationDescriptor* rdescPtr = (OperationDescriptor*)PAYLOAD(rdesc);
+    OperationDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (OperationDescriptor*)PAYLOAD(ldesc);
+    OperationDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : (OperationDescriptor*)PAYLOAD(rdesc);
 
-    if (in_table(ldescPtr->valid_table, rtype)) return ldescPtr->return_type;
-    else if (in_table(rdescPtr->valid_table, ltype)) return rdescPtr->return_type;
+    if (ldescPtr && in_table(ldescPtr->valid_table, rtype)) return ldescPtr->return_type;
+    if (rdescPtr && in_table(rdescPtr->valid_table, ltype)) return rdescPtr->return_type;
 
     char details[snprintf(NULL, 0, "Cannot proceed to operation : %s with types : '%s' and '%s'", AS_STRING(op)->str, AS_STRING(ltype)->str, AS_STRING(rtype)->str) + 1];
     snprintf(details, sizeof(details), "Cannot proceed to operation : %s with types : '%s' and '%s'", AS_STRING(op)->str, AS_STRING(ltype)->str, AS_STRING(rtype)->str);
@@ -134,7 +136,7 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
 }
 
 
-TValue new_resolve_context(Node* node) {
+TypesContext* new_resolve_context() {
     TValue varType = make_fstring("var");
     TypesContext* context = malloc(sizeof(TypesContext));
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
@@ -156,7 +158,7 @@ TValue new_resolve_context(Node* node) {
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("table"), table_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("func"), func_map);
 
-    TValue operation_methods = new_table(NULL, 0);
+    operation_methods = new_table(NULL, 0);
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_PLUS),   make_fstring("__add"));
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MINUS),  make_fstring("__sub"));
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MUL),    make_fstring("__mul"));
@@ -181,7 +183,7 @@ TValue new_resolve_context(Node* node) {
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_LSHIFT), make_fstring("__lshift"));
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_RSHIFT), make_fstring("__rshift"));
 
-    return resolve_type(node, context);
+    return context;
 }
 
 TValue right_operation_method(TokenType op) {

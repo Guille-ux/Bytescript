@@ -42,7 +42,7 @@ TValue resolve_type_repeat_loop(Node* node, TypesContext* context);
 TValue resolve_type_import(Node* node, TypesContext* context);
 TValue resolve_type_func_def(Node* node, TypesContext* context);
 
-TValue new_resolve_context(Node* node);
+TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);
 TValue make_operation_descriptor(TValue valids[], TValue return_type, size_t valid_num);
 

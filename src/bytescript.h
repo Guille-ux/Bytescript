@@ -3,6 +3,7 @@
 
 #include "Lexer/lexer.h"
 #include "Parser/parser.h"
+#include "TypeResolving/type_resolving.h"
 #include "Compiler/compiler.h"
 #include "utils/disassembler.h"
 

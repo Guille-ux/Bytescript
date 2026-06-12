@@ -60,6 +60,9 @@ int main(int argc, char* argv[]) {
     free(buff);
 
     Node* ast = parse(tokens, byte_args[filename]);
+
+    TypesContext* type_context = new_resolve_context();
+    resolve_type(ast, type_context);
     
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
