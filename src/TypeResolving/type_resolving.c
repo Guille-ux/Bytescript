@@ -4,7 +4,6 @@
 #include "Globals/table.h"
 #include "Error/error.h"
 
-TValue varType;
 TValue operation_methods;
 TCDataType OperationDescriptor_Type = { .name = "OperationDescriptor" }, *OperationDescriptorType = &OperationDescriptor_Type;
 TypeResolver type_resolvers[] = {
@@ -54,7 +53,10 @@ TValue resolve_type_continue(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_declare(Node* node, TypesContext* context) {
+    TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
+    if (EQUAL(node->node.VarDeclareNode.type_specifier, varType)) return varType;
 
+    
 }
 
 TValue resolve_type_assignement(Node* node, TypesContext* context) {
@@ -137,24 +139,21 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
 
 
 TypesContext* new_resolve_context() {
-    TValue varType = make_fstring("var");
     TypesContext* context = malloc(sizeof(TypesContext));
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
 
-    TValue num = make_fstring("num");
     TValue num_map = new_table(NULL, 0);
-    TValue num_descriptor = make_operation_descriptor((TValue[1]){ num }, num, 1);
+    TValue num_descriptor = make_operation_descriptor((TValue[1]){ numType }, numType, 1);
     add_value_to_hashtable(num_map, make_fstring("__add"), num_descriptor);
 
-    TValue str = make_fstring("str");
     TValue str_map = new_table(NULL, 0);
-    TValue str_descriptor = make_operation_descriptor((TValue[1]){ str }, str, 1);
+    TValue str_descriptor = make_operation_descriptor((TValue[1]){ strType }, strType, 1);
     add_value_to_hashtable(num_map, make_fstring("__concat"), str_descriptor);
 
     TValue table_map = new_table(NULL, 0);
     TValue func_map = new_table(NULL, 0);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), num, num_map);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), str, str_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("table"), table_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("func"), func_map);
 

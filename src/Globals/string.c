@@ -108,6 +108,53 @@ TValue to_string_string(TValue* argv, size_t argc) {
     return to_return_value(&str1, 1);
 }
 
+TValue format_string(TValue* argv, size_t argc) {
+    if (argc < 1) return NIL;
+
+    uint8_t flag_flags[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3 };
+    char valid_flags[] = { '0', ' ', '+', '-' };
+    char specifiers[] = { 's', 'f', 'e', 'g' };
+
+    FormatInfos format_speicifers[argc - 1];
+    size_t current_format = 0;
+
+    TStr* ptr = AS_STRING(argv[0]);
+    TValue args[argc - 1];
+    size_t args_size = 0;
+
+    for (int i = 0; i < ptr->len; i++) {
+        if (ptr->str[i] == '%') {
+            if (current_format >= argc - 1) INVALID_ARGS_ERROR("not enough arguments in function <String.format>");
+            
+            format_speicifers[current_format].flags = 0;
+            format_speicifers[current_format].precision = -1;
+            i++;
+
+            for (int j = 0; j < sizeof(valid_flags); j++)
+                if (ptr->str[i] == valid_flags[j]) {
+                    i++; format_speicifers[current_format].flags |= flag_flags[j];
+                    j = 0;
+                };
+
+            char* end;
+            format_speicifers[current_format].width = strtol(ptr->str + i, &end, 10);
+            i = end - ptr->str;
+
+            if (ptr->str[i] == '.') {
+                i++; format_speicifers[current_format].precision = strtol(ptr->str + i, &end, 10);
+                i = end - ptr->str;
+            }
+
+            for (int j = 0; j < sizeof(specifiers); j++) if (ptr->str[i] == specifiers[j]) format_speicifers[current_format].specifier = ptr->str[i];
+            current_format += 1;
+        }
+    }
+
+    for (int i = 0; i < argc - 1; i++) {
+        printf("%d %d %d %c", (int)format_speicifers[i].flags, format_speicifers[i].precision, format_speicifers[i].width, format_speicifers[i].specifier);
+    }
+}
+
 
 inline TValue cache_string(TStr* str) {
     TValue tstr = STR_TO_TVALUE(str);

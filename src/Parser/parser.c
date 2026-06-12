@@ -2,6 +2,7 @@
 
 #include "Globals/string.h"
 #include "Parser/parser.h"
+#include "TypeResolving/type_specifiers.h"
 
 
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2) {
@@ -366,15 +367,16 @@ Node* comparaison(ParseResult* res) {
 Node* logical(ParseResult* res) { return bin_op(res, comparaison, LOGICAL_OPERATORS, LOGICAL_OPERATORS_SIZE, NULL); }
 
 Node* expr(ParseResult* res) {
-    if (match_keyword(*res->tokens, "var")) {
-        res->tokens++;
+    TValue vartype;
 
+    if (!IS_NIL((vartype = type_specifier(res)))) {
         TValue var_name;
         EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL))
         EXPECTED(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
 
         Node* nexpr = expr(res);
         Node* return_node = new_node(NT_VAR_DECLARE);
+        return_node->node.VarDeclareNode.type_specifier = varType;
         return_node->node.VarDeclareNode.var_name = var_name;
         return_node->node.VarDeclareNode.value = nexpr;
 
@@ -475,8 +477,13 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
     return false;
 }
 
-static inline void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
+static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
     if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err = new_error("InvalidSyntaxError", expected, 0, 0);
     if (value != NULL) *value = res->tokens->value;
     *res->tokens++;
+}
+
+TValue type_specifier(ParseResult* res) {
+    if (res->tokens->tt != TT_KWORD && res->tokens->tt != TT_IDENTIFIER) return NIL;
+    if (res->tokens->tt == TT_IDENTIFIER || is_native_type_specifier(res->tokens->value)) return res->tokens++->value;
 }

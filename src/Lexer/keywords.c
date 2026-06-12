@@ -3,6 +3,10 @@
 
 const char* keywords[] = {
     "var",
+    "num",
+    "str",
+    "table",
+    "func"
 
     "and",
     "or",

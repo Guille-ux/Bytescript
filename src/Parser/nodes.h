@@ -47,7 +47,7 @@ typedef struct BNode {
     union {
         NodeArray StatementsNode;
         NodeArray ReturnNode;
-        struct { Node* value; TValue var_name; } VarDeclareNode;
+        struct { Node* value; TValue var_name; TValue type_specifier; } VarDeclareNode;
         struct { Node* value; Node* lvalue; } AssignementNode;
         struct { Node* left; Node* right; Token op; } BinOpNode;
         struct { Node* target; Token op; } UniOpNode;

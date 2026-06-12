@@ -2,6 +2,7 @@
 #define TYPE_RESOLVING_H
 
 #include "Parser/nodes.h"
+#include "TypeResolving/type_specifiers.h"
 
 typedef struct {
     TTable* type_namespace;
@@ -14,7 +15,6 @@ typedef struct {
 } OperationDescriptor;
 
 typedef TValue (*TypeResolver)(Node* node, TypesContext* context);
-extern TValue varType;
 extern TValue operation_methods;
 extern TCDataType OperationDescriptor_Type, *OperationDescriptorType;
 
