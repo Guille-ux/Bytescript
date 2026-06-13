@@ -1,11 +1,14 @@
 #include "Globals/string.h"
 #include "Globals/table.h"
 #include "Values/oop.h"
+#include "lib/Math/tmath.h"
 
 #include <stdbool.h>
 
 
 const TTable* string_cache = NULL;
+uint8_t flag_flags[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3 };
+char valid_flags[] = { '0', ' ', '+', '-' };
 
 
 TValue initialize_string_class() {
@@ -110,49 +113,86 @@ TValue to_string_string(TValue* argv, size_t argc) {
 
 TValue format_string(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
+    if (!IS_STRING(argv[0])) TYPE_ERROR("function <String.format> take type <String> as 1st arguments");
 
-    uint8_t flag_flags[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3 };
-    char valid_flags[] = { '0', ' ', '+', '-' };
     char specifiers[] = { 's', 'f', 'e', 'g' };
 
     FormatInfos format_speicifers[argc - 1];
+    size_t format_lenghts[argc - 1];
     size_t current_format = 0;
 
     TStr* ptr = AS_STRING(argv[0]);
     TValue args[argc - 1];
+    size_t base_size = 0;
     size_t args_size = 0;
 
     for (int i = 0; i < ptr->len; i++) {
         if (ptr->str[i] == '%') {
             if (current_format >= argc - 1) INVALID_ARGS_ERROR("not enough arguments in function <String.format>");
+            int start_i = i;
             
             format_speicifers[current_format].flags = 0;
             format_speicifers[current_format].precision = -1;
-            i++;
+            format_speicifers[current_format].specifier = '\0';
+            i++; base_size++;
 
-            for (int j = 0; j < sizeof(valid_flags); j++)
+            for (int j = 0; j < sizeof(valid_flags); j++) {
                 if (ptr->str[i] == valid_flags[j]) {
-                    i++; format_speicifers[current_format].flags |= flag_flags[j];
-                    j = 0;
+                    i++; base_size++;
+                    format_speicifers[current_format].flags |= flag_flags[j]; j = -1;
                 };
+            }
 
             char* end;
+            int pre_i = i;
             format_speicifers[current_format].width = strtol(ptr->str + i, &end, 10);
-            i = end - ptr->str;
+            i = end - ptr->str; base_size += i - pre_i;
 
             if (ptr->str[i] == '.') {
-                i++; format_speicifers[current_format].precision = strtol(ptr->str + i, &end, 10);
-                i = end - ptr->str;
+                i++; pre_i = i;
+                format_speicifers[current_format].precision = strtol(ptr->str + i, &end, 10);
+                i = end - ptr->str; base_size += i - pre_i + 1;
             }
 
             for (int j = 0; j < sizeof(specifiers); j++) if (ptr->str[i] == specifiers[j]) format_speicifers[current_format].specifier = ptr->str[i];
-            current_format += 1;
+            if (!format_speicifers[current_format].specifier) INVALID_ARGS_ERROR("Invalid format specifier in function <String.format>");
+
+            base_size++;
+            current_format++;
+            format_lenghts[current_format] = i - start_i;
         }
     }
 
     for (int i = 0; i < argc - 1; i++) {
-        printf("%d %d %d %c", (int)format_speicifers[i].flags, format_speicifers[i].precision, format_speicifers[i].width, format_speicifers[i].specifier);
+        switch (format_speicifers[i].specifier) {
+            case 's': args[i] = format_s(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
+            case 'f': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
+            case 'e': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
+            case 'g': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
+            default: INVALID_ARGS_ERROR("Invalid format specifier in function <String.format>");
+        }
     }
+
+    TStr* new = malloc(sizeof(TStr) + ptr->len - base_size + args_size);
+    new->len = ptr->len - base_size + args_size;
+
+    current_format = 0;
+    char* current = new->str;
+    char* pre = ptr->str;
+    for (int i = 0; i < ptr->len; i++) {
+        if (ptr->str[i] == '%') {
+            size_t jump_len = (ptr->str + i) - pre;
+            TStr* current_arg = AS_STRING(args[current_format]);
+
+            strncpy(current, pre, jump_len); current += jump_len;
+            strncpy(current, current_arg->str, current_arg->len); current += current_arg->len;
+            i += format_lenghts[current_format]; current_format++;
+        }
+    }
+
+    new->str[new->len] = '\0';
+
+    return STR_TO_TVALUE(new);
 }
 
 
@@ -180,4 +220,59 @@ inline TValue make_string(char* string, size_t len) {
 
 inline TValue make_fstring(char* str) {
     return make_string(str, strlen(str));
+}
+
+TValue format_s(FormatInfos infos, TValue value) {
+    if (!IS_STRING(value)) TYPE_ERROR("Excepted type <String> in function <String.format>.\n\tInvalid format specifier '\%s'");
+    
+    TStr* ptr = AS_STRING(value);
+    size_t precision = infos.precision + 1 ? CLAMP(infos.precision, 0, ptr->len) : ptr->len;
+    size_t len = MAX(precision, infos.width);
+
+    TStr* new = malloc(sizeof(TStr) + len);
+    new->len = len;
+
+    char* loc = infos.flags & FORMAT_FLAG_LEFT ? new->str : new->str + len - precision;
+    char pad = infos.flags & FORMAT_FLAG_ZERO ? '0' : ' ';
+
+    memset(new->str, pad, len);
+    strncpy(loc, ptr->str, precision);
+
+    new->str[new->len] = '\0';
+    return STR_TO_TVALUE(new);
+}
+
+TValue format_n(FormatInfos infos, TValue value) {
+    if (!IS_NUM(value)) TYPE_ERROR("Excepted type <Number> in function <String.format>.\n\tInvalid format specifier '\%f' || '\%e' || '\%g'");
+
+    size_t precision = infos.precision + 1 ? MAX(infos.precision, 0) : 6;
+
+    int needed = snprintf(NULL, 0, ".%zu%c", precision, infos.specifier);
+    char buffer[needed + 1]; snprintf(buffer + 1, needed + 1, ".%zu%c", precision, infos.specifier);
+    buffer[0] = '%';
+
+    needed = snprintf(NULL, 0, buffer, AS_NUM(value));
+    char num_buffer[needed + 1]; snprintf(num_buffer, needed + 1, buffer, AS_NUM(value));
+    char res_buffer[needed + 2];
+
+    int flag_space = infos.flags & FORMAT_FLAG_SPACE;
+    int flag_sign = infos.flags & FORMAT_FLAG_SIGN;
+    int flag_pad = flag_space || flag_sign;
+
+    if (flag_pad && AS_NUM(value) >= 0) {
+        char pad = infos.flags & FORMAT_FLAG_SIGN ? '+' : ' ';
+        strcpy(res_buffer + 1, num_buffer); res_buffer[0] = pad;
+    }
+
+    size_t width = flag_pad ? needed + 2 : needed + 1;
+    size_t len = MAX(width, infos.width);
+
+    FormatInfos new_infos = {
+        .flags = infos.flags,
+        .precision = needed + 1,
+        .width = len,
+        .specifier = 's'
+    };
+
+    return format_s(new_infos, make_fstring(flag_pad ? res_buffer : num_buffer));
 }

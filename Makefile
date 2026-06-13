@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./src
+CFLAGS = -I./src -I./
 SRC := $(shell find src -name '*.c')
 MAIN_SRC := $(wildcard src/*.c)
 LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))

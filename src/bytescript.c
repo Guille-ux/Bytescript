@@ -56,7 +56,6 @@ int main(int argc, char* argv[]) {
 
     initialize_globals();
     initialize_type_specifiers();
-    format_string((TValue[2]){ make_fstring("idk %04.3s"), make_fstring("yes") }, 2);
 
     Token* tokens = make_tokens(buff);
     free(buff);
