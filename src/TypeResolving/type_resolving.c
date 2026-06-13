@@ -80,9 +80,10 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     if (ldescPtr && in_table(ldescPtr->valid_table, rtype)) return ldescPtr->return_type;
     if (rdescPtr && in_table(rdescPtr->valid_table, ltype)) return rdescPtr->return_type;
 
-    char details[snprintf(NULL, 0, "Cannot proceed to operation : %s with types : '%s' and '%s'", AS_STRING(op)->str, AS_STRING(ltype)->str, AS_STRING(rtype)->str) + 1];
-    snprintf(details, sizeof(details), "Cannot proceed to operation : %s with types : '%s' and '%s'", AS_STRING(op)->str, AS_STRING(ltype)->str, AS_STRING(rtype)->str);
-    TYPE_ERROR(details);
+    TValue error_message = make_fstring("Cannot proceed to operation : %s with types : '%s' and '%s'");
+    error_message = format_string((TValue[4]){ error_message, op, ltype, rtype }, 4);
+    
+    TYPE_ERROR(AS_STRING(error_message)->str);
 }
 
 TValue resolve_type_uni_op(Node* node, TypesContext* context) {

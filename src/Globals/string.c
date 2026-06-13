@@ -157,9 +157,9 @@ TValue format_string(TValue* argv, size_t argc) {
             for (int j = 0; j < sizeof(specifiers); j++) if (ptr->str[i] == specifiers[j]) format_speicifers[current_format].specifier = ptr->str[i];
             if (!format_speicifers[current_format].specifier) INVALID_ARGS_ERROR("Invalid format specifier in function <String.format>");
 
+            format_lenghts[current_format] = i - start_i + 1;
             base_size++;
             current_format++;
-            format_lenghts[current_format] = i - start_i;
         }
     }
 
@@ -186,12 +186,12 @@ TValue format_string(TValue* argv, size_t argc) {
 
             strncpy(current, pre, jump_len); current += jump_len;
             strncpy(current, current_arg->str, current_arg->len); current += current_arg->len;
-            i += format_lenghts[current_format]; current_format++;
+            i += format_lenghts[current_format]; current_format++; pre = ptr->str + i;
         }
     }
 
+    strncpy(current, pre, ptr->str + ptr->len - pre);
     new->str[new->len] = '\0';
-
     return STR_TO_TVALUE(new);
 }
 
