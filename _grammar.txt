@@ -77,7 +77,7 @@ repeat-expr :       KEYWORD:"repeat"
 
 import-expr :       KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
 
-func-expr :         type-specifiers? KEYWORD:"func" IDENTIFIER?
+func-expr :         KEYWORD:"func" (type-specifiers? IDENTIFIER)?
                     LPAR (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)? RPAR
                     statements
                     KEYWORD:"end"

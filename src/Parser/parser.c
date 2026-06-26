@@ -376,7 +376,7 @@ Node* expr(ParseResult* res) {
 
         Node* nexpr = expr(res);
         Node* return_node = new_node(NT_VAR_DECLARE);
-        return_node->node.VarDeclareNode.type_specifier = varType;
+        return_node->node.VarDeclareNode.type_specifier = vartype;
         return_node->node.VarDeclareNode.var_name = var_name;
         return_node->node.VarDeclareNode.value = nexpr;
 

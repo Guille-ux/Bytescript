@@ -6,17 +6,10 @@
 
 typedef struct {
     TTable* type_namespace;
+    TTable* id_namespace;
 } TypesContext;
 
-typedef struct {
-    CDATA_HEADER;
-    TValue valid_table;
-    TValue return_type;
-} OperationDescriptor;
-
 typedef TValue (*TypeResolver)(Node* node, TypesContext* context);
-extern TValue operation_methods;
-extern TCDataType OperationDescriptor_Type, *OperationDescriptorType;
 
 #define IS_VAR(tv)      ( EQUAL(tv, varType) )
 
@@ -44,7 +37,5 @@ TValue resolve_type_func_def(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);
-TValue make_operation_descriptor(TValue valids[], TValue return_type, size_t valid_num);
-
 
 #endif

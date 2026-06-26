@@ -80,7 +80,6 @@ typedef enum {
 struct ContextScope;
 typedef struct ContextScope {
     struct ContextScope* parent;
-    struct { TValue saved_consts[256]; uint8_t len; } saved_const;
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
     struct { uint8_t free_regs[256]; uint8_t len; } free_regs;
     struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
@@ -127,18 +126,12 @@ static int register_specific_top(uint8_t r, Scope* context);
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context);
 static int get_constant_idx(TValue const_v, Scope* context);
 static int cache_constant(TValue const_v, Scope* context);
-static int is_saved(TValue const_v, Scope* context);
 static inline int register_top(Scope* context);
 static inline int register_specific(uint8_t r, Scope* context);
 static inline int register_try(uint8_t r, Scope* context);
-static inline int save_cached_constant(int idx, Scope* context);
 static inline int correct_constant_idx(int idx, Scope* context);
-static inline void sure_delete_constant(int idx, Scope* context);
 static void delete_constant(int idx, Scope* context);
-static void unsave_cached_constant(int idx, Scope* context);
-static inline TValue save_constant(TValue const_v, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
-static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context);
 static inline int assignement_analysis(Node* node);
 static inline int assign_to_reg(Node* node, uint8_t r, Scope* context);
 static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);

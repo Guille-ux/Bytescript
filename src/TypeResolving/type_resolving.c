@@ -4,8 +4,7 @@
 #include "Globals/table.h"
 #include "Error/error.h"
 
-TValue operation_methods;
-TCDataType OperationDescriptor_Type = { .name = "OperationDescriptor" }, *OperationDescriptorType = &OperationDescriptor_Type;
+
 TypeResolver type_resolvers[] = {
     [NT_STATEMENTS]     = resolve_type_statements,
     [NT_RETURN]         = resolve_type_return,
@@ -29,7 +28,6 @@ TypeResolver type_resolvers[] = {
     [NT_FUNCDEF]        = resolve_type_func_def
 };
 
-
 TValue resolve_type(Node* node, TypesContext* context) {
     return type_resolvers[node->nt](node, context);
 }
@@ -38,29 +36,50 @@ TValue resolve_type_statements(Node* node, TypesContext* context) {
     for (int i = 0; i < node->node.StatementsNode.len; i++) {
         resolve_type(node->node.StatementsNode.nodes[i], context);
     }
+
+    return varType;
 }
 
 TValue resolve_type_return(Node* node, TypesContext* context) {
-
+    return varType;
 }
 
 TValue resolve_type_break(Node* node, TypesContext* context) {
-
+    return varType;
 }
 
 TValue resolve_type_continue(Node* node, TypesContext* context) {
-
+    return varType;
 }
 
 TValue resolve_type_var_declare(Node* node, TypesContext* context) {
     TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
-    if (EQUAL(node->node.VarDeclareNode.type_specifier, varType)) return varType;
+    TValue var_type = node->node.VarDeclareNode.type_specifier;
 
-    
+    if (EQUAL(var_type, varType) || EQUAL(return_type, varType)) return varType;
+    if (!EQUAL(var_type, return_type)) {
+        TValue error_message = make_fstring("Cannot assign value of type '%s' to variable of type '%s'");
+        error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
+
+        TYPE_ERROR(AS_STRING(error_message)->str);
+    }
+
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, new_namespace_entry(var_type, NULL));
+    return var_type;
 }
 
 TValue resolve_type_assignement(Node* node, TypesContext* context) {
+    TValue return_type = resolve_type(node->node.AssignementNode.value, context);
+    TValue lvalue_type = resolve_type(node->node.AssignementNode.lvalue, context);
+    if (EQUAL(lvalue_type, varType) || EQUAL(return_type, varType)) return varType;
+    if (!EQUAL(lvalue_type, return_type)) {
+        TValue error_message = make_fstring("Cannot assign value of type '%s' to lvalue of type '%s'");
+        error_message = format_string((TValue[3]){ error_message, return_type, lvalue_type }, 3);
 
+        TYPE_ERROR(AS_STRING(error_message)->str);
+    }
+
+    return lvalue_type;
 }
 
 TValue resolve_type_bin_op(Node* node, TypesContext* context) {
@@ -74,11 +93,11 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue rmap = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rtype);
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
-    OperationDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (OperationDescriptor*)PAYLOAD(ldesc);
-    OperationDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : (OperationDescriptor*)PAYLOAD(rdesc);
+    MethodDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (MethodDescriptor*)PAYLOAD(ldesc);
+    MethodDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : (MethodDescriptor*)PAYLOAD(rdesc);
 
-    if (ldescPtr && in_table(ldescPtr->valid_table, rtype)) return ldescPtr->return_type;
-    if (rdescPtr && in_table(rdescPtr->valid_table, ltype)) return rdescPtr->return_type;
+    if (ldescPtr && in_table(ldescPtr->arg_types, rtype)) return ldescPtr->return_type;
+    if (rdescPtr && in_table(rdescPtr->arg_types, ltype)) return rdescPtr->return_type;
 
     TValue error_message = make_fstring("Cannot proceed to operation : %s with types : '%s' and '%s'");
     error_message = format_string((TValue[4]){ error_message, op, ltype, rtype }, 4);
@@ -87,15 +106,47 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_uni_op(Node* node, TypesContext* context) {
+    TValue return_type = resolve_type(node->node.UniOpNode.target, context);
+    if (IS_VAR(return_type)) return varType;
 
+    TValue op = get_value_from_hashtable(unary_operation_methods, NUM_AS_TVALUE(node->node.UniOpNode.op.tt));
+    TValue map = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), return_type);
+    TValue desc = get_value_from_hashtable(map, op);
+    MethodDescriptor* descPtr = IS_NIL(desc) ? NULL : (MethodDescriptor*)PAYLOAD(desc);
+
+    if (descPtr && in_table(descPtr->arg_types, return_type)) return descPtr->return_type;
+
+    TValue error_message = make_fstring("Cannot proceed to unary operation : %s with type : '%s'");
+    error_message = format_string((TValue[3]){ error_message, op, return_type }, 3);
+    
+    TYPE_ERROR(AS_STRING(error_message)->str);
 }
 
 TValue resolve_type_call(Node* node, TypesContext* context) {
+    TValue target_type = resolve_type(node->node.CallNode.target, context);
+    if (EQUAL(target_type, varType)) return varType;
+    if (!EQUAL(target_type, funcType)) {
+        TValue error_message = make_fstring("Cannot call value of type '%s'");
+        error_message = format_string((TValue[3]){ error_message, target_type }, 2);
+
+        TYPE_ERROR(AS_STRING(error_message)->str);
+    }
+
+
 
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
+    TValue entry = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
+    if (EQUAL(entry, NIL)) {
+        TValue error_message = make_fstring("Unknwon identifier : '%s'");
+        error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
 
+        UNKNOWN_IDENTIFIER(AS_STRING(error_message)->str);
+    }
+
+    NamespaceEntry* nm = as_namespace_entry(entry);
+    return (node->type = nm->value);
 }
 
 TValue resolve_type_number(Node* node, TypesContext* context) {
@@ -111,19 +162,56 @@ TValue resolve_type_allocation(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_if_statement(Node* node, TypesContext* context) {
+    for (int i = 0; i < node->node.IfNode.cases.len; i++) {
+        resolve_type(node->node.IfNode.cases.nodes[i], context);
+    }
 
+    for (int i = 0; i < node->node.IfNode.statements.len; i++) {
+        resolve_type(node->node.IfNode.statements.nodes[i], context);
+    }
+
+    return (node->type = varType);
 }
 
 TValue resolve_type_nfor_loop(Node* node, TypesContext* context) {
+    TValue v1 = resolve_type(node->node.nForNode.values[0], context),
+    v2 = resolve_type(node->node.nForNode.values[1], context),
+    v3 = resolve_type(node->node.nForNode.values[2], context);
 
+    int v1cond = EQUAL(v1, varType) || EQUAL(v1, numType);
+    int v2cond = EQUAL(v2, varType) || EQUAL(v2, numType);
+    int v3cond = EQUAL(v3, varType) || EQUAL(v3, numType);
+
+    if (!v1cond || !v2cond || !v3cond) {
+        TValue error_message = make_fstring("numeric for loops can only use type 'num'");
+        TYPE_ERROR(AS_STRING(error_message)->str);
+    }
+
+    resolve_type(node->node.nForNode.statements, context);
+    return (node->type = varType);
 }
 
 TValue resolve_type_gfor_loop(Node* node, TypesContext* context) {
+    TValue target_type = resolve_type(node->node.gForNode.target, context);
 
+    if (!EQUAL(target_type, varType)) {
+        TValue target_map = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_type);
+        TValue iter_desc = get_value_from_hashtable(target_map, make_fstring("__iter"));
+
+        if (IS_NIL(iter_desc)) {
+            TValue error_message = make_fstring("Type <%s> do not have an __iter method");
+            error_message = format_string((TValue[4]){ error_message, target_type }, 2);
+            
+            TYPE_ERROR(AS_STRING(error_message)->str);
+        }
+    }
+
+    resolve_type(node->node.gForNode.statements, context);
+    return (node->type = varType);
 }
 
 TValue resolve_type_while_loop(Node* node, TypesContext* context) {
-
+    return (node->type = varType);
 }
 
 TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
@@ -142,46 +230,12 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
 TypesContext* new_resolve_context() {
     TypesContext* context = malloc(sizeof(TypesContext));
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
+    context->id_namespace = AS_TABLE(new_table(NULL, 0));
 
-    TValue num_map = new_table(NULL, 0);
-    TValue num_descriptor = make_operation_descriptor((TValue[1]){ numType }, numType, 1);
-    add_value_to_hashtable(num_map, make_fstring("__add"), num_descriptor);
-
-    TValue str_map = new_table(NULL, 0);
-    TValue str_descriptor = make_operation_descriptor((TValue[1]){ strType }, strType, 1);
-    add_value_to_hashtable(num_map, make_fstring("__concat"), str_descriptor);
-
-    TValue table_map = new_table(NULL, 0);
-    TValue func_map = new_table(NULL, 0);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_map);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("table"), table_map);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), make_fstring("func"), func_map);
-
-    operation_methods = new_table(NULL, 0);
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_PLUS),   make_fstring("__add"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MINUS),  make_fstring("__sub"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MUL),    make_fstring("__mul"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_POW),    make_fstring("__pow"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_DIV),    make_fstring("__div"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_IDIV),   make_fstring("__idiv"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MOD),    make_fstring("__mod"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_CONCAT), make_fstring("__concat"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_EEQ),    make_fstring("__eq"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_NEQ),    make_fstring("__neq"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_NOT),    make_fstring("__not"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_LT),     make_fstring("__lt"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_GT),     make_fstring("__gt"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_LTEQ),   make_fstring("__lteq"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_GTEQ),   make_fstring("__gteq"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_RAND),   make_fstring("__rand"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_ROR),    make_fstring("__ror"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_AND),    make_fstring("__and"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_OR),     make_fstring("__or"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_BAND),   make_fstring("__band"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_BOR),    make_fstring("__bor"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_LSHIFT), make_fstring("__lshift"));
-    add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_RSHIFT), make_fstring("__rshift"));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), tableType, table_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, func_map);
 
     return context;
 }
@@ -195,13 +249,4 @@ TValue right_operation_method(TokenType op) {
 
     strcpy(buffer + 3, ptr->str + 2);
     return make_fstring(buffer);
-}
-
-TValue make_operation_descriptor(TValue valids[], TValue return_type, size_t valid_num) {
-    OperationDescriptor* res_descriptor = malloc(sizeof(OperationDescriptor));
-    res_descriptor->cdata_type = OperationDescriptorType;
-    res_descriptor->valid_table = new_table(valids, valid_num);
-    res_descriptor->return_type = return_type;
-
-    return CDT_TO_TVALUE(res_descriptor);
 }

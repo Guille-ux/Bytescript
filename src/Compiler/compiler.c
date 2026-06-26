@@ -61,7 +61,7 @@ int compile_return(Node* node, Scope* context) {
         Node* nd = node->node.ReturnNode.nodes[0];
         int return_v = compile(nd, context);
 
-        if (nd->cc) r0 = register_constant(save_cached_constant(return_v, context), context, -1); else r0 = register_specific(return_v, context);
+        if (nd->cc) r0 = register_constant(return_v, context, -1); else r0 = register_specific(return_v, context);
         free(nd);
 
     } else if (node->node.ReturnNode.len > 1) {
@@ -70,7 +70,7 @@ int compile_return(Node* node, Scope* context) {
             Node* nd = node->node.ReturnNode.nodes[i];
             int return_v = compile(nd, context);
 
-            if (nd->cc) register_constant(save_cached_constant(return_v, context), context, r0 + i); else register_register(return_v, context, r0 + i);
+            if (nd->cc) register_constant(return_v, context, r0 + i); else register_register(return_v, context, r0 + i);
             free(nd);
         }
     }
@@ -118,7 +118,7 @@ int compile_var_declare(Node* node, Scope* context) {
     int r = -1;
     int value = compile(node->node.VarDeclareNode.value, context);
 
-    if (node->node.VarDeclareNode.value->cc) r = register_constant(save_cached_constant(value, context), context, -1); else r = register_register(value, context, -1);
+    if (node->node.VarDeclareNode.value->cc) r = register_constant(value, context, -1); else r = register_register(value, context, -1);
     append_symbol(context, node->node.VarDeclareNode.var_name, r);
 
     free(node->node.VarDeclareNode.value);
@@ -136,7 +136,7 @@ int compile_assignement(Node* node, Scope* context) {
             if (analysis_res) free_register(lvalue, context);
 
             value = compile(node->node.AssignementNode.value, context);
-            if (node->node.AssignementNode.value->cc) value = register_constant(save_cached_constant(value, context), context, lvalue);
+            if (node->node.AssignementNode.value->cc) value = register_constant(value, context, lvalue);
 
             break;
         }
@@ -159,45 +159,33 @@ int compile_bin_op(Node* node, Scope* context) {
     bool rightCC = node->node.BinOpNode.right->cc;
 
     int op = node->node.BinOpNode.op.tt;
-
     if (free_left) free_register(left, context);
-    if (leftCC && rightCC) {
-        TValue folded = operation_fold(left, op, right, context);
-        delete_constant(left, context);
-        delete_constant(right, context);
-        
-        node->cc = true;
-        return cache_constant(folded, context);
-    }
 
     bool CC = leftCC || rightCC;
-    if (leftCC) left = save_cached_constant(left, context); if (rightCC) right = save_cached_constant(right, context);
-    if (leftCC) { int temp = left; left = right; right = temp; }
-
     switch (op) {
-        case TT_PLUS:   emit(CC ? OP_ADD_RC  : OP_ADD_RR, context); break;
-        case TT_MUL:    emit(CC ? OP_MUL_RC  : OP_MUL_RR, context); break;
-        case TT_AND:    emit(CC ? OP_AND_RC  : OP_AND_RR, context); break;
-        case TT_OR:     emit(CC ? OP_OR_RC   : OP_OR_RR, context); break;
-        case TT_BAND:   emit(CC ? OP_BAND_RC : OP_BAND_RR, context); break;
-        case TT_BOR:    emit(CC ? OP_BOR_RC  : OP_BOR_RR, context); break;
-        case TT_BXOR:   emit(CC ? OP_BXOR_RC : OP_BXOR_RR, context); break;
-        case TT_EEQ:    emit(CC ? OP_EEQ_RC  : OP_EEQ_RR, context); break;
-        case TT_GT:     emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
-        case TT_LT:     emit(leftCC ? OP_GT_RC : rightCC ? OP_LT_RC : OP_GT_RR, context); break;
-        case TT_GTEQ:   emit(leftCC ? OP_LTEQ_RC : rightCC ? OP_GTEQ_RC : OP_GTEQ_RR, context); break;
-        case TT_LTEQ:   emit(leftCC ? OP_GTEQ_RC : rightCC ? OP_LTEQ_RC : OP_LTEQ_RR, context); break;
+        case TT_MINUS:  emit(leftCC ? OP_SUB_CR    : rightCC ? OP_SUB_RC     : OP_SUB_RR, context); break;
+        case TT_DIV:    emit(leftCC ? OP_DIV_CR    : rightCC ? OP_DIV_RC     : OP_DIV_RR, context); break;
+        case TT_IDIV:   emit(leftCC ? OP_IDIV_CR   : rightCC ? OP_IDIV_RC    : OP_IDIV_RR, context); break;
+        case TT_MOD:    emit(leftCC ? OP_MOD_CR    : rightCC ? OP_MOD_RC     : OP_MOD_RR, context); break;
+        case TT_POW:    emit(leftCC ? OP_POW_CR    : rightCC ? OP_POW_RC     : OP_POW_RR, context); break;
+        case TT_CONCAT: emit(leftCC ? OP_CONCAT_CR : rightCC ? OP_CONCAT_RC  : OP_CONCAT_RR, context); break;
 
         default :
             if (leftCC) { int temp = left; left = right; right = temp; }
 
             switch (op) {
-                case TT_MINUS:  emit(leftCC ? OP_SUB_CR    : rightCC ? OP_SUB_RC     : OP_SUB_RR, context); break;
-                case TT_DIV:    emit(leftCC ? OP_DIV_CR    : rightCC ? OP_DIV_RC     : OP_DIV_RR, context); break;
-                case TT_IDIV:   emit(leftCC ? OP_IDIV_CR   : rightCC ? OP_IDIV_RC    : OP_IDIV_RR, context); break;
-                case TT_MOD:    emit(leftCC ? OP_MOD_CR    : rightCC ? OP_MOD_RC     : OP_MOD_RR, context); break;
-                case TT_POW:    emit(leftCC ? OP_POW_CR    : rightCC ? OP_POW_RC     : OP_POW_RR, context); break;
-                case TT_CONCAT: emit(leftCC ? OP_CONCAT_CR : rightCC ? OP_CONCAT_RC  : OP_CONCAT_RR, context); break;
+                case TT_PLUS:   emit(CC ? OP_ADD_RC  : OP_ADD_RR, context); break;
+                case TT_MUL:    emit(CC ? OP_MUL_RC  : OP_MUL_RR, context); break;
+                case TT_AND:    emit(CC ? OP_AND_RC  : OP_AND_RR, context); break;
+                case TT_OR:     emit(CC ? OP_OR_RC   : OP_OR_RR, context); break;
+                case TT_BAND:   emit(CC ? OP_BAND_RC : OP_BAND_RR, context); break;
+                case TT_BOR:    emit(CC ? OP_BOR_RC  : OP_BOR_RR, context); break;
+                case TT_BXOR:   emit(CC ? OP_BXOR_RC : OP_BXOR_RR, context); break;
+                case TT_EEQ:    emit(CC ? OP_EEQ_RC  : OP_EEQ_RR, context); break;
+                case TT_GT:     emit(leftCC ? OP_LT_RC : rightCC ? OP_GT_RC : OP_GT_RR, context); break;
+                case TT_LT:     emit(leftCC ? OP_GT_RC : rightCC ? OP_LT_RC : OP_GT_RR, context); break;
+                case TT_GTEQ:   emit(leftCC ? OP_LTEQ_RC : rightCC ? OP_GTEQ_RC : OP_GTEQ_RR, context); break;
+                case TT_LTEQ:   emit(leftCC ? OP_GTEQ_RC : rightCC ? OP_LTEQ_RC : OP_LTEQ_RR, context); break;
             }
     }
 
@@ -206,10 +194,6 @@ int compile_bin_op(Node* node, Scope* context) {
     emit(left, context);
     emit(right, context);
 
-    node->cc = false;
-
-    free(node->node.BinOpNode.left);
-    free(node->node.BinOpNode.right);
     return r;
 }
 
@@ -232,7 +216,7 @@ int compile_uni_op(Node* node, Scope* context) {
             emit(OP_MUL_RC, context);
             emit(r, context);
             emit(target, context);
-            emit(save_cached_constant(cache_constant(NUM_AS_TVALUE(-1), context), context), context);
+            emit(cache_constant(NUM_AS_TVALUE(-1), context), context);
         }
 
         case TT_NOT: {
@@ -492,7 +476,7 @@ int compile_func_def(Node* node, Scope* context) {
     compile(node->node.funcDefNode.statements, func_context);
     TValue func = close_context(func_context);
 
-    int idx = save_cached_constant(cache_constant(func, context), context);
+    int idx = cache_constant(func, context);
     if (!IS_NIL(node->node.funcDefNode.name)) {
         idx = register_constant(idx, context, -1);
         append_symbol(context, node->node.funcDefNode.name, idx);
@@ -513,7 +497,6 @@ Scope* new_scope() {
     size_t CONST_POOL_SIZE = sizeof(scope->const_pool.const_pool) / TVALUESIZE;
     for (int i = 0; i < CONST_POOL_SIZE; i++) { scope->const_pool.const_pool[i] = NIL; }
     scope->const_pool.len = 0;
-    scope->saved_const.len = 0;
 
     scope->free_regs.len = 0;
     scope->reg_ptr = 0;
@@ -635,14 +618,6 @@ static int cache_constant(TValue const_v, Scope* context) {
     return context->const_pool.len - 1;
 }
 
-static int is_saved(TValue const_v, Scope* context) { 
-    for (int i = 0; i < context->saved_const.len; i++) {
-        if (AS_TVALUE(context->saved_const.saved_consts[i]) == AS_TVALUE(const_v)) return true;
-    }
-
-    return false;
-}
-
 static inline int register_top(Scope* context) {
     if (context->reg_ptr == 0xff) STACK_OVERFLOW("Fatal Error : Register overflow, exceeded register limit");
     return context->reg_ptr++;
@@ -658,80 +633,14 @@ static inline int register_try(uint8_t r, Scope* context) {
     if (!(new_r + 1)) register_first(context); else return r;
 }
 
-static inline int save_cached_constant(int idx, Scope* context) { save_constant(get_constant(idx, context), context); return idx; }
-
 static inline int correct_constant_idx(int idx, Scope* context) { return idx < context->const_pool.len ? 1 : 0; }
 
-static inline void sure_delete_constant(int idx, Scope* context) {
+static inline void delete_constant(int idx, Scope* context) {
     shift_tvalue_array(context->const_pool.const_pool, context->const_pool.len, idx);
     context->const_pool.len--;
 }
 
-static void delete_constant(int idx, Scope* context) {
-    TValue const_v = get_constant(idx, context);
-    if (is_saved(const_v, context) || !correct_constant_idx(idx, context)) return;
-
-    sure_delete_constant(idx, context);
-}
-
-static void unsave_cached_constant(int idx, Scope* context) {
-    TValue target = get_constant(idx, context);
-
-    for (int i = 0; i < context->saved_const.len; i++) {
-        TValue cst = context->saved_const.saved_consts[i];
-
-        if (AS_TVALUE(cst) == AS_TVALUE(target)) {
-            shift_tvalue_array(context->saved_const.saved_consts, 256, i);
-            context->saved_const.len--;
-            break;
-        }
-    }
-
-    sure_delete_constant(idx, context);
-}
-
-static inline TValue save_constant(TValue const_v, Scope* context) { context->saved_const.saved_consts[context->saved_const.len++] = const_v; return const_v; }
-
 static inline TValue get_constant(int idx, Scope* context) { return context->const_pool.const_pool[idx]; }
-
-static TValue operation_fold(int idx1, TokenType op, int idx2, Scope* context) {
-    TValue v1 = get_constant(idx1, context);
-    TValue v2 = get_constant(idx2, context);
-    if (op == TT_EEQ) return NUM_AS_TVALUE(AS_TVALUE(v1) == AS_TVALUE(v2));
-
-    switch (TYPE(v1)) {
-        case STRING : {
-            if (TYPE(v2) != STRING) TYPE_ERROR("second value to this operation must be a string");
-
-            switch (op) {
-                case TT_CONCAT: return concat_string((TValue[2]){ v1, v2 }, 2);
-            }
-        }
-
-        default : {
-            if (!IS_NUM(v2)) TYPE_ERROR("second value to this operation must be a number");
-
-            switch (op) {
-                case TT_PLUS:   return NUM_AS_TVALUE(AS_NUM(v1) + AS_NUM(v2));
-                case TT_MINUS:  return NUM_AS_TVALUE(AS_NUM(v1) - AS_NUM(v2));
-                case TT_MUL:    return NUM_AS_TVALUE(AS_NUM(v1) * AS_NUM(v2));
-                case TT_DIV:    return NUM_AS_TVALUE(AS_NUM(v1) / AS_NUM(v2));
-                case TT_IDIV:   return NUM_AS_TVALUE(floor(AS_NUM(v1) / AS_NUM(v2)));
-                case TT_MOD:    return NUM_AS_TVALUE(fmod(AS_NUM(v1), AS_NUM(v2)));
-                case TT_AND:    return NUM_AS_TVALUE(TRUTHY(v1) && TRUTHY(v2));
-                case TT_OR:     return NUM_AS_TVALUE(TRUTHY(v1) || TRUTHY(v2));
-                case TT_BAND:   return NUM_AS_TVALUE(AS_TVALUE(v1) & AS_TVALUE(v2));
-                case TT_BOR:    return NUM_AS_TVALUE(AS_TVALUE(v1) | AS_TVALUE(v2));
-                case TT_BXOR:   return NUM_AS_TVALUE(AS_TVALUE(v1) ^ AS_TVALUE(v2));
-                case TT_GT:     return NUM_AS_TVALUE(AS_NUM(v1) > AS_NUM(v2));
-                case TT_LT:     return NUM_AS_TVALUE(AS_NUM(v1) < AS_NUM(v2));
-                case TT_GTEQ:   return NUM_AS_TVALUE(AS_NUM(v1) >= AS_NUM(v2));
-                case TT_LTEQ:   return NUM_AS_TVALUE(AS_NUM(v1) <= AS_NUM(v2));
-                case TT_POW:    return NUM_AS_TVALUE(pow(AS_NUM(v1), AS_NUM(v2)));
-            }
-        }
-    }
-}
 
 static inline int assignement_analysis(Node* node) {
     int depth = 0;
