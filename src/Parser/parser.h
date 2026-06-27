@@ -21,6 +21,7 @@ typedef struct {
     Token* tokens;
     Error* err;
     size_t adv_count;
+    TTable* user_types;
 } ParseResult;
 
 typedef Node* (*ParseFunc)(ParseResult* res);

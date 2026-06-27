@@ -41,7 +41,27 @@ TValue resolve_type_statements(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_return(Node* node, TypesContext* context) {
-    return varType;
+    TValue return_type = context->return_types.next->value;
+    if (node->node.ReturnNode.len == 0) return (node->type = varType);
+    if (node->node.ReturnNode.len == 1) {
+        TValue return_value = resolve_type(node->node.ReturnNode.nodes[0], context);
+
+        if (EQUAL(return_type, return_value)) { return (node->type = return_type); }
+        else {
+            TValue error_message = make_fstring("Tried returning value of type <%s> in function of type <%s>");
+            error_message = format_string((TValue[3]){ error_message, return_value, return_type }, 3);
+
+            TYPE_ERROR(AS_STRING(error_message)->str);
+        }
+    }
+
+    if (!EQUAL(return_type, tableType)) {
+        TValue error_message = make_fstring("Tried returning multiple argument to function of type <%s>");
+        error_message = format_string((TValue[2]){ error_message, return_type }, 2);
+    }
+
+    for (int i = 0; i < node->node.ReturnNode.len; i++) resolve_type(node->node.ReturnNode.nodes[i], context);
+    return (node->type = tableType);
 }
 
 TValue resolve_type_break(Node* node, TypesContext* context) {
@@ -56,8 +76,7 @@ TValue resolve_type_var_declare(Node* node, TypesContext* context) {
     TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
-    if (EQUAL(var_type, varType) || EQUAL(return_type, varType)) return varType;
-    if (!EQUAL(var_type, return_type)) {
+    if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
         TValue error_message = make_fstring("Cannot assign value of type '%s' to variable of type '%s'");
         error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
 
@@ -158,7 +177,13 @@ TValue resolve_type_string(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_allocation(Node* node, TypesContext* context) {
+    TValue target_type = resolve_type(node->node.AllocNode.target, context);
+    for (int i = 0; i < node->node.AllocNode.args.len; i++) {
+        resolve_type(node->node.AllocNode.args.nodes[i], context);
+    }
 
+    if (EQUAL(target_type, varType) || EQUAL(target_type, tableType)) return (node->type = tableType);
+    TYPE_ERROR("Allocation only work on type <Table>");
 }
 
 TValue resolve_type_if_statement(Node* node, TypesContext* context) {
@@ -211,11 +236,15 @@ TValue resolve_type_gfor_loop(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_while_loop(Node* node, TypesContext* context) {
+    resolve_type(node->node.whileNode.condition, context);
+    resolve_type(node->node.whileNode.statements, context);
     return (node->type = varType);
 }
 
 TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
-
+    resolve_type(node->node.repeatNode.condition, context);
+    resolve_type(node->node.repeatNode.statements, context);
+    return (node->type = varType);
 }
 
 TValue resolve_type_import(Node* node, TypesContext* context) {
@@ -223,14 +252,29 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_func_def(Node* node, TypesContext* context) {
+    TTable* id_namespace = context->id_namespace;
+    context->id_namespace = AS_TABLE(new_table(NULL, 0));
 
+    struct TValueLinkedList* return_type = malloc(sizeof(struct TValueLinkedList));
+    return_type->value = node->node.funcDefNode.type_specifier;
+    return_type->next = context->return_types.next;
+    context->return_types.next = return_type;
+
+    resolve_type(node->node.funcDefNode.statements, context);
+    context->id_namespace = id_namespace;
+    context->return_types.next = context->return_types.next->next;
+
+    free(return_type);
+    return (node->type = funcType);
 }
 
 
 TypesContext* new_resolve_context() {
     TypesContext* context = malloc(sizeof(TypesContext));
+    context->return_types.next = malloc(sizeof(struct TValueLinkedList));
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
+    context->return_types.next->value = varType;
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_map);

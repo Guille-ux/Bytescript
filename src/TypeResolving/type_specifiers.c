@@ -54,7 +54,7 @@ void initialize_type_specifiers() {
     add_value_to_hashtable(num_map, make_fstring("__concat"), str_descriptor);
 
     table_map = new_table(NULL, 0);
-    add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType}, varType, 2 ));
+    add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType }, varType, 2 ));
 
     func_map = new_table(NULL, 0);
 

@@ -104,7 +104,7 @@ typedef struct {
 } TCDataType;
 
 typedef TCDataType* TCData;
-#define CDATA_HEADER                TCData cdata_type
+#define CDATA_HEADER TCData cdata_type
 
 
 // NAN BOXING

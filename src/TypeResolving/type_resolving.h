@@ -5,6 +5,7 @@
 #include "TypeResolving/type_specifiers.h"
 
 typedef struct {
+    struct TValueLinkedList return_types;
     TTable* type_namespace;
     TTable* id_namespace;
 } TypesContext;

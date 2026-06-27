@@ -10,12 +10,12 @@ TValue new_namespace_entry(TValue value, TTable* map) {
     res_namespace->nmspace = map;
     res_namespace->value = value;
 
-    return CDT_TO_TVALUE(res_namespace);
+    return CDT_TO_TVALUE((TCData*)res_namespace);
 }
 
 NamespaceEntry* as_namespace_entry(TValue value) {
     TCData* data = AS_CDATA(value);
-    if (data != (TCData*)NamespaceEntryType) TYPE_ERROR("Failed to cast tvalue into namespace entry");
+    if (*data != (TCData)NamespaceEntryType) TYPE_ERROR("Failed to cast tvalue into namespace entry");
 
     return (NamespaceEntry*)data;
 }

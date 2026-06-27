@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "Globals/string.h"
+#include "Globals/table.h"
 #include "Parser/parser.h"
 #include "TypeResolving/type_specifiers.h"
 
@@ -439,7 +440,7 @@ Node* get_statements(ParseResult* res, Token stopToken) {
 
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count) { while ( (**tokens).tt == TT_NEWLINE && ++*adv_count ) ++*tokens; }
-static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err = NULL, .adv_count = 0, .tokens = tokens }; }
+static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err = NULL, .adv_count = 0, .tokens = tokens, .user_types = AS_TABLE(new_table(NULL, 0)) }; }
 static inline Node* new_node(NodeType nt) { Node* node =  malloc(sizeof(Node)); node->nt = nt; node->cc = false; return node; }
 
 
@@ -485,5 +486,6 @@ static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value
 
 TValue type_specifier(ParseResult* res) {
     if (res->tokens->tt != TT_KWORD && res->tokens->tt != TT_IDENTIFIER) return NIL;
-    if (res->tokens->tt == TT_IDENTIFIER || is_native_type_specifier(res->tokens->value)) return res->tokens++->value;
+    if (is_native_type_specifier(res->tokens->value) ||
+        (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens++->value;
 }
