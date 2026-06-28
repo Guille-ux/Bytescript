@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "Globals/tError.h"
 #include "Globals/string.h"
 #include "Globals/table.h"
 #include "Parser/parser.h"
@@ -39,7 +40,7 @@ static NodeArray separated(ParseResult* res, ParseFunc func, Token separator) {
 
     } while (1);
 
-    res->err = NULL;
+    res->err_details = NULL;
     return nda;
 }
 
@@ -75,7 +76,7 @@ Node* parse(Token* tokens, char filename[]) {
     ParseResult res = new_res(tokens);
 
     Node* ast = statements(&res);
-    if (res.err != NULL) call_error(res.err, filename);
+    if (res.err_details != NULL) call_error(new_syntax_error, res.err_details);
     return ast;
 }
 
@@ -178,7 +179,7 @@ Node* for_expr(ParseResult* res) {
             break;
         }
 
-        default: SYNTAX_ERROR("(EQ:'=' || SEPARATOR:',') EXPECTED");
+        default: call_error(new_syntax_error, "(EQ:'=' || SEPARATOR:',') EXPECTED");
     }
 
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
@@ -308,7 +309,7 @@ Node* numerics(ParseResult* res) {
         }
 
         default : {
-            res->err = new_error("InvalidSyntaxError", "(INT | STR | OPERATOR) EXPECTED", 0, 0);
+            res->err_details = "(INT | STR | OPERATOR) EXPECTED";
             free(return_node);
             return NULL;
         }
@@ -429,7 +430,7 @@ Node* get_statements(ParseResult* res, Token stopToken) {
         Token* pre = res->tokens;
         Node* stmnt = statement(res);
 
-        if (stmnt == NULL || res->err != NULL) { if (pre == res->tokens) res->err = NULL; break; }
+        if (stmnt == NULL || res->err_details != NULL) { if (pre == res->tokens) res->err_details = NULL; break; }
         append_to_node_array(&statementNodes, stmnt);
         clean_newlines(&res->tokens, &res->adv_count);
     }
@@ -440,7 +441,7 @@ Node* get_statements(ParseResult* res, Token stopToken) {
 
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count) { while ( (**tokens).tt == TT_NEWLINE && ++*adv_count ) ++*tokens; }
-static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err = NULL, .adv_count = 0, .tokens = tokens, .user_types = AS_TABLE(new_table(NULL, 0)) }; }
+static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err_details = NULL, .adv_count = 0, .tokens = tokens, .user_types = AS_TABLE(new_table(NULL, 0)) }; }
 static inline Node* new_node(NodeType nt) { Node* node =  malloc(sizeof(Node)); node->nt = nt; node->cc = false; return node; }
 
 
@@ -451,7 +452,7 @@ static inline void clean_node_array(NodeArray* nda, size_t start_index) {
 static NodeArray make_node_array() {
     size_t cap = 8;
     Node** ndarray = malloc(sizeof(Node*) * cap);
-    if (ndarray == NULL) FAILED_ALLOCATION_ERROR("Failed allocation while making node");
+    if (ndarray == NULL) call_error(new_failed_allocation_error, "Failed allocation while making node");
 
     NodeArray nda = { .len = 0, .cap = cap, .nodes = ndarray };
     clean_node_array(&nda, 0);
@@ -461,7 +462,7 @@ static NodeArray make_node_array() {
 static Node* append_to_node_array(NodeArray* nda, Node* node) {
     if (nda->len >= nda->cap) {
         nda->nodes = realloc(nda->nodes, sizeof(Node*) * (nda->cap *= 2));
-        if (nda->nodes == NULL) FAILED_ALLOCATION_ERROR("Failed allocation while making node");
+        if (nda->nodes == NULL) call_error(new_failed_allocation_error, "Failed allocation while making node");
 
         clean_node_array(nda, nda->cap / 2);
     }
@@ -479,7 +480,7 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
 }
 
 static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
-    if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err = new_error("InvalidSyntaxError", expected, 0, 0);
+    if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err_details = expected;
     if (value != NULL) *value = res->tokens->value;
     *res->tokens++;
 }

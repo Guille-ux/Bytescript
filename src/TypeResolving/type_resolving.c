@@ -2,7 +2,7 @@
 #include "Values/namespaces.h"
 #include "Globals/string.h"
 #include "Globals/table.h"
-#include "Error/error.h"
+#include "Globals/tError.h"
 
 
 TypeResolver type_resolvers[] = {
@@ -51,7 +51,7 @@ TValue resolve_type_return(Node* node, TypesContext* context) {
             TValue error_message = make_fstring("Tried returning value of type <%s> in function of type <%s>");
             error_message = format_string((TValue[3]){ error_message, return_value, return_type }, 3);
 
-            TYPE_ERROR(AS_STRING(error_message)->str);
+            call_error(new_type_error, AS_STRING(error_message)->str);
         }
     }
 
@@ -80,7 +80,7 @@ TValue resolve_type_var_declare(Node* node, TypesContext* context) {
         TValue error_message = make_fstring("Cannot assign value of type '%s' to variable of type '%s'");
         error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
 
-        TYPE_ERROR(AS_STRING(error_message)->str);
+        call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, new_namespace_entry(var_type, NULL));
@@ -95,7 +95,7 @@ TValue resolve_type_assignement(Node* node, TypesContext* context) {
         TValue error_message = make_fstring("Cannot assign value of type '%s' to lvalue of type '%s'");
         error_message = format_string((TValue[3]){ error_message, return_type, lvalue_type }, 3);
 
-        TYPE_ERROR(AS_STRING(error_message)->str);
+        call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
     return lvalue_type;
@@ -121,7 +121,7 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue error_message = make_fstring("Cannot proceed to operation : %s with types : '%s' and '%s'");
     error_message = format_string((TValue[4]){ error_message, op, ltype, rtype }, 4);
     
-    TYPE_ERROR(AS_STRING(error_message)->str);
+    call_error(new_type_error, AS_STRING(error_message)->str);
 }
 
 TValue resolve_type_uni_op(Node* node, TypesContext* context) {
@@ -138,7 +138,7 @@ TValue resolve_type_uni_op(Node* node, TypesContext* context) {
     TValue error_message = make_fstring("Cannot proceed to unary operation : %s with type : '%s'");
     error_message = format_string((TValue[3]){ error_message, op, return_type }, 3);
     
-    TYPE_ERROR(AS_STRING(error_message)->str);
+    call_error(new_type_error, AS_STRING(error_message)->str);
 }
 
 TValue resolve_type_call(Node* node, TypesContext* context) {
@@ -148,7 +148,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
         TValue error_message = make_fstring("Cannot call value of type '%s'");
         error_message = format_string((TValue[3]){ error_message, target_type }, 2);
 
-        TYPE_ERROR(AS_STRING(error_message)->str);
+        call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
 
@@ -161,7 +161,7 @@ TValue resolve_type_var_access(Node* node, TypesContext* context) {
         TValue error_message = make_fstring("Unknwon identifier : '%s'");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
 
-        UNKNOWN_IDENTIFIER(AS_STRING(error_message)->str);
+        call_error(new_unknown_identifier_error, AS_STRING(error_message)->str);
     }
 
     NamespaceEntry* nm = as_namespace_entry(entry);
@@ -183,7 +183,7 @@ TValue resolve_type_allocation(Node* node, TypesContext* context) {
     }
 
     if (EQUAL(target_type, varType) || EQUAL(target_type, tableType)) return (node->type = tableType);
-    TYPE_ERROR("Allocation only work on type <Table>");
+    call_error(new_type_error, "Allocation only work on type <Table>");
 }
 
 TValue resolve_type_if_statement(Node* node, TypesContext* context) {
@@ -209,7 +209,7 @@ TValue resolve_type_nfor_loop(Node* node, TypesContext* context) {
 
     if (!v1cond || !v2cond || !v3cond) {
         TValue error_message = make_fstring("numeric for loops can only use type 'num'");
-        TYPE_ERROR(AS_STRING(error_message)->str);
+        call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
     resolve_type(node->node.nForNode.statements, context);
@@ -227,7 +227,7 @@ TValue resolve_type_gfor_loop(Node* node, TypesContext* context) {
             TValue error_message = make_fstring("Type <%s> do not have an __iter method");
             error_message = format_string((TValue[4]){ error_message, target_type }, 2);
             
-            TYPE_ERROR(AS_STRING(error_message)->str);
+            call_error(new_type_error, AS_STRING(error_message)->str);
         }
     }
 

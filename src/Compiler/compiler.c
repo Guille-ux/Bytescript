@@ -88,7 +88,7 @@ int compile_break(Node* node, Scope* context) {
 
     current.ptr = CURRENT_INSTR;
     current.next = malloc(sizeof(struct uint8LinkedList));
-    if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
+    if (!current.next) call_error(new_failed_allocation_error, "Failed allocation while compiling");
 
     emit(OP_JUMP, context);
     emit(0x00, context);
@@ -104,7 +104,7 @@ int compile_continue(Node* node, Scope* context) {
 
     current.ptr = CURRENT_INSTR;
     current.next = malloc(sizeof(struct uint8LinkedList));
-    if (!current.next) FAILED_ALLOCATION_ERROR("Failed allocation while compiling");
+    if (!current.next) call_error(new_failed_allocation_error, "Failed allocation while compiling");
 
     emit(OP_JUMP, context);
     emit(0x00, context);
@@ -141,7 +141,7 @@ int compile_assignement(Node* node, Scope* context) {
             break;
         }
 
-        default : INCORRECT_LVALUE("cannot assign value to rvalue");
+        default : call_error(new_incorrect_lvalue_error, "cannot assign value to rvalue");
     }
 
     free(node->node.AssignementNode.lvalue);
@@ -207,8 +207,6 @@ int compile_uni_op(Node* node, Scope* context) {
         case TT_MINUS: {
             if (node->cc) {
                 TValue v = get_constant(target, context);
-                if (!IS_NUM(v)) TYPE_ERROR("cannot proceed to the unary operation '-' on a type other than number");
-
                 return cache_constant(NUM_AS_TVALUE(-AS_NUM(v)), context);
             }
 
@@ -257,11 +255,10 @@ int compile_var_access(Node* node, Scope* context) {
     TValue tidx = get_symbol_register(context, node->node.VarAcess.name);
 
     if (IS_NIL(tidx)) {
-        TStr* name = AS_STRING(node->node.VarAcess.name);
+        TValue details = make_fstring("identifier '%s' does not exist");
+        details = format_string((TValue[2]){ details, node->node.VarAcess.name }, 2);
 
-        char details[snprintf(NULL, 0, "identifier '%s' does not exist", name->str) + 1];
-        snprintf(details, sizeof(details), "identifier '%s' does not exist", name->str);
-        UNKNOWN_IDENTIFIER(details);
+        call_error(new_unknown_identifier_error, AS_STRING(details)->str);
     }
 
     return (int)(AS_NUM(tidx));
@@ -517,7 +514,7 @@ int emit(uint8_t instr, Scope* context) {
     context->bytecode.bytes[context->bytecode.len++] = instr;
     if (context->bytecode.len == context->bytecode.cap) {
         uint8_t* new = realloc(context->bytecode.bytes, (context->bytecode.cap *= 2));
-        if (new == NULL) FAILED_ALLOCATION_ERROR("Failed allocation while emiting instruction");
+        if (new == NULL) call_error(new_failed_allocation_error, "Failed allocation while emiting instruction");
 
         context->bytecode.bytes = new;
     }
@@ -612,14 +609,14 @@ static int cache_constant(TValue const_v, Scope* context) {
     int idx = get_constant_idx(const_v, context);
     if (idx != -1) return idx;
 
-    if (context->const_pool.len == 0xff) STACK_OVERFLOW("Fatal Error : Constant overflow, exceeded constants limit");
+    if (context->const_pool.len == 0xff) call_error(new_stack_overflow_error, "Fatal Error : Constant overflow, exceeded constants limit");
     context->const_pool.const_pool[context->const_pool.len++] = const_v;
 
     return context->const_pool.len - 1;
 }
 
 static inline int register_top(Scope* context) {
-    if (context->reg_ptr == 0xff) STACK_OVERFLOW("Fatal Error : Register overflow, exceeded register limit");
+    if (context->reg_ptr == 0xff) call_error(new_stack_overflow_error, "Fatal Error : Register overflow, exceeded register limit");
     return context->reg_ptr++;
 }
 
@@ -737,7 +734,7 @@ TValue close_context(Scope* context) {
     emit(0x00, context);
 
     uint8_t* bytecode = realloc(context->bytecode.bytes, context->bytecode.len);
-    if (!bytecode) FAILED_ALLOCATION_ERROR("Failed allocation while closing compile context");
+    if (!bytecode) call_error(new_failed_allocation_error, "Failed allocation while closing compile context");
 
     TValue func = new_func(bytecode, context->const_pool.const_pool, context->const_pool.len, NULL);
 

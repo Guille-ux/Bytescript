@@ -2,7 +2,6 @@
 #define STRING_H
 
 #include "Values/bytev.h"
-#include "Error/error.h"
 
 #define STRING_METHOD
 

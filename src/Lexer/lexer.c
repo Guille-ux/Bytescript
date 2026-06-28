@@ -1,5 +1,5 @@
 #include "lexer.h"
-#include "Error/error.h"
+#include "Globals/tError.h"
 #include "Globals/string.h"
 
 #include <stdlib.h>
@@ -61,9 +61,9 @@ static inline void emit_default(Token* tp, char** text) {
     if (isdigit(**text) || **text == '.') return emit_token(tp, TT_NUMBER, make_number(text));
     else if (isalpha(**text) || **text == '_') return make_word(tp, text);
     else {
-        char details[snprintf(NULL, 0, "Unidentified character : %c\n\tCannot Tokenize", **text) + 1];
-        snprintf(details, sizeof(details), "Unidentified character : %c\n\tCannot Tokenize", **text);
-        call_error(new_error("UnidentifiedCharacter Error", details, 0, 0), NULL);
+        TValue err = make_fstring("Unidentified character : %c\n\tCannot Tokenize");
+        err = format_string((TValue[2]){ err, **text }, 2);
+        call_error(new_unidentified_character_error, AS_STRING(err)->str);
     }
 }
 
@@ -80,7 +80,7 @@ TValue make_string_token(char** text, char initializer) {
     char* buff = malloc(cap);
     char* pre_text = *text;
 
-    if (buff == NULL) FAILED_ALLOCATION_ERROR("Failed allocation while making string");
+    if (buff == NULL) call_error(new_failed_allocation_error, "Failed allocation while making string");
     while (*++*text != initializer && **text != '\0') {
          if (**text == '\\') {
             switch (*++*text) {
@@ -105,7 +105,7 @@ TValue make_string_token(char** text, char initializer) {
         len++;
         if (len >= cap) {
             char* new = realloc(buff, (cap *= 2));
-            if (new == NULL) FAILED_ALLOCATION_ERROR("Failed allocation while making string");
+            if (new == NULL) call_error(new_failed_allocation_error, "Failed allocation while making string");
 
             buff = new;
         }
@@ -123,7 +123,7 @@ Token* make_tokens(char* text) {
     Token* tp = tokens;
     size_t tok_len = 0;
 
-    if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
+    if (tokens == NULL) call_error(new_failed_allocation_error, "Failed allocation of token table");
 
     do {
         if (*text == ' ' || *text == '\t' || *text == '\r') goto skip;
@@ -267,7 +267,7 @@ Token* make_tokens(char* text) {
         if (++tok_len >= cap) {
             cap *= 2;
             tokens = realloc(tokens, sizeof(Token) * cap);
-            if (tokens == NULL) FAILED_ALLOCATION_ERROR("Failed allocation of token table");
+            if (tokens == NULL) call_error(new_failed_allocation_error, "Failed allocation of token table");
 
             tp = tokens + tok_len;
         }

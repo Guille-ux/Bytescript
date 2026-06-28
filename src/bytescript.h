@@ -8,8 +8,6 @@
 #include "Compiler/compiler.h"
 #include "Compiler/ast_cleaner.h"
 #include "utils/disassembler.h"
-
-#include "Error/error.h"
 #include "Values/bytev.h"
 
 

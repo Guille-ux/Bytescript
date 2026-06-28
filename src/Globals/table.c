@@ -35,10 +35,7 @@ TValue initialize_table_class() {
     TValue Table_map = new_table(NULL, 0);
     TValue Table_fields[fields_size];
 
-    for (int i = 0; i < fields_size; i++) {
-        Table_fields[i] = Table_methods[i][1];
-        add_value_to_hashtable(Table_map, Table_methods[i][0], NUM_AS_TVALUE(i));
-    }
+    append_methods_to_map(Table_map, Table_methods, Table_fields, fields_size);
 
     TValue Table_class = new_class(NULL, Table_fields, 0, fields_size);
     TValue Table_namespace = new_namespace_entry(Table_class, AS_TABLE(Table_map));
@@ -57,7 +54,7 @@ TValue new_table(TValue* argv, size_t argc) {
     TValue* newarray = malloc(BSIZE(arr_cap));
     TTable* newtab = malloc(sizeof(TTable));
     Bucket* newhasharray = malloc(sizeof(Bucket) * hash_cap);
-    if (newarray == NULL || newtab == NULL || newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.new>");
+    if (newarray == NULL || newtab == NULL || newhasharray == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.new>");
 
     newtab->array.array = newarray;      
     newtab->array.capacity = arr_cap;         
@@ -76,7 +73,7 @@ TValue new_table(TValue* argv, size_t argc) {
 
 TValue free_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.appendKey> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
 
@@ -94,7 +91,7 @@ TValue free_table(TValue* argv, size_t argc) {
 
 TValue pop_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.pop> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.pop> take type <Table> as first argument");
 
     size_t returnc = argc - 1 ? argc - 1 : argc;
     TTable* ptr = AS_TABLE(argv[0]);
@@ -108,7 +105,7 @@ TValue pop_table(TValue* argv, size_t argc) {
 
     for (int i = 1; i < argc; i++) {
         int idx = AS_NUM(argv[i]);
-        if ( OUT_OF_SCOPE(ptr, idx) ) INDEX_OUT_OF_SCOPE_ERROR("Index out of scope in function <Table.pop>");
+        if ( OUT_OF_SCOPE(ptr, idx) ) call_error(new_index_error, "Index out of scope in function <Table.pop>");
 
         returnv[i - 2] = ptr->array.array[idx];
         ptr->array.array[idx] = NIL;
@@ -122,19 +119,19 @@ TValue pop_table(TValue* argv, size_t argc) {
 
 TValue shrink_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.shrink> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.shrink> take type <Table> as first argument");
     TTable* ptr = AS_TABLE(argv[0]);
     
     ptr->array.capacity = ptr->array.capacity / 2;
     TValue* nptr = realloc(ptr->array.array, BSIZE(ptr->array.capacity));
     ptr->array.array = nptr;
 
-    if (ptr->array.array == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.expand>");
+    if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.expand>");
 }
 
 TValue expand_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.expand> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.expand> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     ptr->array.capacity *= 2;
@@ -142,7 +139,7 @@ TValue expand_table(TValue* argv, size_t argc) {
     TValue* nptr = realloc(ptr->array.array, BSIZE(ptr->array.capacity));
     ptr->array.array = nptr;
 
-    if (ptr->array.array == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.expand>");
+    if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.expand>");
     return NIL;
 }
 
@@ -152,7 +149,7 @@ TValue len_table(TValue* argv, size_t argc) {
 
     for (int i = 0; i < argc; i++) {
         TValue value = argv[i];
-        if (!IS_TABLE(value)) TYPE_ERROR("function <Table.len> take type <Table> as arguments");
+        if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.len> take type <Table> as arguments");
 
         TTable* ptr = AS_TABLE(value);
         returnv[i] = NUM_AS_TVALUE(ptr->array.len);
@@ -163,7 +160,7 @@ TValue len_table(TValue* argv, size_t argc) {
 
 TValue reserve_table(TValue* argv, size_t argc) {
     if (argc < 2) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.reserve> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.reserve> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     size_t n_size = AS_NUM(argv[1]);
@@ -173,7 +170,7 @@ TValue reserve_table(TValue* argv, size_t argc) {
         ptr->array.array = nptr;
         ptr->array.capacity = n_size;
 
-        if (ptr->array.array == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.reserve>");
+        if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.reserve>");
     }
 }
 
@@ -192,19 +189,19 @@ TValue print_table(TValue* argv, size_t argc) {
 
 TValue slice_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.pop> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.pop> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     uint64_t start  = argc > 1 ? AS_NUM(argv[1]) : 0;
     uint64_t end    = argc > 2 ? AS_NUM(argv[2]) : 0;
 
-    if (OUT_OF_SCOPE(ptr, start) || OUT_OF_SCOPE(ptr, end)) INDEX_OUT_OF_SCOPE_ERROR("Index out of scope in function <Table.slice>");
+    if (OUT_OF_SCOPE(ptr, start) || OUT_OF_SCOPE(ptr, end)) call_error(new_index_error, "Index out of scope in function <Table.slice>");
     return new_table(ptr->array.array + start, end - start + 1);
 }
 
 TValue fill_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.fill> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.fill> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue fillValue = argc > 1 ? argv[1] : NUM_AS_TVALUE(0);
@@ -222,7 +219,7 @@ TValue copy_table(TValue* argv, size_t argc) {
 
     for (int i = 0; i < argc; i++) {
         TValue value = argv[i];
-        if (!IS_TABLE(value)) TYPE_ERROR("function <Table.copy> take type <Table> as arguments");
+        if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.copy> take type <Table> as arguments");
 
         TTable* ptr = AS_TABLE(value);
         returnv[i] = new_table(ptr->array.array, ptr->array.len);
@@ -233,7 +230,7 @@ TValue copy_table(TValue* argv, size_t argc) {
 
 TValue insert_table(TValue* argv, size_t argc) {
     if (argc < 2) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.insert> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.insert> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue value = argv[1];
@@ -260,7 +257,7 @@ TValue hash_value_table(TValue* argv, size_t argc) {
 
 TValue append_hash_table(TValue* argv, size_t argc) {
     if (argc < 3) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.appendKey> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue key = argv[1];
@@ -285,7 +282,7 @@ TValue append_hash_table(TValue* argv, size_t argc) {
 
 TValue get_table(TValue* argv, size_t argc) {
     if (argc < 2) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.get> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.get> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue key = argv[1];
@@ -307,7 +304,7 @@ TValue get_table(TValue* argv, size_t argc) {
 
 TValue clean_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.cleanTable> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.cleanTable> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
 
@@ -340,13 +337,13 @@ TValue reset_table(TValue* argv, size_t argc) {
     if (arr_cap == 0) arr_cap = 4;
 
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.resetTable> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.resetTable> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
 
     TValue* newarray = realloc(ptr->array.array, BSIZE(arr_cap));
     Bucket* newhasharray = realloc(ptr->hash_table.array, sizeof(Bucket) * hash_cap);
-    if (newarray == NULL || newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.resetTable>");
+    if (newarray == NULL || newhasharray == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.resetTable>");
 
     ptr->array.array = newarray;      
     ptr->array.capacity = arr_cap;         
@@ -365,7 +362,7 @@ TValue reset_table(TValue* argv, size_t argc) {
 
 TValue hashed_keys_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.hashedKeys> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.hashedKeys> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     return to_return_value((TValue[1]){ collect_bucket(ptr, collect_key) }, 1);
@@ -373,7 +370,7 @@ TValue hashed_keys_table(TValue* argv, size_t argc) {
 
 TValue hashed_values_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.hashedValues> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.hashedValues> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     return to_return_value((TValue[1]){ collect_bucket(ptr, collect_value) }, 1);
@@ -381,14 +378,14 @@ TValue hashed_values_table(TValue* argv, size_t argc) {
 
 TValue buckets_table(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.appendKey> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.appendKey> take type <Table> as first argument");
 
     //
 }
 
 TValue in_array_table(TValue*  argv, size_t argc) {
     if (argc < 2) return NIL;
-    if (!IS_TABLE(argv[0])) TYPE_ERROR("function <Table.inArray> take type <Table> as first argument");
+    if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.inArray> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     TValue value = argv[1];
@@ -495,7 +492,7 @@ static inline void rehash_into(PairArray* pre, Pair* post, size_t pre_len) {
 
 static inline void oa_rehash(Bucket* buck, size_t pre_len) {
     Pair* newhasharray = malloc(sizeof(Pair) * buck->sub.capacity);
-    if (newhasharray == NULL) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation in function <Table.new>");
+    if (newhasharray == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.new>");
 
     empty_pairs(newhasharray, buck->sub.capacity);
     buck->sub.len = 0;

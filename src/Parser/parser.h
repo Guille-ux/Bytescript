@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "Values/helper_structs.h"
-#include "Error/error.h"
 #include "Lexer/lexer.h"
 #include "Parser/nodes.h"
 
@@ -14,12 +13,12 @@
 #define END_TOKEN       ((Token){ .tt = TT_KWORD, .value = make_fstring("end") })
 #define WHILE_TOKEN     ((Token){ .tt = TT_KWORD, .value = make_fstring("while") })
 #define ELSEIF_TOKEN    ((Token){ .tt = TT_KWORD, .value = make_fstring("elseif") })
-#define EXPECTED(exc) do { (exc); if (res->err) return NULL; } while (0);
+#define EXPECTED(exc)   { (exc); if (res->err_details) return NULL; }
 
 
 typedef struct {
     Token* tokens;
-    Error* err;
+    char* err_details;
     size_t adv_count;
     TTable* user_types;
 } ParseResult;

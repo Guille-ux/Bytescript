@@ -1,5 +1,5 @@
 #include "Values/tutils.h"
-#include "Error/error.h"
+#include "Globals/tError.h"
 #include "Lexer/lexer.h"
 
 
@@ -20,7 +20,7 @@ char* read_string() {
         if (count >= size) {
             size *= 2;
             char* new_str = realloc(str, size + 1);
-            if (!new_str) FAILED_ALLOCATION_ERROR("Fatal Error : Failed allocation while reading stdout");
+            if (!new_str) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation while reading stdout");
 
             str = new_str;
         }

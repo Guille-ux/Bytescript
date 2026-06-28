@@ -4,7 +4,6 @@
 #include "utils/utils.h"
 #include "Values/bytev.h"
 #include "Values/tutils.h"
-#include "Error/error.h"
 #include "Globals/globals.h"
 #include "Globals/rapidhash.h"
 
@@ -20,7 +19,6 @@
 #define MAX_TOMBSTONE_FACTOR        (0.18)
 
 
-extern TValue Table_map;
 TValue initialize_table_class();
 
 TValue new_table(TValue* argv, size_t argc);

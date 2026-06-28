@@ -81,3 +81,10 @@ void initialize_globals() {
     initialize_string_class();
     initialize_table_class();
 }
+
+void append_methods_to_map(TValue map, TValue methods[][2], TValue fields[], size_t fields_size) {
+    for (int i = 0; i < fields_size; i++) {
+        fields[i] = methods[i][1];
+        add_value_to_hashtable(map, methods[i][0], NUM_AS_TVALUE(i));
+    }
+}

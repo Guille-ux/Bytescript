@@ -27,7 +27,7 @@ typedef TValue (*CFunc)(TValue* argv, size_t argc);
 typedef struct Func {
     uint8_t isCfunc;
     union {
-        CFunc* cfunc;
+        CFunc cfunc;
         struct {
             const uint8_t* bytecode;
             TValue* const * upvalues;
@@ -220,7 +220,7 @@ static TValue new_func(const uint8_t* bytecode, const TValue* const_pool, uint8_
     return FNC_TO_TVALUE(func);
 }
 
-static TValue new_cfunc(CFunc* cfunc) {
+static TValue new_cfunc(CFunc cfunc) {
     TFunc* func = malloc(sizeof(TFunc));
     func->isCfunc = 1;
     func->cfunc = cfunc;

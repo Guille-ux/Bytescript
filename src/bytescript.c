@@ -18,12 +18,12 @@ void get_flags(int argc, char* argv[], char* byte_args[]) {
 char* read_file(FILE* file, size_t* out_size) {
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
-    if (size == -1) FAILED_ALLOCATION_ERROR("Failed allocation while reading file");
+    if (size == -1) call_error(new_failed_allocation_error, "Failed allocation while reading file");
     
     rewind(file);
 
     char* buffer = malloc(size + 1);
-    if (!buffer) FAILED_ALLOCATION_ERROR("Failed allocation of buffer while reading file");
+    if (!buffer) call_error(new_failed_allocation_error, "Failed allocation of buffer while reading file");
 
     size_t read = fread(buffer, 1, size, file);
     buffer[read] = '\0';
@@ -40,14 +40,14 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;
 
     get_flags(argc, argv, byte_args);
-    if (byte_args[filename] == NULL) call_error(new_error("Unspecified filename", "must specify filename", 0, 0), NULL);
+    if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
     FILE* pFile = fopen(byte_args[filename], "r");
 
     if (pFile == NULL) {
-        char details[snprintf(NULL, 0, "Could not find file : %s", byte_args[filename]) + 1];
-        snprintf(details, sizeof(details), "Could not find file : %s", byte_args[filename]);
-        call_error(new_error("Inexistant File", details, 0, 0), NULL);
+        TValue details = make_fstring("Could not find file : %s");
+        details = format_string((TValue[2]){ details, make_fstring(byte_args[filename]) }, 2);
+        call_error(new_failed_allocation_error, AS_STRING(details)->str);
     }
 
 

@@ -24,10 +24,7 @@ TValue initialize_string_class() {
     TValue String_map = new_table(NULL, 0);
     TValue String_fields[fields_size];
 
-    for (int i = 0; i < fields_size; i++) {
-        String_fields[i] = String_methods[i][1];
-        add_value_to_hashtable(String_map, String_methods[i][0], NUM_AS_TVALUE(i));
-    }
+    append_methods_to_map(String_map, String_methods, String_fields, fields_size);
 
     TValue String_class = new_class(NULL, String_fields, 0, fields_size);
     TValue String_namespace = new_namespace_entry(String_class, AS_TABLE(String_map));
@@ -40,7 +37,7 @@ TValue initialize_string_class() {
 TValue compare_string(TValue* argv, size_t argc) {
     for (int i = 0; i < argc; i++) {
         TValue value = argv[i];
-        if (!IS_STRING(value)) TYPE_ERROR("function <String.compare> take type <String> as arguments");
+        if (!IS_STRING(value)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
 
         TTable* ptr = AS_TABLE(value);  // ??????????????????
         free(ptr->array.array);
@@ -52,8 +49,8 @@ TValue compare_string(TValue* argv, size_t argc) {
 }
 
 TValue concat_string(TValue* argv, size_t argc) {
-    if (argc != 2) INVALID_ARGS_ERROR("function <String.concat> take 2 arguments");
-    if (!IS_STRING(argv[0]) || !IS_STRING(argv[1])) TYPE_ERROR("function <String.concat> take type <String> as arguments");
+    if (argc != 2) call_error(new_invalid_args_error, "function <String.concat> take 2 arguments");
+    if (!IS_STRING(argv[0]) || !IS_STRING(argv[1])) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
 
     TStr* v0 = AS_STRING(argv[0]);
     TStr* v1 = AS_STRING(argv[1]);
@@ -113,7 +110,7 @@ TValue to_string_string(TValue* argv, size_t argc) {
 
 TValue format_string(TValue* argv, size_t argc) {
     if (argc < 1) return NIL;
-    if (!IS_STRING(argv[0])) TYPE_ERROR("function <String.format> take type <String> as 1st arguments");
+    if (!IS_STRING(argv[0])) call_error(new_type_error, "function <String.format> take type <String> as 1st arguments");
 
     char specifiers[] = { 's', 'f', 'e', 'g' };
 
@@ -128,7 +125,7 @@ TValue format_string(TValue* argv, size_t argc) {
 
     for (int i = 0; i < ptr->len; i++) {
         if (ptr->str[i] == '%') {
-            if (current_format >= argc - 1) INVALID_ARGS_ERROR("not enough arguments in function <String.format>");
+            if (current_format >= argc - 1) call_error(new_invalid_args_error, "not enough arguments in function <String.format>");
             int start_i = i;
             
             format_speicifers[current_format].flags = 0;
@@ -155,7 +152,7 @@ TValue format_string(TValue* argv, size_t argc) {
             }
 
             for (int j = 0; j < sizeof(specifiers); j++) if (ptr->str[i] == specifiers[j]) format_speicifers[current_format].specifier = ptr->str[i];
-            if (!format_speicifers[current_format].specifier) INVALID_ARGS_ERROR("Invalid format specifier in function <String.format>");
+            if (!format_speicifers[current_format].specifier) call_error(new_invalid_args_error, "Invalid format specifier in function <String.format>");
 
             format_lenghts[current_format] = i - start_i + 1;
             base_size++;
@@ -169,7 +166,7 @@ TValue format_string(TValue* argv, size_t argc) {
             case 'f': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
             case 'e': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
             case 'g': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
-            default: INVALID_ARGS_ERROR("Invalid format specifier in function <String.format>");
+            default: call_error(new_invalid_args_error, "Invalid format specifier in function <String.format>");
         }
     }
 
@@ -223,7 +220,7 @@ inline TValue make_fstring(char* str) {
 }
 
 TValue format_s(FormatInfos infos, TValue value) {
-    if (!IS_STRING(value)) TYPE_ERROR("Excepted type <String> in function <String.format>.\n\tInvalid format specifier '\%s'");
+    if (!IS_STRING(value)) call_error(new_type_error, "Excepted type <String> in function <String.format>.\n\tInvalid format specifier '\%s'");
     
     TStr* ptr = AS_STRING(value);
     size_t precision = infos.precision + 1 ? CLAMP(infos.precision, 0, ptr->len) : ptr->len;
@@ -243,7 +240,7 @@ TValue format_s(FormatInfos infos, TValue value) {
 }
 
 TValue format_n(FormatInfos infos, TValue value) {
-    if (!IS_NUM(value)) TYPE_ERROR("Excepted type <Number> in function <String.format>.\n\tInvalid format specifier '\%f' || '\%e' || '\%g'");
+    if (!IS_NUM(value)) call_error(new_type_error, "Excepted type <Number> in function <String.format>.\n\tInvalid format specifier '\%f' || '\%e' || '\%g'");
 
     size_t precision = infos.precision + 1 ? MAX(infos.precision, 0) : 6;
 
