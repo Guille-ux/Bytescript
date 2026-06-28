@@ -5,6 +5,7 @@
 #include "Values/namespaces.h"
 #include "Values/tutils.h"
 #include "Globals/table.h"
+#include "Globals/string.h"
 #include "Globals/tError.h"
 
 #define NEW_METHOD(name, classname)     { make_fstring(snake_to_camel_case((char[]){ #name }, sizeof(#name))), new_cfunc((CFunc)name##_##classname) }

@@ -8,12 +8,18 @@ TValue new_class(TValue inherited[], TValue fields[], size_t inherited_count, si
     TClass* nclass = malloc(sizeof(TClass) + BSIZE(inherited_count) + BSIZE(field_count));
     nclass->inherited_count = inherited_count;
     memcpy(nclass->fields, inherited, BSIZE(inherited_count));
-    memcpy(nclass->fields + inherited_count, fields, BSIZE(inherited_count));
+    memcpy(nclass->fields + inherited_count, fields, BSIZE(field_count));
 
     return CLS_TO_TVALUE(nclass);
 }
 
-TValue new_object(TClass* clss) {
+TValue new_object(TValue cls, CFunc constructor, size_t fields_count) {
+    TObject* obj = malloc(sizeof(TObject) + BSIZE(fields_count));
+    TValue tobj = OBJ_TO_TVALUE(obj);
+    obj->class = AS_CLASS(cls);
+
+    if (constructor) constructor(&tobj, 1);
+    return tobj;
 
 }
 
