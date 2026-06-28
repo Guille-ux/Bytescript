@@ -6,11 +6,25 @@ TValue numType;
 TValue strType;
 TValue tableType;
 TValue funcType;
+TValue NumberType;
+TValue StringType;
+TValue TableType;
 
 TValue num_map;
 TValue str_map;
 TValue table_map;
 TValue func_map;
+
+TValue* typeTable[][2] = {
+    { &varType, NULL },
+    { &numType, &num_map },
+    { &NumberType, &num_map },
+    { &strType, &str_map },
+    { &StringType, &str_map },
+    { &tableType, &table_map },
+    { &TableType, &table_map },
+    { &funcType, &func_map }
+};
 
 TValue operation_methods;
 TValue unary_operation_methods;
@@ -22,9 +36,12 @@ void initialize_type_specifiers() {
     strType     = make_fstring("str");
     tableType   = make_fstring("table");
     funcType    = make_fstring("func");
+    NumberType  = make_fstring("Number");
+    StringType  = make_fstring("String");
+    TableType  = make_fstring("Table");
 
     num_map = new_table(NULL, 0);
-    TValue num_descriptor = make_method_descriptor((TValue[1]){ numType }, numType, 1);
+    TValue num_descriptor = make_method_descriptor((TValue[1]){ NumberType }, NumberType, 1);
     add_value_to_hashtable(num_map, make_fstring("__add"), num_descriptor);
     add_value_to_hashtable(num_map, make_fstring("__sub"), num_descriptor);
     add_value_to_hashtable(num_map, make_fstring("__mul"), num_descriptor);
@@ -50,14 +67,17 @@ void initialize_type_specifiers() {
     add_value_to_hashtable(num_map, make_fstring("__not"), num_descriptor);
 
     str_map = new_table(NULL, 0);
-    TValue str_descriptor = make_method_descriptor((TValue[1]){ strType }, strType, 1);
+    TValue str_descriptor = make_method_descriptor((TValue[1]){ StringType }, StringType, 1);
     add_value_to_hashtable(num_map, make_fstring("__concat"), str_descriptor);
 
     table_map = new_table(NULL, 0);
     add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType }, varType, 2 ));
 
     func_map = new_table(NULL, 0);
+    return initialize_operation_methods();
+}
 
+void initialize_operation_methods() {
     unary_operation_methods = new_table(NULL, 0);
     add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_MINUS), make_fstring("__unm"));
     add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_NOT), make_fstring("__not"));
@@ -87,12 +107,13 @@ void initialize_type_specifiers() {
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_RSHIFT), make_fstring("__rshift"));
 }
 
-int is_native_type_specifier(TValue value) {
-    return  EQUAL(value, varType)   ||
-            EQUAL(value, numType)   ||
-            EQUAL(value, strType)   ||
-            EQUAL(value, tableType) ||
-            EQUAL(value, funcType);
+int is_native_type_specifier(TValue* value) {
+    if (EQUAL(*value, numType)) *value = NumberType;
+    else if (EQUAL(*value, strType)) *value = StringType;
+    else if (EQUAL(*value, tableType)) *value = TableType;
+
+    for (int i = 0; i < sizeof(typeTable) / sizeof(typeTable[0]); i++) if (EQUAL(*value, *typeTable[i][0])) return 1;
+    return 0;
 }
 
 TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t argc) {

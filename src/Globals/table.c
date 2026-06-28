@@ -8,7 +8,7 @@
 
 
 TValue initialize_table_class() {
-    TValue Table_methods[][2] = {
+    TValue Table_fields[][2] = {
         NEW_METHOD(new, table),
         NEW_METHOD(free, table),
         NEW_METHOD(pop, table),
@@ -31,17 +31,8 @@ TValue initialize_table_class() {
         NEW_METHOD(buckets, table)
     };
 
-    size_t fields_size = sizeof(Table_methods) / sizeof(Table_methods[0]);
-    TValue Table_map = new_table(NULL, 0);
-    TValue Table_fields[fields_size];
-
-    append_methods_to_map(Table_map, Table_methods, Table_fields, fields_size);
-
-    TValue Table_class = new_class(NULL, Table_fields, 0, fields_size);
-    TValue Table_namespace = new_namespace_entry(Table_class, AS_TABLE(Table_map));
-
-    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("Table"), Table_namespace);
-    return Table_class;
+    size_t fields_size = sizeof(Table_fields) / sizeof(Table_fields[0]);
+    return global_class_from_fields(Table_fields, fields_size, "Table");
 }
 
 

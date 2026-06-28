@@ -5,4 +5,8 @@
 #include "Globals/globals.h"
 
 
+TValue initialize_io_class();
+
+TValue open_IO(TValue* argv, size_t argc);
+
 #endif

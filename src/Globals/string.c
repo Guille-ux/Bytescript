@@ -14,23 +14,14 @@ char valid_flags[] = { '0', ' ', '+', '-' };
 TValue initialize_string_class() {
     string_cache = AS_TABLE(new_table(NULL, 0));
 
-    TValue String_methods[][2] = {
+    TValue String_fields[][2] = {
         NEW_METHOD(compare, string),
         NEW_METHOD(concat, string),
         NEW_METHOD(to_string, string)
     };
 
-    size_t fields_size = sizeof(String_methods) / sizeof(String_methods[0]);
-    TValue String_map = new_table(NULL, 0);
-    TValue String_fields[fields_size];
-
-    append_methods_to_map(String_map, String_methods, String_fields, fields_size);
-
-    TValue String_class = new_class(NULL, String_fields, 0, fields_size);
-    TValue String_namespace = new_namespace_entry(String_class, AS_TABLE(String_map));
-
-    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("String"), String_namespace);
-    return String_class;
+    size_t fields_size = sizeof(String_fields) / sizeof(String_fields[0]);
+    return global_class_from_fields(String_fields, fields_size, "String");
 }
 
 

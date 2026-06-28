@@ -18,6 +18,6 @@ TValue print(TValue* argv, size_t argc);
 TValue tfree(TValue* argv, size_t argc);
 
 void initialize_globals();
-void append_methods_to_map(TValue map, TValue methods[][2], TValue fields[], size_t fields_size);
+void append_methods_to_map(TValue map, TValue fields[][2], TValue fieldvalues[], size_t fields_size);
 
 #endif

@@ -1,2 +1,2 @@
 num a = -5 + 20
-num b = a + 1
+Number b = a + 1

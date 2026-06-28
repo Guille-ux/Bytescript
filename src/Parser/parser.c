@@ -487,6 +487,6 @@ static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value
 
 TValue type_specifier(ParseResult* res) {
     if (res->tokens->tt != TT_KWORD && res->tokens->tt != TT_IDENTIFIER) return NIL;
-    if (is_native_type_specifier(res->tokens->value) ||
+    if (is_native_type_specifier(&res->tokens->value) ||
         (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens++->value;
 }

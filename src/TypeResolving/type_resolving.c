@@ -77,7 +77,7 @@ TValue resolve_type_var_declare(Node* node, TypesContext* context) {
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
     if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
-        TValue error_message = make_fstring("Cannot assign value of type '%s' to variable of type '%s'");
+        TValue error_message = make_fstring("Cannot assign value of type <%s> to variable of type <%s>");
         error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
 
         call_error(new_type_error, AS_STRING(error_message)->str);
@@ -92,7 +92,7 @@ TValue resolve_type_assignement(Node* node, TypesContext* context) {
     TValue lvalue_type = resolve_type(node->node.AssignementNode.lvalue, context);
     if (EQUAL(lvalue_type, varType) || EQUAL(return_type, varType)) return varType;
     if (!EQUAL(lvalue_type, return_type)) {
-        TValue error_message = make_fstring("Cannot assign value of type '%s' to lvalue of type '%s'");
+        TValue error_message = make_fstring("Cannot assign value of type <%s> to lvalue of type <%s>");
         error_message = format_string((TValue[3]){ error_message, return_type, lvalue_type }, 3);
 
         call_error(new_type_error, AS_STRING(error_message)->str);
@@ -118,7 +118,7 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     if (ldescPtr && in_table(ldescPtr->arg_types, rtype)) return ldescPtr->return_type;
     if (rdescPtr && in_table(rdescPtr->arg_types, ltype)) return rdescPtr->return_type;
 
-    TValue error_message = make_fstring("Cannot proceed to operation : %s with types : '%s' and '%s'");
+    TValue error_message = make_fstring("Cannot proceed to operation : %s with types : <%s> and <%s>");
     error_message = format_string((TValue[4]){ error_message, op, ltype, rtype }, 4);
     
     call_error(new_type_error, AS_STRING(error_message)->str);
@@ -135,7 +135,7 @@ TValue resolve_type_uni_op(Node* node, TypesContext* context) {
 
     if (descPtr && in_table(descPtr->arg_types, return_type)) return descPtr->return_type;
 
-    TValue error_message = make_fstring("Cannot proceed to unary operation : %s with type : '%s'");
+    TValue error_message = make_fstring("Cannot proceed to unary operation : %s with type : <%s>");
     error_message = format_string((TValue[3]){ error_message, op, return_type }, 3);
     
     call_error(new_type_error, AS_STRING(error_message)->str);
@@ -145,7 +145,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
     TValue target_type = resolve_type(node->node.CallNode.target, context);
     if (EQUAL(target_type, varType)) return varType;
     if (!EQUAL(target_type, funcType)) {
-        TValue error_message = make_fstring("Cannot call value of type '%s'");
+        TValue error_message = make_fstring("Cannot call value of type <%s>");
         error_message = format_string((TValue[3]){ error_message, target_type }, 2);
 
         call_error(new_type_error, AS_STRING(error_message)->str);
@@ -158,7 +158,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
     TValue entry = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
     if (EQUAL(entry, NIL)) {
-        TValue error_message = make_fstring("Unknwon identifier : '%s'");
+        TValue error_message = make_fstring("Unknwon identifier : <%s>");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
 
         call_error(new_unknown_identifier_error, AS_STRING(error_message)->str);
@@ -169,11 +169,11 @@ TValue resolve_type_var_access(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_number(Node* node, TypesContext* context) {
-    return (node->type = make_fstring("num"));
+    return (node->type = make_fstring("Number"));
 }
 
 TValue resolve_type_string(Node* node, TypesContext* context) {
-    return (node->type = make_fstring("str"));
+    return (node->type = make_fstring("String"));
 }
 
 TValue resolve_type_allocation(Node* node, TypesContext* context) {
@@ -279,6 +279,9 @@ TypesContext* new_resolve_context() {
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), tableType, table_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), NumberType, num_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), StringType, str_map);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), TableType, table_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, func_map);
 
     return context;

@@ -128,8 +128,8 @@ typedef TValue* TStack;
 #define NAN_AS_TVALUE(v)((TValue){ .nan = (v) })
 #define NUM_AS_TVALUE(v)((TValue){ .num = (v) })
 
-#define AS_TVALUE(v)    (v.nan)
-#define AS_NUM(v)       (v.num)
+#define AS_TVALUE(v)    ((v).nan)
+#define AS_NUM(v)       ((v).num)
 
 #define TYPE_MASK       (((0x01ULL << TYPE_AMOUNT) - 1) << TYPE_SHIFT)
 #define TYPE_STRING     (0x01ULL << TYPE_SHIFT)

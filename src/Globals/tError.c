@@ -19,15 +19,7 @@ TValue initialize_error_class() {
     };
 
     size_t fields_size = sizeof(Error_fields) / sizeof(Error_fields[0]);
-    TValue Error_Map = new_table(NULL, 0);
-    TValue Error_fieldvalues[fields_size];
-
-    append_methods_to_map(Error_Map, Error_fields, Error_fieldvalues, fields_size);
-
-    Error_class = new_class(NULL, Error_fieldvalues, 0, fields_size);
-    TValue Error_namespace = new_namespace_entry(Error_class, AS_TABLE(Error_Map));
-
-    add_value_to_hashtable(TBL_TO_TVALUE(globals_namespace), make_fstring("Error"), Error_namespace);
+    Error_class = global_class_from_fields(Error_fields, fields_size, "Error");
 
     TypeError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_type_error) }, 1, 1);
     IndexError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_index_error) }, 1, 1);
