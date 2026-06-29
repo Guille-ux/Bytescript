@@ -15,7 +15,6 @@ TValue initialize_io_class() {
 TValue open_IO(TValue* argv, size_t argc) {
     STRICT_MIN_ARGC(2, "IO.open")
 
-    TValue self = argv[0];
     TValue filename = argv[1];
     TValue openmode = argc > 2 ? argv[3] : make_fstring("r");
 

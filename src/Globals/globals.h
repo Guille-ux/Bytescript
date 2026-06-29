@@ -11,7 +11,7 @@
 #define NEW_METHOD(name, classname)     { make_fstring(snake_to_camel_case((char[]){ #name }, sizeof(#name))), new_cfunc((CFunc)name##_##classname) }
 #define NEW_FIELD(name, value)          { make_fstring(snake_to_camel_case((char[]){ name }, sizeof(name))), value }
 #define MIN_ARGC(n)                     { if (argc < n) return NIL; }
-#define STRICT_MIN_ARGC(n, fname)       { if (argc < n) return new_error((TValue[2]){ InvalidArgsError, make_fstring("function <" fname "> take " #n " arguments") }, 2); }
+#define STRICT_MIN_ARGC(n, fname)       { if (argc < n) call_error(new_invalid_args_error, "function <" fname "> take " #n " arguments"); }
 
 extern TTable* globals_namespace;
 

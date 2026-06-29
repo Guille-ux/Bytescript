@@ -14,7 +14,7 @@ extern TCDataType FileData_Type, *FileDataType;
 extern TValue File_class;
 TValue initialize_file_class();
 
-TValue reads_file(TValue* argv, size_t argc);
+TValue read_file(TValue* argv, size_t argc);
 TValue write_file(TValue* argv, size_t argc);
 
 TValue new_filedata(FILE* pfile);
