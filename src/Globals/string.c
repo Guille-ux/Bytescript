@@ -40,7 +40,7 @@ TValue compare_string(TValue* argv, size_t argc) {
 }
 
 TValue concat_string(TValue* argv, size_t argc) {
-    if (argc != 2) call_error(new_invalid_args_error, "function <String.concat> take 2 arguments");
+    STRICT_MIN_ARGC(2, "function <String.concat> take 2 arguments")
     if (!IS_STRING(argv[0]) || !IS_STRING(argv[1])) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
 
     TStr* v0 = AS_STRING(argv[0]);
@@ -49,7 +49,7 @@ TValue concat_string(TValue* argv, size_t argc) {
     TStr* new = malloc(sizeof(TStr) + v0->len + v1->len + 1);
     strcpy(new->str, v0->str);
     strcat(new->str, v1->str);
-    new->len = sizeof(TStr) + v0->len + v1->len;
+    new->len = v0->len + v1->len;
     new->str[new->len] = '\0';
 
     return cache_string(new);

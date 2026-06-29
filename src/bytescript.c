@@ -29,21 +29,16 @@ int main(int argc, char* argv[]) {
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
 
-    printf("lex\n");
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
 
-    printf("parse\n");
     Node* ast = parse(tokens, byte_args[filename]);
 
-    printf("typu\n");
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
 
-    printf("fold\n");
     fold(ast);
     
-    printf("compile\n");
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 

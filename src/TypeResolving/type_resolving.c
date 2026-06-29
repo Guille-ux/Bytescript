@@ -74,7 +74,6 @@ TValue resolve_type_continue(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_declare(Node* node, TypesContext* context) {
-    printf("why\n");
     TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
@@ -85,9 +84,7 @@ TValue resolve_type_var_declare(Node* node, TypesContext* context) {
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-    printf("here");
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, var_type);
-    printf(":(");
     return var_type;
 }
 
