@@ -1,6 +1,7 @@
 #include "Compiler/constant_folding.h"
 #include "Globals/string.h"
 #include <math.h>
+#include <stdio.h>
 
 
 FoldingFunction fold_functions[] = {
@@ -23,7 +24,8 @@ FoldingFunction fold_functions[] = {
     [NT_WHILE]          = fold_while_loop,
     [NT_REPEAT]         = fold_repeat_loop,
     [NT_IMPORT]         = fold_import,
-    [NT_FUNCDEF]        = fold_func_def
+    [NT_FUNCDEF]        = fold_func_def,
+    [NT_CLASSDEF]       = fold_class_def
 };
 
 
@@ -202,5 +204,10 @@ TValue fold_import(Node* node) {
 
 TValue fold_func_def(Node* node) {
     fold(node->node.funcDefNode.statements);
+    return (node->cc = false, NIL);
+}
+
+TValue fold_class_def(Node* node) {
+    fold(node->node.classDefNode.statements);
     return (node->cc = false, NIL);
 }

@@ -37,6 +37,7 @@ Node* while_expr(ParseResult* res);
 Node* repeat_expr(ParseResult* res);
 Node* import_expr(ParseResult* res);
 Node* func_expr(ParseResult* res);
+Node* class_expr(ParseResult* res);
 Node* numerics(ParseResult* res);
 Node* postfix(ParseResult* res);
 Node* power(ParseResult* res);
@@ -48,7 +49,10 @@ Node* logical(ParseResult* res);
 Node* expr(ParseResult* res);
 Node* statement(ParseResult* res);
 Node* statements(ParseResult* res);
-Node* get_statements(ParseResult* res, Token stopToken);
+Node* toplvl_statement(ParseResult* res);
+Node* main_parse(ParseResult* res);
+
+Node* get_parsed(ParseFunc func, ParseResult* res, Token stopToken);
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count);
 static inline ParseResult new_res(Token* tokens);

@@ -75,7 +75,7 @@ Node* parse(Token* tokens, char filename[]) {
     init_operators();
     ParseResult res = new_res(tokens);
 
-    Node* ast = statements(&res);
+    Node* ast = main_parse(&res);
     if (res.err_details != NULL) call_error(new_syntax_error, res.err_details);
     return ast;
 }
@@ -107,7 +107,7 @@ Node* if_expr(ParseResult* res) {
 
         Node* condition = expr(res);
         EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'then') EXPECTED", NULL, "then"))
-        Node* thenStatements = get_statements(res, ELSEIF_TOKEN);
+        Node* thenStatements = get_parsed(statement, res, ELSEIF_TOKEN);
         
         append_to_node_array(&cases, condition);
         append_to_node_array(&stments, thenStatements);
@@ -115,7 +115,7 @@ Node* if_expr(ParseResult* res) {
 
     if (match_keyword(*res->tokens, "else")) {
         res->tokens++;
-        Node* thenStatements = get_statements(res, END_TOKEN);
+        Node* thenStatements = get_parsed(statement, res, END_TOKEN);
         append_to_node_array(&stments, thenStatements);
     }
 
@@ -147,7 +147,7 @@ Node* for_expr(ParseResult* res) {
             else (stepValue = new_node(NT_NUMBER))->node.NumberNode.num = NUM_AS_TVALUE(1);
 
             EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
-            Node* stments = get_statements(res, END_TOKEN);
+            Node* stments = get_parsed(statement, res, END_TOKEN);
 
             Node* nfor_node = new_node(NT_NFOR);
             nfor_node->node.nForNode.identifier = i;
@@ -167,7 +167,7 @@ Node* for_expr(ParseResult* res) {
 
             Node* target = expr(res);
             EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
-            Node* stments = get_statements(res, END_TOKEN);
+            Node* stments = get_parsed(statement, res, END_TOKEN);
 
             Node* gfor_node = new_node(NT_GFOR);
             gfor_node->node.gForNode.identifiers[0] = i;
@@ -191,7 +191,7 @@ Node* while_expr(ParseResult* res) {
 
     Node* condition = expr(res);
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'repeat') EXPECTED", NULL, "repeat"))
-    Node* stments = get_statements(res, END_TOKEN);
+    Node* stments = get_parsed(statement, res, END_TOKEN);
 
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     Node* while_node = new_node(NT_WHILE);
@@ -204,7 +204,7 @@ Node* while_expr(ParseResult* res) {
 Node* repeat_expr(ParseResult* res) {
     res->tokens++;
 
-    Node* stments = get_statements(res, WHILE_TOKEN);
+    Node* stments = get_parsed(statement, res, WHILE_TOKEN);
 
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'while') EXPECTED", NULL, "while"))
     Node* condition = expr(res);
@@ -263,12 +263,37 @@ Node* func_expr(ParseResult* res) {
     }
 
     EXPECTED(expect(res, TT_RPAR, "(LPAR : ')') EXPECTED", NULL, NULL))
-    Node* stments = get_statements(res, END_TOKEN);
+    Node* stments = get_parsed(statement, res, END_TOKEN);
     func_node->node.funcDefNode.statements = stments;
 
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     return func_node;
+}
+
+Node* class_expr(ParseResult* res) {
+    res->tokens++;
+
+    Node* class_node = new_node(NT_CLASSDEF);
+    EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &class_node->node.classDefNode.name, NULL))
+
+    class_node->node.classDefNode.inherited.next = NULL;
+    class_node->node.classDefNode.inherited.value = NIL;
+    if (res->tokens->tt == TT_ARROW) {
+        while (res->tokens->tt == TT_IDENTIFIER) {
+            res->tokens++;
+
+            struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
+            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
+
+            new->next =  class_node->node.classDefNode.inherited.next;
+            class_node->node.classDefNode.inherited.next = new;
+
+            if (res->tokens->tt != TT_SEPARATOR) break; else res->tokens++;
+        }
+    }
+
+    class_node->node.classDefNode.statements = main_parse(res);
 }
 
 Node* numerics(ParseResult* res) {
@@ -419,16 +444,24 @@ Node* statement(ParseResult* res) {
     return expr(res);
 }
 
-Node* statements(ParseResult* res) { return get_statements(res, EOF_TOKEN); }
+Node* statements(ParseResult* res) { return get_parsed(statement, res, EOF_TOKEN); }
 
-Node* get_statements(ParseResult* res, Token stopToken) {
+Node* toplvl_statement(ParseResult* res) {
+    if (match_keyword(*res->tokens, "class")) return class_expr(res);
+    return statement(res);
+}
+
+Node* main_parse(ParseResult* res) { return get_parsed(toplvl_statement, res, EOF_TOKEN); }
+
+
+Node* get_parsed(ParseFunc func, ParseResult* res, Token stopToken) {
     Node* node = new_node(NT_STATEMENTS);
     NodeArray statementNodes = make_node_array();
 
     clean_newlines(&res->tokens, &res->adv_count);
     while (res->tokens->tt != TT_EOF && !match_token(*res->tokens, stopToken)) {
         Token* pre = res->tokens;
-        Node* stmnt = statement(res);
+        Node* stmnt = func(res);
 
         if (stmnt == NULL || res->err_details != NULL) { if (pre == res->tokens) res->err_details = NULL; break; }
         append_to_node_array(&statementNodes, stmnt);
@@ -438,7 +471,6 @@ Node* get_statements(ParseResult* res, Token stopToken) {
     node->node.StatementsNode = statementNodes;
     return node;
 }
-
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count) { while ( (**tokens).tt == TT_NEWLINE && ++*adv_count ) ++*tokens; }
 static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err_details = NULL, .adv_count = 0, .tokens = tokens, .user_types = AS_TABLE(new_table(NULL, 0)) }; }

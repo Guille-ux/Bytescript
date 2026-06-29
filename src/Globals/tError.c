@@ -10,7 +10,8 @@ TValue StackOverflowError;
 TValue IncorrectLvalueError;
 TValue FailedAllocationError;
 TValue UnknownIdentifierError;
-extern TValue UnidentifiedCharacterError;
+TValue UnidentifiedCharacterError;
+TValue InvalidIdentifierError;
 
 
 TValue initialize_error_class() {
@@ -29,6 +30,7 @@ TValue initialize_error_class() {
     IncorrectLvalueError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_incorrect_lvalue_error) }, 1, 1);
     FailedAllocationError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_failed_allocation_error) }, 1, 1);
     UnknownIdentifierError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_unknown_identifier_error) }, 1, 1);
+    InvalidIdentifierError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_invalid_identifier_error) }, 1, 1);
     return Error_class;
 }
 
@@ -80,6 +82,11 @@ TValue new_incorrect_lvalue_error(TValue* argv, size_t argc) {
 TValue new_failed_allocation_error(TValue* argv, size_t argc) {
     STRICT_MIN_ARGC(2, "FailedAllocationError.new");
     new_error((TValue[3]){ Error_class, make_fstring("FailedAllocationError"), argv[1] }, 3);
+}
+
+TValue new_invalid_identifier_error(TValue* argv, size_t argc) {
+    STRICT_MIN_ARGC(2, "InvalidIdentifierError.new");
+    new_error((TValue[3]){ Error_class, make_fstring("InvalidIdentifierError"), argv[1] }, 3);
 }
 
 TValue new_unknown_identifier_error(TValue* argv, size_t argc) {

@@ -25,7 +25,8 @@ TypeResolver type_resolvers[] = {
     [NT_WHILE]          = resolve_type_while_loop,
     [NT_REPEAT]         = resolve_type_repeat_loop,
     [NT_IMPORT]         = resolve_type_import,
-    [NT_FUNCDEF]        = resolve_type_func_def
+    [NT_FUNCDEF]        = resolve_type_func_def,
+    [NT_CLASSDEF]       = resolve_type_class_def
 };
 
 TValue resolve_type(Node* node, TypesContext* context) {
@@ -41,7 +42,7 @@ TValue resolve_type_statements(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_return(Node* node, TypesContext* context) {
-    TValue return_type = context->return_types.next->value;
+    TValue return_type = context->return_type;
     if (node->node.ReturnNode.len == 0) return (node->type = varType);
     if (node->node.ReturnNode.len == 1) {
         TValue return_value = resolve_type(node->node.ReturnNode.nodes[0], context);
@@ -73,6 +74,7 @@ TValue resolve_type_continue(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_declare(Node* node, TypesContext* context) {
+    printf("why\n");
     TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
@@ -83,7 +85,9 @@ TValue resolve_type_var_declare(Node* node, TypesContext* context) {
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, new_namespace_entry(var_type, NULL));
+    printf("here");
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, var_type);
+    printf(":(");
     return var_type;
 }
 
@@ -156,16 +160,15 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
-    TValue entry = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
-    if (EQUAL(entry, NIL)) {
+    TValue var_type = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
+    if (EQUAL(var_type, NIL)) {
         TValue error_message = make_fstring("Unknwon identifier : <%s>");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
 
         call_error(new_unknown_identifier_error, AS_STRING(error_message)->str);
     }
 
-    NamespaceEntry* nm = as_namespace_entry(entry);
-    return (node->type = nm->value);
+    return (node->type = var_type);
 }
 
 TValue resolve_type_number(Node* node, TypesContext* context) {
@@ -252,29 +255,47 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_func_def(Node* node, TypesContext* context) {
+    TValue pre_return_type = context->return_type;
     TTable* id_namespace = context->id_namespace;
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
 
-    struct TValueLinkedList* return_type = malloc(sizeof(struct TValueLinkedList));
-    return_type->value = node->node.funcDefNode.type_specifier;
-    return_type->next = context->return_types.next;
-    context->return_types.next = return_type;
+    context->return_type = node->node.funcDefNode.type_specifier;
 
     resolve_type(node->node.funcDefNode.statements, context);
     context->id_namespace = id_namespace;
-    context->return_types.next = context->return_types.next->next;
+    context->return_type = pre_return_type;
 
-    free(return_type);
     return (node->type = funcType);
+}
+
+TValue resolve_type_class_def(Node* node, TypesContext* context) {
+    TStr* name = AS_STRING(node->node.classDefNode.name);
+    context->current_class = node->node.classDefNode.name;
+    if (name->str[0] == '_' && name->str[1] == '_') {
+        TValue error_message = make_fstring("Invalid class name <%s>, class name cannot start with '__'");
+        error_message = format_string((TValue[2]){ error_message, context->current_class }, 2);
+
+        call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
+    }
+
+    TValue dunder = make_fstring("__");
+    TValue dunder_class = concat_string((TValue[2]){ dunder, context->current_class }, 2);
+
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), context->current_class, dunder_class);
+
+    resolve_type(node->node.classDefNode.statements, context);
+    return (node->type = dunder_class);
 }
 
 
 TypesContext* new_resolve_context() {
     TypesContext* context = malloc(sizeof(TypesContext));
-    context->return_types.next = malloc(sizeof(struct TValueLinkedList));
+    context->current_class = NIL;
+    context->return_type = varType;
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
-    context->return_types.next->value = varType;
+
+    TValue dunder = make_fstring("__");
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_map);
@@ -283,6 +304,8 @@ TypesContext* new_resolve_context() {
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), StringType, str_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), TableType, table_map);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, func_map);
+
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), NumberType, concat_string((TValue[2]){ dunder, NumberType }, 2));
 
     return context;
 }

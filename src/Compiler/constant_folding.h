@@ -26,5 +26,6 @@ TValue fold_while_loop(Node* node);
 TValue fold_repeat_loop(Node* node);
 TValue fold_import(Node* node);
 TValue fold_func_def(Node* node);
+TValue fold_class_def(Node* node);
 
 #endif

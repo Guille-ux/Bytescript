@@ -27,7 +27,8 @@ CompileFunction compiler_functions[] = {
     [NT_WHILE]          = compile_while_loop,
     [NT_REPEAT]         = compile_repeat_loop,
     [NT_IMPORT]         = compile_import,
-    [NT_FUNCDEF]        = compile_func_def
+    [NT_FUNCDEF]        = compile_func_def,
+    [NT_CLASSDEF]       = compile_class_def
 };
 
 
@@ -483,6 +484,9 @@ int compile_func_def(Node* node, Scope* context) {
     return idx;
 }
 
+int compile_class_def(Node* node, Scope* context) {
+    return 0;
+}
 
 
 Scope* new_scope() {

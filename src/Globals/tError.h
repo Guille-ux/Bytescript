@@ -13,6 +13,7 @@ extern TValue InvalidArgsError;
 extern TValue StackOverflowError;
 extern TValue IncorrectLvalueError;
 extern TValue FailedAllocationError;
+extern TValue InvalidIdentifierError;
 extern TValue UnknownIdentifierError;
 extern TValue UnidentifiedCharacterError;
 
@@ -25,6 +26,7 @@ TValue new_invalid_args_error(TValue* argv, size_t argc);
 TValue new_stack_overflow_error(TValue* argv, size_t argc);
 TValue new_incorrect_lvalue_error(TValue* argv, size_t argc);
 TValue new_failed_allocation_error(TValue* argv, size_t argc);
+TValue new_invalid_identifier_error(TValue* argv, size_t argc);
 TValue new_unknown_identifier_error(TValue* argv, size_t argc);
 TValue new_unidentified_character_error(TValue* argv, size_t argc);
 

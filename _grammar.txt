@@ -1,4 +1,9 @@
-statements :        NEWLINE* NEWLINE* (statement? NEWLINE+)*
+main :              NEWLINE* (toplvl-statement? NEWLINE+)*
+
+toplvl-statement :  class-expr
+                    statement
+
+statements :        NEWLINE* (statement? NEWLINE+)*
 
 statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
                     KEYWORD:"break"
@@ -81,6 +86,10 @@ func-expr :         KEYWORD:"func" (type-specifiers? IDENTIFIER)?
                     LPAR (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)? RPAR
                     statements
                     KEYWORD:"end"
+
+class-expr :        KEYWORD:"class" IDENTIFIER
+                    (ARROW IDENTIFIER (SEPARATOR IDENTIFIER)*)?
+                    main KEYWORD:"end"
 
 type-specifiers :   KEYWORD:"var"
                     KEYWORD:"num"

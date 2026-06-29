@@ -5,7 +5,8 @@
 #include "TypeResolving/type_specifiers.h"
 
 typedef struct {
-    struct TValueLinkedList return_types;
+    TValue current_class;
+    TValue return_type;
     TTable* type_namespace;
     TTable* id_namespace;
 } TypesContext;
@@ -35,6 +36,7 @@ TValue resolve_type_while_loop(Node* node, TypesContext* context);
 TValue resolve_type_repeat_loop(Node* node, TypesContext* context);
 TValue resolve_type_import(Node* node, TypesContext* context);
 TValue resolve_type_func_def(Node* node, TypesContext* context);
+TValue resolve_type_class_def(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);

@@ -28,6 +28,7 @@ typedef enum {
     NT_REPEAT,
     NT_IMPORT,
     NT_FUNCDEF,
+    NT_CLASSDEF,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -63,6 +64,7 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue identifier; } importNode;
         struct { TValue name; TValue type_specifier; struct TValueLinkedList args; Node* statements; } funcDefNode;
+        struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
     } node;
 } Node;
 
