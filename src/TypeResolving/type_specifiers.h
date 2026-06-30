@@ -34,5 +34,6 @@ void initialize_type_specifiers();
 void initialize_operation_methods();
 int is_native_type_specifier(TValue* value);
 TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t argc);
+MethodDescriptor* as_method_descriptor(TValue value);
 
 #endif

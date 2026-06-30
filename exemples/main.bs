@@ -1,5 +1,3 @@
-func Number a(Number b, Number c)
-    return b + c
-end
+class Idk
 
-a(5, 2)
+end

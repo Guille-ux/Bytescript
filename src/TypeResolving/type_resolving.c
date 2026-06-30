@@ -152,7 +152,27 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-    
+    if (node->node.CallNode.target->nt == NT_VAR_ACESS) {
+        TValue target_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.CallNode.target->node.VarAcess.name);
+        if (!IS_NIL(target_desc)) {
+            MethodDescriptor* desc = as_method_descriptor(target_desc);
+            TTable* args = AS_TABLE(desc->arg_types);
+
+            if (args->array.len < node->node.CallNode.args.len) call_error(new_invalid_args_error, "Called function with too many args");
+            for (int i = 0; i < args->array.len; i++) {
+                Node* cur_arg = node->node.CallNode.args.nodes[i];
+                TValue cur_type = resolve_type(cur_arg, context);
+                TValue expected_arg = args->array.array[args->array.len - i - 1];
+
+                if (!EQUAL(expected_arg, cur_type) && !EQUAL(expected_arg, varType) && !EQUAL(cur_type, varType)) {
+                    TValue error_message = make_fstring("Passed argument of type <%s> when type <%s> was expected, in function <%s>");
+                    error_message = format_string((TValue[4]){ error_message, cur_type, expected_arg, node->node.CallNode.target->node.VarAcess.name }, 4);
+                    
+                    call_error(new_type_error, AS_STRING(error_message)->str);
+                }
+            }
+        }
+    }
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
@@ -259,9 +279,10 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     context->func_namespace = AS_TABLE(new_table(NULL, 0));
     context->return_type = node->node.funcDefNode.type_specifier;
 
+    int argc = 0;
     struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
     struct TValueLinkedList* arg_type = node->node.funcDefNode.arg_types.next;
-    for (; arg; (arg = arg->next, arg_type = arg_type->next)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg->value, arg_type->value);
+    for (; arg; (arg = arg->next, arg_type = arg_type->next)) { add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg->value, arg_type->value); argc++; }
 
     resolve_type(node->node.funcDefNode.statements, context);
     context->id_namespace = id_namespace;
@@ -269,8 +290,13 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     context->return_type = pre_return_type;
 
     if (!IS_NIL(node->node.funcDefNode.name)) {
+        TValue arg_list[argc];
+        struct TValueLinkedList* arg = node->node.funcDefNode.arg_types.next;
+
+        for (int i = 0; i < argc; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
+
         add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.funcDefNode.name, funcType);
-        add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.funcDefNode.name, node->node.funcDefNode.type_specifier);
+        add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.funcDefNode.name, make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc));
     }
 
     return (node->type = funcType);

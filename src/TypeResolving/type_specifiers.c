@@ -67,7 +67,7 @@ void initialize_type_specifiers() {
 
     str_map = new_table(NULL, 0);
     TValue str_descriptor = make_method_descriptor((TValue[1]){ StringType }, StringType, 1);
-    add_value_to_hashtable(num_map, make_fstring("__concat"), str_descriptor);
+    add_value_to_hashtable(str_map, make_fstring("__concat"), str_descriptor);
 
     table_map = new_table(NULL, 0);
     add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType }, varType, 2 ));
@@ -122,4 +122,11 @@ TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t arg
     res_descriptor->return_type = return_type;
 
     return CDT_TO_TVALUE(res_descriptor);
+}
+
+MethodDescriptor* as_method_descriptor(TValue value) {
+    TCData* data = AS_CDATA(value);
+    if (*data != MethodDescriptorType) call_error(new_type_error, "Failed to cast tvalue into function descriptor");
+
+    return (MethodDescriptor*)data;
 }
