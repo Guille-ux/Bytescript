@@ -27,6 +27,7 @@ typedef Node* (*ParseFunc)(ParseResult* res);
 
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2);
 static NodeArray separated(ParseResult* res, ParseFunc func, Token separator);
+static Node* call_like(Node* return_node, ParseResult* res, Node* num, NodeType nt);
 static Node* postfix_op(ParseResult* res, Node* num);
 
 Node* parse(Token* tokens, char filename[]);

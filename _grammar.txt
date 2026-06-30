@@ -36,7 +36,7 @@ power :             call ((POW) factor)*
 
 postfix :           numerics ( postfix_op )*
 
-postfix_op :        LPAR (expr (SEPARATOR expr)*)? RPAR
+postfix_op :        COLON? LPAR (expr (SEPARATOR expr)*)? RPAR
                     LSBRAC logical RSBRAC
                     DOT postfix
 

@@ -1,1 +1,5 @@
-Number a = 5
+func Number a(Number b, Number c)
+    return b + c
+end
+
+a(5, 2)

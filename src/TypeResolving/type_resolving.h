@@ -8,6 +8,7 @@ typedef struct {
     TValue current_class;
     TValue return_type;
     TTable* type_namespace;
+    TTable* func_namespace;
     TTable* id_namespace;
 } TypesContext;
 

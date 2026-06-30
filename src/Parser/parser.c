@@ -44,18 +44,29 @@ static NodeArray separated(ParseResult* res, ParseFunc func, Token separator) {
     return nda;
 }
 
-static Node* postfix_op(ParseResult* res, Node* num) {
-    switch (res->tokens->tt) {
-        case TT_LPAR: {
-            clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
-            NodeArray args =  separated(res, expr, SEPARATOR);
-            
-            EXPECTED(expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL))
-            Node* return_node = new_node(NT_CALL);
-            return_node->node.CallNode.args = args;
-            return_node->node.CallNode.target = num;
+static Node* call_like(Node* return_node, ParseResult* res, Node* num, NodeType nt) {
+    clean_newlines(&res->tokens, &res->adv_count);
+    NodeArray args =  separated(res, expr, SEPARATOR);
+    
+    EXPECTED(expect(res, TT_RPAR, "(RPAR : ')') EXPECTED", NULL, NULL))
+    return_node->nt = nt;
+    return_node->node.CallNode.args = args;
+    return_node->node.CallNode.target = num;
 
-            return return_node;
+    return return_node;
+}
+
+static Node* postfix_op(ParseResult* res, Node* num) {
+    Node* return_node = new_node(NT_PLACEHOLDER);
+
+    switch (res->tokens->tt) {
+        case TT_COLON: {
+            res->tokens++; EXPECTED(expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL))
+            return call_like(return_node, res, num, NT_SELFCALL);
+        }
+
+        case TT_LPAR: {
+            res->tokens++; return call_like(return_node, res, num, NT_CALL);
         }
 
         case TT_LSBRAC: {
@@ -237,29 +248,40 @@ Node* import_expr(ParseResult* res) {
 Node* func_expr(ParseResult* res) {
     res->tokens++;
 
+    TValue func_type = type_specifier(res);
+    if (IS_NIL(func_type)) func_type = varType; else res->tokens++;
+
     TValue func_name = NIL;
     if (res->tokens->tt == TT_IDENTIFIER) func_name = res->tokens++->value;
 
     EXPECTED(expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL))
     Node* func_node = new_node(NT_FUNCDEF);
     func_node->node.funcDefNode.name = func_name;
+    func_node->node.funcDefNode.type_specifier = func_type;
     func_node->node.funcDefNode.args.value = NIL;
     func_node->node.funcDefNode.args.next = NULL;
+    func_node->node.funcDefNode.arg_types.value = NIL;
+    func_node->node.funcDefNode.arg_types.next = NULL;
 
-    if (res->tokens->tt == TT_IDENTIFIER) {
-        func_node->node.funcDefNode.args.next = malloc(sizeof(struct TValueLinkedList));
-        func_node->node.funcDefNode.args.next->value = res->tokens++->value;
-        func_node->node.funcDefNode.args.next->next = NULL;
-    }
+    TValue arg_specifier;
+    if (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
+        while (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
+            if (!IS_NIL(arg_specifier)) res->tokens++;
+            else arg_specifier = varType;
 
-    while (res->tokens->tt == TT_SEPARATOR) {
-        res->tokens++;
+            struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
+            struct TValueLinkedList* new_type = malloc(sizeof(struct TValueLinkedList));
 
-        struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
-        EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
+            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
+            new_type->value = arg_specifier;
+            
+            new->next = func_node->node.funcDefNode.args.next;
+            new_type->next = func_node->node.funcDefNode.arg_types.next;
+            func_node->node.funcDefNode.args.next = new;
+            func_node->node.funcDefNode.arg_types.next = new_type;
 
-        new->next =  func_node->node.funcDefNode.args.next;
-        func_node->node.funcDefNode.args.next = new;
+            if (res->tokens->tt != TT_SEPARATOR) break; else res->tokens++;
+        }
     }
 
     EXPECTED(expect(res, TT_RPAR, "(LPAR : ')') EXPECTED", NULL, NULL))
@@ -281,19 +303,21 @@ Node* class_expr(ParseResult* res) {
     class_node->node.classDefNode.inherited.value = NIL;
     if (res->tokens->tt == TT_ARROW) {
         while (res->tokens->tt == TT_IDENTIFIER) {
-            res->tokens++;
-
             struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
-            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
 
+            new->value = res->tokens->value;
             new->next =  class_node->node.classDefNode.inherited.next;
             class_node->node.classDefNode.inherited.next = new;
 
-            if (res->tokens->tt != TT_SEPARATOR) break; else res->tokens++;
+            if (++(res->tokens)->tt != TT_SEPARATOR) break; else res->tokens++;
         }
     }
 
+    add_value_to_hashtable(TBL_TO_TVALUE(res->user_types), class_node->node.classDefNode.name, NUM_AS_TVALUE(1));
     class_node->node.classDefNode.statements = main_parse(res);
+
+    EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
+    return class_node;
 }
 
 Node* numerics(ParseResult* res) {
@@ -397,7 +421,7 @@ Node* expr(ParseResult* res) {
     TValue vartype;
 
     if (!IS_NIL((vartype = type_specifier(res)))) {
-        TValue var_name;
+        TValue var_name; res->tokens++;
         EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL))
         EXPECTED(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
 
@@ -514,11 +538,13 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
 static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
     if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err_details = expected;
     if (value != NULL) *value = res->tokens->value;
-    *res->tokens++;
+    res->tokens++;
 }
 
 TValue type_specifier(ParseResult* res) {
     if (res->tokens->tt != TT_KWORD && res->tokens->tt != TT_IDENTIFIER) return NIL;
     if (is_native_type_specifier(&res->tokens->value) ||
-        (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens++->value;
+        (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens->value;
+
+    return NIL;
 }

@@ -45,6 +45,7 @@ typedef enum {
     TT_SEPARATOR,
     TT_DOT,
     TT_ARROW,
+    TT_COLON,
     TT_NEWLINE,
     TT_UNDEF,
     TT_EOF

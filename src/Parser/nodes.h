@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 
-
 typedef enum {
     NT_STATEMENTS,
     NT_RETURN,
@@ -29,6 +28,7 @@ typedef enum {
     NT_IMPORT,
     NT_FUNCDEF,
     NT_CLASSDEF,
+    NT_SELFCALL,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -63,8 +63,9 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } whileNode;
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue identifier; } importNode;
-        struct { TValue name; TValue type_specifier; struct TValueLinkedList args; Node* statements; } funcDefNode;
+        struct { TValue name; TValue type_specifier; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; } funcDefNode;
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
+        struct { Node* target; NodeArray args; } SelfCallnode;
     } node;
 } Node;
 
@@ -101,6 +102,7 @@ static inline int node_equal(Node* node1, Node* node2) {
         case NT_UNI_OP: return  node1->node.UniOpNode.op.tt = node2->node.UniOpNode.op.tt &&
                                 node_equal(node1->node.UniOpNode.target, node2->node.UniOpNode.target);
 
+        case NT_SELFCALL:
         case NT_CALL: return 0;
         case NT_VAR_ACESS: return AS_TVALUE(node1->node.VarAcess.name) == AS_TVALUE(node2->node.VarAcess.name);
         case NT_NUMBER: return AS_TVALUE(node1->node.NumberNode.num) == AS_TVALUE(node2->node.NumberNode.num);

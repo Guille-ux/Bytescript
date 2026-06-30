@@ -47,7 +47,7 @@ TValue resolve_type_return(Node* node, TypesContext* context) {
     if (node->node.ReturnNode.len == 1) {
         TValue return_value = resolve_type(node->node.ReturnNode.nodes[0], context);
 
-        if (EQUAL(return_type, return_value)) { return (node->type = return_type); }
+        if (EQUAL(return_type, return_value) || EQUAL(return_value, varType) || EQUAL(return_type, varType)) { return (node->type = return_type); }
         else {
             TValue error_message = make_fstring("Tried returning value of type <%s> in function of type <%s>");
             error_message = format_string((TValue[3]){ error_message, return_value, return_type }, 3);
@@ -144,22 +144,21 @@ TValue resolve_type_uni_op(Node* node, TypesContext* context) {
 
 TValue resolve_type_call(Node* node, TypesContext* context) {
     TValue target_type = resolve_type(node->node.CallNode.target, context);
-    if (EQUAL(target_type, varType)) return varType;
-    if (!EQUAL(target_type, funcType)) {
+
+    if (!EQUAL(target_type, funcType) && !EQUAL(target_type, varType)) {
         TValue error_message = make_fstring("Cannot call value of type <%s>");
         error_message = format_string((TValue[3]){ error_message, target_type }, 2);
 
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-
-
+    
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
     TValue var_type = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
     if (EQUAL(var_type, NIL)) {
-        TValue error_message = make_fstring("Unknwon identifier : <%s>");
+        TValue error_message = make_fstring("Unknown identifier : '%s'");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
 
         call_error(new_unknown_identifier_error, AS_STRING(error_message)->str);
@@ -254,13 +253,25 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 TValue resolve_type_func_def(Node* node, TypesContext* context) {
     TValue pre_return_type = context->return_type;
     TTable* id_namespace = context->id_namespace;
-    context->id_namespace = AS_TABLE(new_table(NULL, 0));
+    TTable* func_namespace = context->func_namespace;
 
+    context->id_namespace = AS_TABLE(new_table(NULL, 0));
+    context->func_namespace = AS_TABLE(new_table(NULL, 0));
     context->return_type = node->node.funcDefNode.type_specifier;
+
+    struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
+    struct TValueLinkedList* arg_type = node->node.funcDefNode.arg_types.next;
+    for (; arg; (arg = arg->next, arg_type = arg_type->next)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg->value, arg_type->value);
 
     resolve_type(node->node.funcDefNode.statements, context);
     context->id_namespace = id_namespace;
+    context->func_namespace = func_namespace;
     context->return_type = pre_return_type;
+
+    if (!IS_NIL(node->node.funcDefNode.name)) {
+        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.funcDefNode.name, funcType);
+        add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.funcDefNode.name, node->node.funcDefNode.type_specifier);
+    }
 
     return (node->type = funcType);
 }
@@ -291,6 +302,7 @@ TypesContext* new_resolve_context() {
     context->return_type = varType;
     context->type_namespace = AS_TABLE(new_table(NULL, 0));
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
+    context->func_namespace = AS_TABLE(new_table(NULL, 0));
 
     TValue dunder = make_fstring("__");
 

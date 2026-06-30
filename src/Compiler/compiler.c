@@ -463,12 +463,9 @@ int compile_func_def(Node* node, Scope* context) {
     func_context->parent = context;
 
     struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
-    while (arg) {
+    for (; arg; arg = arg->next) {
         int r = register_first(func_context);
         append_symbol(func_context, arg->value, r);
-
-        struct TValueLinkedList* new = arg->next;
-        free(arg); arg = new;
     }
 
     compile(node->node.funcDefNode.statements, func_context);

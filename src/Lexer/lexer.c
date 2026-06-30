@@ -255,6 +255,11 @@ Token* make_tokens(char* text) {
                 break;
             }
 
+            case ':': {
+                emit_token(tp, TT_COLON, NIL);
+                break;
+            }
+
             case ';':
 
             case '\n': {

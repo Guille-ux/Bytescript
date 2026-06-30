@@ -23,7 +23,6 @@ TValue* typeTable[][2] = {
     { &StringType, &str_map },
     { &tableType, &table_map },
     { &TableType, &table_map },
-    { &funcType, &func_map }
 };
 
 TValue operation_methods;
