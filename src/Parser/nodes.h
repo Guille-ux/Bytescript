@@ -65,8 +65,8 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } whileNode;
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue identifier; } importNode;
-        struct { TValue name; TValue type_specifier; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; } funcDefNode;
-        struct { TValue name; TValue type_specifier; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; TValue class; } methodDefNode;
+        struct { TValue name; TValue type_specifier; TValue modifiers; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; } funcDefNode;
+        struct { TValue name; TValue type_specifier; TValue modifiers; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; TValue class; } methodDefNode;
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
         struct { Node* target; NodeArray args; TValue name; } SelfCallnode;
         struct { Node* value; TValue var_name; TValue type_specifier; } SelfDeclarenode;
@@ -115,6 +115,5 @@ static inline int node_equal(Node* node1, Node* node2) {
 
     return 0;
 }
-
 
 #endif

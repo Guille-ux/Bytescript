@@ -127,10 +127,10 @@ TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t arg
     return CDT_TO_TVALUE(res_descriptor);
 }
 
-TValue make_class_descriptor(TValue map) {
+TValue make_class_descriptor(TValue func_map, TValue id_map) {
     ClassDescriptor* res_descriptor = malloc(sizeof(ClassDescriptor));
-    res_descriptor->func_namespace = AS_TABLE(new_table(NULL, 0));
-    res_descriptor->id_namespace   = IS_NIL(map) ? AS_TABLE(new_table(NULL, 0)) : AS_TABLE(map);
+    res_descriptor->func_namespace = IS_NIL(func_map) ? AS_TABLE(new_table(NULL, 0)) : AS_TABLE(func_map);
+    res_descriptor->id_namespace   = IS_NIL(id_map) ? AS_TABLE(new_table(NULL, 0)) : AS_TABLE(id_map);
     res_descriptor->cdata_type = ClassDescriptorType;
 
     return CDT_TO_TVALUE(res_descriptor);

@@ -41,7 +41,7 @@ void initialize_type_specifiers();
 void initialize_operation_methods();
 int is_native_type_specifier(TValue* value);
 TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t argc);
-TValue make_class_descriptor(TValue map);
+TValue make_class_descriptor(TValue func_map, TValue id_map);
 MethodDescriptor* as_method_descriptor(TValue value);
 ClassDescriptor* as_class_descriptor(TValue value);
 

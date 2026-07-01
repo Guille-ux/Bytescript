@@ -113,8 +113,8 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
     TValue lcdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), ltype);
     TValue rcdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rtype);
-    TValue lmap = TBL_TO_TVALUE(as_class_descriptor(lcdesc)->id_namespace);
-    TValue rmap = TBL_TO_TVALUE(as_class_descriptor(rcdesc)->id_namespace);
+    TValue lmap = TBL_TO_TVALUE(as_class_descriptor(lcdesc)->func_namespace);
+    TValue rmap = TBL_TO_TVALUE(as_class_descriptor(rcdesc)->func_namespace);
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
     MethodDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (MethodDescriptor*)PAYLOAD(ldesc);
@@ -294,6 +294,8 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     context->current_class = pre_class;
 
     if (!IS_NIL(node->node.funcDefNode.name)) {
+        TValue name = node->node.funcDefNode.name;
+
         TValue arg_list[argc];
         struct TValueLinkedList* arg = node->node.funcDefNode.arg_types.next;
         for (int i = 0; i < argc; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
@@ -301,15 +303,24 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
         TValue desc = make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc);
 
         if (node->nt == NT_METHODDEF) {
-            TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), node->node.methodDefNode.class);
+            TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
+
+            TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_class);
             TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
             TValue class_func = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
+
+            if (in_table(native_methods, dunder(name))) {
+                TValue error_message = make_fstring("Cannot name a method <%s>");
+                error_message = format_string((TValue[2]){ error_message, name }, 2);
+
+                call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
+            }
             
-            add_value_to_hashtable(class_map, node->node.funcDefNode.name, funcType);
-            add_value_to_hashtable(class_func, node->node.funcDefNode.name, desc);
+            add_value_to_hashtable(class_map, name, funcType);
+            add_value_to_hashtable(class_func, name, desc);
         } else {
-            add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.funcDefNode.name, funcType);
-            add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.funcDefNode.name, desc);
+            add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, funcType);
+            add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), name, desc);
         }
     }
 
@@ -331,8 +342,8 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
     TValue dunder_class = dunder(context->current_class);
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), context->current_class, dunder_class);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder_class, make_class_descriptor(NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), context->current_class, make_class_descriptor(NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder_class, make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), context->current_class, make_class_descriptor(NIL, NIL));
 
     context->current_class = dunder_class;
     for (int i = 0; i < node->node.classDefNode.statements->node.StatementsNode.len; i++) {
@@ -351,7 +362,12 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
 
 TValue resolve_type_selfcall(Node* node, TypesContext* context) {
     TValue target = resolve_type(node->node.SelfCallnode.target, context);
+
     TValue name = node->node.SelfCallnode.name;
+    TValue dundered = get_value_from_hashtable(native_methods_map, name);
+    name = IS_NIL(dundered) ? name : dundered;
+
+    node->node.SelfCallnode.name = name;
 
     if (EQUAL(target, varType)) call_error(new_type_error, "Must specify type of value in order to self-call");
     TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
@@ -389,9 +405,9 @@ TypesContext* new_resolve_context() {
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
     context->func_namespace = AS_TABLE(new_table(NULL, 0));
 
-    TValue num_desc = make_class_descriptor(num_map);
-    TValue str_desc = make_class_descriptor(str_map);
-    TValue tbl_desc = make_class_descriptor(table_map);
+    TValue num_desc = make_class_descriptor(num_map, NIL);
+    TValue str_desc = make_class_descriptor(str_map, NIL);
+    TValue tbl_desc = make_class_descriptor(table_map, NIL);
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_desc);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_desc);
@@ -399,14 +415,14 @@ TypesContext* new_resolve_context() {
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), NumberType, num_desc);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), StringType, str_desc);
     add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), TableType, tbl_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, make_class_descriptor(func_map));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, make_class_descriptor(func_map, NIL));
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), NumberType, dunder(NumberType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), StringType, dunder(StringType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(TableType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(NumberType), make_class_descriptor(NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(StringType), make_class_descriptor(NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(TableType), make_class_descriptor(NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(NumberType), make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(StringType), make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(TableType), make_class_descriptor(NIL, NIL));
 
     return context;
 }
@@ -436,13 +452,4 @@ TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* contex
             call_error(new_type_error, AS_STRING(error_message)->str);
         }
     }
-}
-
-TValue dunder(TValue str) {
-    TValue dunder_str = make_fstring("__");
-    return concat_string((TValue[2]){ dunder_str, str }, 2);
-}
-
-TValue undunder(TValue str) {
-    return make_fstring(AS_STRING(str)->str + 2);
 }

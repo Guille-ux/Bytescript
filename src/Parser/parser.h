@@ -68,6 +68,7 @@ static Node* append_to_node_array(NodeArray* nda, Node* node);
 static inline bool is_correct_operator(Token op, Token ops[], int opc);
 static void expect(ParseResult* res, TokenType tt, char* expect, TValue* value, char* kword);
 TValue type_specifier(ParseResult* res);
+TValue get_modifiers(ParseResult* res);
 
 extern Token LOGICAL_OPERATORS[];
 extern Token COMP_OPERATORS[];

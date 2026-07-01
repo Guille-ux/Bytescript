@@ -84,7 +84,7 @@ repeat-expr :       KEYWORD:"repeat"
 
 import-expr :       KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
 
-func-expr :         KEYWORD:"func" (type-specifiers? IDENTIFIER)?
+func-expr :         KEYWORD:"func" (func_modifier* type-specifiers? IDENTIFIER)?
                     LPAR (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)? RPAR
                     statements
                     KEYWORD:"end"
@@ -98,3 +98,6 @@ type-specifiers :   KEYWORD:"var"
                     KEYWORD:"str"
                     KEYWORD:"table"
                     IDENTIFIER
+
+func-modifier :     KEYWORD:"static"
+                    

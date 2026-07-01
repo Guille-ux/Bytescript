@@ -252,6 +252,7 @@ Node* import_expr(ParseResult* res) {
 Node* func_expr(ParseResult* res) {
     res->tokens++;
 
+    TValue modifiers = get_modifiers(res);
     TValue func_type = type_specifier(res);
     if (IS_NIL(func_type)) func_type = varType; else res->tokens++;
 
@@ -262,6 +263,7 @@ Node* func_expr(ParseResult* res) {
     Node* func_node = new_node(NT_FUNCDEF);
     func_node->node.funcDefNode.name = func_name;
     func_node->node.funcDefNode.type_specifier = func_type;
+    func_node->node.funcDefNode.modifiers = modifiers;
     func_node->node.funcDefNode.args.value = NIL;
     func_node->node.funcDefNode.args.next = NULL;
     func_node->node.funcDefNode.arg_types.value = NIL;
@@ -562,4 +564,16 @@ TValue type_specifier(ParseResult* res) {
         (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens->value;
 
     return NIL;
+}
+
+TValue get_modifiers(ParseResult* res) {
+    TValue modif = new_table(NULL, 0);
+
+    while (res->tokens->tt == TT_KWORD) {
+        if (match_keyword(*res->tokens, "static")) append_to_table(modif, res->tokens->value);
+        else break;
+        res->tokens++;
+    }
+
+    return modif;
 }

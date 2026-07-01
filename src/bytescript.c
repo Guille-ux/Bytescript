@@ -18,6 +18,7 @@ void get_flags(int argc, char* argv[], char* byte_args[]) {
 int main(int argc, char* argv[]) {
     initialize_globals();
     initialize_type_specifiers();
+    initialize_oop();
 
     char* byte_args[argc];
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;
@@ -36,7 +37,6 @@ int main(int argc, char* argv[]) {
 
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
-    printf("hello?");
 
     fold(ast);
     

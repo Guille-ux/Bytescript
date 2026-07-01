@@ -43,7 +43,5 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context);
 TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);
 TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context);
-TValue dunder(TValue str);
-TValue undunder(TValue str);
 
 #endif

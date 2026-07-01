@@ -25,6 +25,7 @@ const char* keywords[] = {
 
     "in",
 
+    "static",
     "class",
     "func",
     "return",

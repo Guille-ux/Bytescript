@@ -2,7 +2,47 @@
 #include "Globals/table.h"
 #include "Globals/string.h"
 #include "Globals/globals.h"
+#include "utils/utils.h"
 
+
+TValue native_methods;
+TValue native_methods_map;
+void initialize_oop() {
+    native_methods = new_table(NULL, 0);
+    native_methods_map = new_table(NULL, 0);
+    append_to_table(native_methods, make_fstring("__new"));
+    append_to_table(native_methods, make_fstring("__add"));
+    append_to_table(native_methods, make_fstring("__sub"));
+    append_to_table(native_methods, make_fstring("__mul"));
+    append_to_table(native_methods, make_fstring("__pow"));
+    append_to_table(native_methods, make_fstring("__div"));
+    append_to_table(native_methods, make_fstring("__idiv"));
+    append_to_table(native_methods, make_fstring("__mod"));
+    append_to_table(native_methods, make_fstring("__concat"));
+    append_to_table(native_methods, make_fstring("__eq"));
+    append_to_table(native_methods, make_fstring("__neq"));
+    append_to_table(native_methods, make_fstring("__lt"));
+    append_to_table(native_methods, make_fstring("__gt"));
+    append_to_table(native_methods, make_fstring("__lteq"));
+    append_to_table(native_methods, make_fstring("__gteq"));
+    append_to_table(native_methods, make_fstring("__rand"));
+    append_to_table(native_methods, make_fstring("__ror"));
+    append_to_table(native_methods, make_fstring("__and"));
+    append_to_table(native_methods, make_fstring("__or"));
+    append_to_table(native_methods, make_fstring("__band"));
+    append_to_table(native_methods, make_fstring("__bor"));
+    append_to_table(native_methods, make_fstring("__lshift"));
+    append_to_table(native_methods, make_fstring("__rshift"));
+    append_to_table(native_methods, make_fstring("__unm"));
+    append_to_table(native_methods, make_fstring("__unp"));
+    append_to_table(native_methods, make_fstring("__not"));
+
+    TTable* native_table = AS_TABLE(native_methods);
+    for (int i = 0; i < native_table->array.len; i++) {
+        TValue undundered = undunder(native_table->array.array[i]);
+        add_value_to_hashtable(native_methods_map, undundered, native_table->array.array[i]);
+    }
+}
 
 TValue new_class(TValue inherited[], TValue fields[], size_t inherited_count, size_t field_count) {
     TClass* nclass = malloc(sizeof(TClass) + BSIZE(inherited_count) + BSIZE(field_count));

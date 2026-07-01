@@ -1,4 +1,5 @@
 #include "utils/utils.h"
+#include "Globals/table.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -31,4 +32,15 @@ char* snake_to_camel_case(char* snaked, size_t len) {
     }
 
     return snaked;
+}
+
+int has_modifier(TValue tbl, char modif[]) { return in_table(tbl, make_fstring(modif)); }
+
+TValue dunder(TValue str) {
+    TValue dunder_str = make_fstring("__");
+    return concat_string((TValue[2]){ dunder_str, str }, 2);
+}
+
+TValue undunder(TValue str) {
+    return make_fstring(AS_STRING(str)->str + 2);
 }
