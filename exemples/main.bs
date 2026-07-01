@@ -1,5 +1,6 @@
 class Idk
     func static Idk __new()
+        Number self.num = 5
         return self
     end
 

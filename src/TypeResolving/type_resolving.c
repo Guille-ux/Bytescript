@@ -28,7 +28,8 @@ TypeResolver type_resolvers[] = {
     [NT_FUNCDEF]        = resolve_type_func_def,
     [NT_METHODDEF]      = resolve_type_func_def,
     [NT_CLASSDEF]       = resolve_type_class_def,
-    [NT_SELFCALL]       = resolve_type_selfcall
+    [NT_SELFCALL]       = resolve_type_selfcall,
+    [NT_SELFDECLARE]    = resolve_type_selfdeclare
 };
 
 TValue resolve_type(Node* node, TypesContext* context) {
@@ -394,6 +395,32 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
 
     check_call_types(node, args, context);
     return desc->return_type;
+}
+
+TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
+    TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
+    TValue var_type = node->node.VarDeclareNode.type_specifier;
+
+    if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
+        TValue error_message = make_fstring("Cannot assign value of type <%s> to attribute of type <%s>");
+        error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
+
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
+
+    TValue name = node->node.SelfDeclarenode.var_name;
+    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), context->current_class);
+    TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
+
+    if (in_table(native_methods, dunder(name))) {
+        TValue error_message = make_fstring("Cannot name a attribute <%s>");
+        error_message = format_string((TValue[2]){ error_message, name }, 2);
+
+        call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
+    }
+    
+    add_value_to_hashtable(class_map, name, return_type);
+    return var_type;
 }
 
 

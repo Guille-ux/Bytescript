@@ -31,6 +31,7 @@ CompileFunction compiler_functions[] = {
     [NT_METHODDEF]      = compile_func_def,
     [NT_CLASSDEF]       = compile_class_def,
     [NT_SELFCALL]       = compile_selfcall,
+    [NT_SELFDECLARE]    = compile_selfdeclare
 };
 
 
@@ -488,6 +489,10 @@ int compile_class_def(Node* node, Scope* context) {
 }
 
 int compile_selfcall(Node* node, Scope* context) {
+    
+}
+
+int compile_selfdeclare(Node* node, Scope* context) {
     
 }
 
