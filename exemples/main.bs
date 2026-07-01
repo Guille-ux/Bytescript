@@ -1,3 +1,11 @@
 class Idk
+    func Idk __new()
+        return self
+    end
 
+    func Number __add(Number b)
+        return b + 1
+    end
 end
+
+var c = Idk:__new() + 2

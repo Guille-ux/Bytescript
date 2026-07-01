@@ -28,6 +28,7 @@ TValue* typeTable[][2] = {
 TValue operation_methods;
 TValue unary_operation_methods;
 TCDataType MethodDescriptor_Type = { .name = "MethodDescriptor" }, *MethodDescriptorType = &MethodDescriptor_Type;
+TCDataType ClassDescriptor_Type = { .name = "ClassDescriptor" }, *ClassDescriptorType = &ClassDescriptor_Type;
 
 void initialize_type_specifiers() {
     varType     = make_fstring("var");
@@ -63,6 +64,7 @@ void initialize_type_specifiers() {
     add_value_to_hashtable(num_map, make_fstring("__lshift"), num_descriptor);
     add_value_to_hashtable(num_map, make_fstring("__rshift"), num_descriptor);
     add_value_to_hashtable(num_map, make_fstring("__unm"), num_descriptor);
+    add_value_to_hashtable(num_map, make_fstring("__unp"), num_descriptor);
     add_value_to_hashtable(num_map, make_fstring("__not"), num_descriptor);
 
     str_map = new_table(NULL, 0);
@@ -79,6 +81,7 @@ void initialize_type_specifiers() {
 void initialize_operation_methods() {
     unary_operation_methods = new_table(NULL, 0);
     add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_MINUS), make_fstring("__unm"));
+    add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_PLUS), make_fstring("__unp"));
     add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_NOT), make_fstring("__not"));
 
     operation_methods = new_table(NULL, 0);
@@ -124,9 +127,25 @@ TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t arg
     return CDT_TO_TVALUE(res_descriptor);
 }
 
+TValue make_class_descriptor(TValue map) {
+    ClassDescriptor* res_descriptor = malloc(sizeof(ClassDescriptor));
+    res_descriptor->func_namespace = AS_TABLE(new_table(NULL, 0));
+    res_descriptor->id_namespace   = IS_NIL(map) ? AS_TABLE(new_table(NULL, 0)) : AS_TABLE(map);
+    res_descriptor->cdata_type = ClassDescriptorType;
+
+    return CDT_TO_TVALUE(res_descriptor);
+}
+
 MethodDescriptor* as_method_descriptor(TValue value) {
     TCData* data = AS_CDATA(value);
     if (*data != MethodDescriptorType) call_error(new_type_error, "Failed to cast tvalue into function descriptor");
 
     return (MethodDescriptor*)data;
+}
+
+ClassDescriptor* as_class_descriptor(TValue value) {
+    TCData* data = AS_CDATA(value);
+    if (*data != ClassDescriptorType) call_error(new_type_error, "Failed to cast tvalue into class descriptor");
+
+    return (ClassDescriptor*)data;
 }

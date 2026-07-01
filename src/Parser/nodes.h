@@ -27,8 +27,10 @@ typedef enum {
     NT_REPEAT,
     NT_IMPORT,
     NT_FUNCDEF,
+    NT_METHODDEF,
     NT_CLASSDEF,
     NT_SELFCALL,
+    NT_SELFDECLARE,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -64,8 +66,10 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue identifier; } importNode;
         struct { TValue name; TValue type_specifier; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; } funcDefNode;
+        struct { TValue name; TValue type_specifier; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; TValue class; } methodDefNode;
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
-        struct { Node* target; NodeArray args; } SelfCallnode;
+        struct { Node* target; NodeArray args; TValue name; } SelfCallnode;
+        struct { Node* value; TValue var_name; TValue type_specifier; } SelfDeclarenode;
     } node;
 } Node;
 

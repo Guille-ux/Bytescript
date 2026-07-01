@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
 
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
+    printf("hello?");
 
     fold(ast);
     

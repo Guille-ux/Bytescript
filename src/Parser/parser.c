@@ -61,7 +61,11 @@ static Node* postfix_op(ParseResult* res, Node* num) {
 
     switch (res->tokens->tt) {
         case TT_COLON: {
-            res->tokens++; EXPECTED(expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL))
+            res->tokens++;
+
+            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &return_node->node.SelfCallnode.name, NULL))
+            EXPECTED(expect(res, TT_LPAR, "(LPAR : '(') EXPECTED", NULL, NULL))
+
             return call_like(return_node, res, num, NT_SELFCALL);
         }
 
@@ -314,8 +318,8 @@ Node* class_expr(ParseResult* res) {
     }
 
     add_value_to_hashtable(TBL_TO_TVALUE(res->user_types), class_node->node.classDefNode.name, NUM_AS_TVALUE(1));
-    class_node->node.classDefNode.statements = main_parse(res);
 
+    class_node->node.classDefNode.statements = main_parse(res);
     EXPECTED(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     return class_node;
 }
@@ -417,24 +421,7 @@ Node* comparaison(ParseResult* res) {
 
 Node* logical(ParseResult* res) { return bin_op(res, comparaison, LOGICAL_OPERATORS, LOGICAL_OPERATORS_SIZE, NULL); }
 
-Node* expr(ParseResult* res) {
-    TValue vartype;
-
-    if (!IS_NIL((vartype = type_specifier(res)))) {
-        TValue var_name; res->tokens++;
-        EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL))
-        EXPECTED(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
-
-        Node* nexpr = expr(res);
-        Node* return_node = new_node(NT_VAR_DECLARE);
-        return_node->node.VarDeclareNode.type_specifier = vartype;
-        return_node->node.VarDeclareNode.var_name = var_name;
-        return_node->node.VarDeclareNode.value = nexpr;
-
-        return return_node;
-    } else if (match_keyword(*res->tokens, "import")) return import_expr(res);
-
-    Token* pret = res->tokens;
+Node* assignement(ParseResult* res) {
     Node* log =  logical(res);
     if (res->tokens->tt == TT_EQ) {
         res->tokens++;
@@ -447,6 +434,34 @@ Node* expr(ParseResult* res) {
     }
 
     return log;
+}
+
+Node* expr(ParseResult* res) {
+    TValue vartype;
+    if (!IS_NIL((vartype = type_specifier(res)))) {
+        Node* return_node = new_node(NT_VAR_DECLARE);
+        TValue var_name; res->tokens++;
+
+        if (match_token(*res->tokens, SELF_TOKEN)) {
+            return_node->nt = NT_SELFDECLARE; res->tokens++;
+            EXPECTED(expect(res, TT_DOT, "(DOT : '.') EXPECTED", NULL, NULL))
+            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &var_name, NULL))
+        } else {
+            if (res->tokens->tt == TT_IDENTIFIER) { var_name = res->tokens++->value; }
+            else { res->tokens--; return assignement(res); }
+        }
+
+        EXPECTED(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
+
+        Node* nexpr = expr(res);
+        return_node->node.VarDeclareNode.type_specifier = vartype;
+        return_node->node.VarDeclareNode.var_name = var_name;
+        return_node->node.VarDeclareNode.value = nexpr;
+
+        return return_node;
+    } else if (match_keyword(*res->tokens, "import")) return import_expr(res);
+
+    return assignement(res);
 }
 
 Node* statement(ParseResult* res) {

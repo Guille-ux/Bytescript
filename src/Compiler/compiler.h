@@ -115,6 +115,8 @@ int compile_repeat_loop(Node* node, Scope* context);
 int compile_import(Node* node, Scope* context);
 int compile_func_def(Node* node, Scope* context);
 int compile_class_def(Node* node, Scope* context);
+int compile_class_def(Node* node, Scope* context);
+int compile_selfcall(Node* node, Scope* context);
 
 int emit(uint8_t instr, Scope* context);
 static int register_first(Scope* context);

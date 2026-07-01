@@ -22,6 +22,12 @@ extern TValue* typeTable[][2];
 
 typedef struct {
     CDATA_HEADER;
+    TTable* func_namespace;
+    TTable* id_namespace;
+} ClassDescriptor;
+
+typedef struct {
+    CDATA_HEADER;
     TValue arg_types;
     TValue return_type;
 } MethodDescriptor;
@@ -29,11 +35,14 @@ typedef struct {
 extern TValue operation_methods;
 extern TValue unary_operation_methods;
 extern TCDataType MethodDescriptor_Type, *MethodDescriptorType;
+extern TCDataType ClassDescriptor_Type, *ClassDescriptorType;
 
 void initialize_type_specifiers();
 void initialize_operation_methods();
 int is_native_type_specifier(TValue* value);
 TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t argc);
+TValue make_class_descriptor(TValue map);
 MethodDescriptor* as_method_descriptor(TValue value);
+ClassDescriptor* as_class_descriptor(TValue value);
 
 #endif

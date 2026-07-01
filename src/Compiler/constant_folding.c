@@ -25,7 +25,9 @@ FoldingFunction fold_functions[] = {
     [NT_REPEAT]         = fold_repeat_loop,
     [NT_IMPORT]         = fold_import,
     [NT_FUNCDEF]        = fold_func_def,
-    [NT_CLASSDEF]       = fold_class_def
+    [NT_METHODDEF]      = fold_func_def,
+    [NT_CLASSDEF]       = fold_class_def,
+    [NT_SELFCALL]       = fold_call
 };
 
 

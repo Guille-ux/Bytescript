@@ -16,9 +16,11 @@ statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
                     repeat-expr
                     expr
 
-expr :              type-specifiers IDENTIFIER EQ expr
-                    logical (EQ expr)?
+expr :              type-specifiers (KEYWORD:'self' DOT)? IDENTIFIER EQ expr
                     import-expr
+                    assignement
+
+assignement :       logical (EQ expr)?
 
 logical :           (comparaison ((KEYWORD:"and" | KEYWORD:"or" | "||" | "&&" | "|" | "&") comparaison)*)
                 
@@ -36,7 +38,7 @@ power :             call ((POW) factor)*
 
 postfix :           numerics ( postfix_op )*
 
-postfix_op :        COLON? LPAR (expr (SEPARATOR expr)*)? RPAR
+postfix_op :        (COLON IDENTIFIER)? LPAR (expr (SEPARATOR expr)*)? RPAR
                     LSBRAC logical RSBRAC
                     DOT postfix
 

@@ -13,6 +13,7 @@
 #define END_TOKEN       ((Token){ .tt = TT_KWORD, .value = make_fstring("end") })
 #define WHILE_TOKEN     ((Token){ .tt = TT_KWORD, .value = make_fstring("while") })
 #define ELSEIF_TOKEN    ((Token){ .tt = TT_KWORD, .value = make_fstring("elseif") })
+#define SELF_TOKEN      ((Token){ .tt = TT_IDENTIFIER, .value = make_fstring("self") })
 #define EXPECTED(exc)   { (exc); if (res->err_details) return NULL; }
 
 
@@ -47,6 +48,7 @@ Node* term(ParseResult* res);
 Node* arithmetic(ParseResult* res);
 Node* comparaison(ParseResult* res);
 Node* logical(ParseResult* res);
+Node* assignement(ParseResult* res);
 Node* expr(ParseResult* res);
 Node* statement(ParseResult* res);
 Node* statements(ParseResult* res);

@@ -28,7 +28,9 @@ CompileFunction compiler_functions[] = {
     [NT_REPEAT]         = compile_repeat_loop,
     [NT_IMPORT]         = compile_import,
     [NT_FUNCDEF]        = compile_func_def,
-    [NT_CLASSDEF]       = compile_class_def
+    [NT_METHODDEF]      = compile_func_def,
+    [NT_CLASSDEF]       = compile_class_def,
+    [NT_SELFCALL]       = compile_selfcall,
 };
 
 
@@ -483,6 +485,10 @@ int compile_func_def(Node* node, Scope* context) {
 
 int compile_class_def(Node* node, Scope* context) {
     return 0;
+}
+
+int compile_selfcall(Node* node, Scope* context) {
+    
 }
 
 
