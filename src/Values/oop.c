@@ -5,12 +5,14 @@
 #include "utils/utils.h"
 
 
+TValue constructor;
 TValue native_methods;
 TValue native_methods_map;
 void initialize_oop() {
+    constructor = make_fstring("__new");
     native_methods = new_table(NULL, 0);
     native_methods_map = new_table(NULL, 0);
-    append_to_table(native_methods, make_fstring("__new"));
+    append_to_table(native_methods, constructor);
     append_to_table(native_methods, make_fstring("__add"));
     append_to_table(native_methods, make_fstring("__sub"));
     append_to_table(native_methods, make_fstring("__mul"));

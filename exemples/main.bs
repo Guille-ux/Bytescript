@@ -1,6 +1,7 @@
 class Idk
     func static Idk __new()
         Number self.num = 5
+        String self.str = "yes"
         return self
     end
 
@@ -9,4 +10,6 @@ class Idk
     end
 end
 
-var c = Idk:new() + 2
+Idk myIdk = Idk:new()
+Number myNum = myIdk + 2
+String myStr = myIdk.str

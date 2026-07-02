@@ -29,7 +29,8 @@ FoldingFunction fold_functions[] = {
     [NT_CLASSDEF]       = fold_class_def,
     [NT_SELFCALL]       = fold_call,
     [NT_SELFDECLARE]    = fold_selfdeclare,
-    [NT_FIELDACCESS]    = fold_fieldaccess
+    [NT_FIELDACCESS]    = fold_fieldaccess,
+    [NT_CONSTRUCTOR]    = fold_func_def
 };
 
 

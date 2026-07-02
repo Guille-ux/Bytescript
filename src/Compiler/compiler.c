@@ -33,6 +33,7 @@ CompileFunction compiler_functions[] = {
     [NT_SELFCALL]       = compile_selfcall,
     [NT_SELFDECLARE]    = compile_selfdeclare,
     [NT_FIELDACCESS]    = compile_fieldaccess,
+    [NT_CONSTRUCTOR]    = compile_constructor
 };
 
 
@@ -498,6 +499,10 @@ int compile_selfdeclare(Node* node, Scope* context) {
 }
 
 int compile_fieldaccess(Node* node, Scope* context) {
+    
+}
+
+int compile_constructor(Node* node, Scope* context) {
     
 }
 

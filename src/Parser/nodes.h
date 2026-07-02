@@ -32,6 +32,7 @@ typedef enum {
     NT_SELFCALL,
     NT_SELFDECLARE,
     NT_FIELDACCESS,
+    NT_CONSTRUCTOR,
     NT_PLACEHOLDER
 } NodeType;
 

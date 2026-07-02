@@ -119,6 +119,7 @@ int compile_class_def(Node* node, Scope* context);
 int compile_selfcall(Node* node, Scope* context);
 int compile_selfdeclare(Node* node, Scope* context);
 int compile_fieldaccess(Node* node, Scope* context);
+int compile_constructor(Node* node, Scope* context);
 
 int emit(uint8_t instr, Scope* context);
 static int register_first(Scope* context);

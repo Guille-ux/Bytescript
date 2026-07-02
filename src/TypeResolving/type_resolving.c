@@ -26,11 +26,12 @@ TypeResolver type_resolvers[] = {
     [NT_REPEAT]         = resolve_type_repeat_loop,
     [NT_IMPORT]         = resolve_type_import,
     [NT_FUNCDEF]        = resolve_type_func_def,
-    [NT_METHODDEF]      = resolve_type_func_def,
+    [NT_METHODDEF]      = resolve_type_method_def,
     [NT_CLASSDEF]       = resolve_type_class_def,
     [NT_SELFCALL]       = resolve_type_selfcall,
     [NT_SELFDECLARE]    = resolve_type_selfdeclare,
     [NT_FIELDACCESS]    = resolve_type_fieldaccess,
+    [NT_CONSTRUCTOR]    = resolve_type_constructor,
 };
 
 TValue resolve_type(Node* node, TypesContext* context) {
@@ -279,10 +280,44 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     context->func_namespace = AS_TABLE(new_table(NULL, 0));
     context->return_type = node->node.funcDefNode.type_specifier;
 
-    if (node->nt == NT_METHODDEF) {
-        context->current_class = node->node.methodDefNode.class;
-        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), make_fstring("self"), node->node.methodDefNode.class);
+    int argc = 0;
+    struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
+    struct TValueLinkedList* arg_type = node->node.funcDefNode.arg_types.next;
+    for (; arg; (arg = arg->next, arg_type = arg_type->next)) { add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg->value, arg_type->value); argc++; }
+
+    resolve_type(node->node.funcDefNode.statements, context);
+    context->id_namespace = id_namespace;
+    context->func_namespace = func_namespace;
+    context->return_type = pre_return_type;
+    context->current_class = pre_class;
+
+    if (!IS_NIL(node->node.funcDefNode.name)) {
+        TValue name = node->node.funcDefNode.name;
+
+        TValue arg_list[argc];
+        struct TValueLinkedList* arg = node->node.funcDefNode.arg_types.next;
+        for (int i = 0; i < argc; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
+
+        TValue desc = make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc);
+        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, funcType);
+        add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), name, desc);
     }
+
+    return (node->type = funcType);
+}
+
+TValue resolve_type_method_def(Node* node, TypesContext* context) {
+    TValue pre_return_type = context->return_type;
+    TValue pre_class = context->current_class;
+    TTable* id_namespace = context->id_namespace;
+    TTable* func_namespace = context->func_namespace;
+
+    context->id_namespace = AS_TABLE(new_table(NULL, 0));
+    context->func_namespace = AS_TABLE(new_table(NULL, 0));
+    context->return_type = node->node.funcDefNode.type_specifier;
+
+    context->current_class = node->node.methodDefNode.class;
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), make_fstring("self"), node->node.methodDefNode.class);
 
     int argc = 0;
     struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
@@ -303,27 +338,21 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
         for (int i = 0; i < argc; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
 
         TValue desc = make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc);
+        TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
 
-        if (node->nt == NT_METHODDEF) {
-            TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
+        TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_class);
+        TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
+        TValue class_func = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
-            TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_class);
-            TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
-            TValue class_func = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
+        if (in_table(native_methods, dunder(name))) {
+            TValue error_message = make_fstring("Cannot name a method <%s>");
+            error_message = format_string((TValue[2]){ error_message, name }, 2);
 
-            if (in_table(native_methods, dunder(name))) {
-                TValue error_message = make_fstring("Cannot name a method <%s>");
-                error_message = format_string((TValue[2]){ error_message, name }, 2);
-
-                call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
-            }
-            
-            add_value_to_hashtable(class_map, name, funcType);
-            add_value_to_hashtable(class_func, name, desc);
-        } else {
-            add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, funcType);
-            add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), name, desc);
+            call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
         }
+        
+        add_value_to_hashtable(class_map, name, funcType);
+        add_value_to_hashtable(class_func, name, desc);
     }
 
     return (node->type = funcType);
@@ -351,7 +380,9 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
     for (int i = 0; i < node->node.classDefNode.statements->node.StatementsNode.len; i++) {
         Node* cur = node->node.classDefNode.statements->node.StatementsNode.nodes[i];
         if (cur->nt == NT_FUNCDEF) {
-            cur->nt = NT_METHODDEF;
+            if (EQUAL(cur->node.funcDefNode.name, constructor)) cur->nt = NT_CONSTRUCTOR;
+            else cur->nt = NT_METHODDEF;
+            
             cur->node.methodDefNode.class = node->node.classDefNode.name;
         }
 
@@ -453,6 +484,13 @@ TValue resolve_type_fieldaccess(Node* node, TypesContext* context) {
     }
 
     return (node->type = field);
+}
+
+TValue resolve_type_constructor(Node* node, TypesContext* context) {
+    TValue modifiers = node->node.methodDefNode.modifiers;
+    if (!has_modifier(modifiers, "static")) call_error(new_type_error, "A class's constructor ('__new') must be static");
+
+    return resolve_type_method_def(node, context);
 }
 
 
