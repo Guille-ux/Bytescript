@@ -5,7 +5,7 @@ class Idk
     end
 
     func Number __add(Number b)
-        return b + 1
+        return b + self.num
     end
 end
 

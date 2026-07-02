@@ -78,7 +78,11 @@ static Node* postfix_op(ParseResult* res, Node* num) {
         }
 
         case TT_DOT: {
-            
+            res->tokens++; return_node->nt = NT_FIELDACCESS;
+            return_node->node.FieldAccessNode.target = num;
+            EXPECTED(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &return_node->node.FieldAccessNode.name, NULL))
+
+            return return_node;
         }
     }
 

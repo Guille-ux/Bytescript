@@ -40,6 +40,7 @@ TValue resolve_type_func_def(Node* node, TypesContext* context);
 TValue resolve_type_class_def(Node* node, TypesContext* context);
 TValue resolve_type_selfcall(Node* node, TypesContext* context);
 TValue resolve_type_selfdeclare(Node* node, TypesContext* context);
+TValue resolve_type_fieldaccess(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);

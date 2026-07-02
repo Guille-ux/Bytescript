@@ -31,6 +31,7 @@ typedef enum {
     NT_CLASSDEF,
     NT_SELFCALL,
     NT_SELFDECLARE,
+    NT_FIELDACCESS,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -70,6 +71,7 @@ typedef struct BNode {
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
         struct { Node* target; NodeArray args; TValue name; } SelfCallnode;
         struct { Node* value; TValue var_name; TValue type_specifier; } SelfDeclarenode;
+        struct { Node* target; TValue name; } FieldAccessNode;
     } node;
 } Node;
 

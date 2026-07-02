@@ -29,7 +29,8 @@ TypeResolver type_resolvers[] = {
     [NT_METHODDEF]      = resolve_type_func_def,
     [NT_CLASSDEF]       = resolve_type_class_def,
     [NT_SELFCALL]       = resolve_type_selfcall,
-    [NT_SELFDECLARE]    = resolve_type_selfdeclare
+    [NT_SELFDECLARE]    = resolve_type_selfdeclare,
+    [NT_FIELDACCESS]    = resolve_type_fieldaccess,
 };
 
 TValue resolve_type(Node* node, TypesContext* context) {
@@ -372,7 +373,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
 
     if (EQUAL(target, varType)) call_error(new_type_error, "Must specify type of value in order to self-call");
     TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
-    TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
+    TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
     if (IS_NIL(class_map)) {
         TValue error_message = make_fstring("Type <%s> does not have a proper method map");
@@ -381,7 +382,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-    TValue method = get_value_from_hashtable(TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace), name);
+    TValue method = get_value_from_hashtable(class_map, name);
 
     if (IS_NIL(method)) {
         TValue error_message = make_fstring("Type <%s> does not have any method of name <%s>");
@@ -420,7 +421,38 @@ TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
     }
     
     add_value_to_hashtable(class_map, name, return_type);
-    return var_type;
+    return (node->type = var_type);
+}
+
+TValue resolve_type_fieldaccess(Node* node, TypesContext* context) {
+    TValue target = resolve_type(node->node.FieldAccessNode.target, context);
+    if (EQUAL(target, varType)) call_error(new_type_error, "Must specify type of value in order to access a field");
+
+    TValue name = node->node.FieldAccessNode.name;
+    TValue dundered = get_value_from_hashtable(native_methods_map, name);
+    name = IS_NIL(dundered) ? name : dundered;
+
+    node->node.FieldAccessNode.name = name;
+
+    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
+    TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
+
+    if (IS_NIL(class_map)) {
+        TValue error_message = make_fstring("Type <%s> does not have a proper method map");
+        error_message = format_string((TValue[2]){ error_message, target }, 2);
+
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
+
+    TValue field = get_value_from_hashtable(class_map, name);
+    if (IS_NIL(field)) {
+        TValue error_message = make_fstring("Type <%s> does not have any field of name <%s>");
+        error_message = format_string((TValue[3]){ error_message, target, name }, 3);
+
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
+
+    return (node->type = field);
 }
 
 
