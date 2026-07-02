@@ -7,75 +7,7 @@
 #include "Globals/string.h"
 #include "Parser/nodes.h"
 #include "utils/utils.h"
-
-typedef enum {
-    OP_ADD_RC,
-    OP_ADD_RR,
-    OP_SUB_RC,
-    OP_SUB_CR,
-    OP_SUB_RR,
-    OP_MUL_RC,
-    OP_MUL_RR,
-    OP_DIV_RC,
-    OP_DIV_CR,
-    OP_DIV_RR,
-    OP_IDIV_RC,
-    OP_IDIV_CR,
-    OP_IDIV_RR,
-    OP_MOD_RC,
-    OP_MOD_CR,
-    OP_MOD_RR,
-    OP_POW_RC,
-    OP_POW_CR,
-    OP_POW_RR,
-    OP_CONCAT_RC,
-    OP_CONCAT_CR,
-    OP_CONCAT_RR,
-    OP_EEQ_RC,
-    OP_EEQ_RR,
-    OP_NEQ_RC,
-    OP_NEQ_RR,
-    OP_LT_RC,
-    OP_LT_RR,
-    OP_GT_RC,
-    OP_GT_RR,
-    OP_LTEQ_RC,
-    OP_LTEQ_RR,
-    OP_GTEQ_RC,
-    OP_GTEQ_RR,
-    OP_RAND_RC,
-    OP_RAND_RR,
-    OP_ROR_RC,
-    OP_ROR_RR,
-    OP_AND_RC,
-    OP_AND_RR,
-    OP_OR_RC,
-    OP_OR_RR,
-    OP_BAND_RC,
-    OP_BAND_RR,
-    OP_BOR_RC,
-    OP_BOR_RR,
-    OP_BXOR_RC,
-    OP_BXOR_RR,
-    OP_BNOT,
-    OP_JUMP,
-    OP_JFALSE,
-    OP_NFOR_INIT,
-    OP_NFOR_LOOP,
-    OP_GFOR_INIT,
-    OP_GFOR_LOOP,
-    OP_LOAD_CR,
-    OP_LOAD_RR,
-    OP_LOAD_UP,
-    OP_CALL,
-    OP_RETURN,
-    OP_NEWTABLE,
-    OP_ADDTABLE,
-    OP_GETTABLE,
-    OP_SETTABLE,
-    OP_HALT
-} BytecodeInstruction;
-
+#include "Compiler/instructions.h"
 
 struct ContextScope;
 typedef struct ContextScope {
@@ -106,6 +38,7 @@ int compile_call(Node* node, Scope* context);
 int compile_var_access(Node* node, Scope* context);
 int compile_number(Node* node, Scope* context);
 int compile_string(Node* node, Scope* context);
+int compile_table(Node* node, Scope* context);
 int compile_allocation(Node* node, Scope* context);
 int compile_if_statement(Node* node, Scope* context);
 int compile_nfor_loop(Node* node, Scope* context);
@@ -114,12 +47,14 @@ int compile_while_loop(Node* node, Scope* context);
 int compile_repeat_loop(Node* node, Scope* context);
 int compile_import(Node* node, Scope* context);
 int compile_func_def(Node* node, Scope* context);
+int compile_method_def(Node* node, Scope* context);
 int compile_class_def(Node* node, Scope* context);
 int compile_class_def(Node* node, Scope* context);
 int compile_selfcall(Node* node, Scope* context);
 int compile_selfdeclare(Node* node, Scope* context);
 int compile_fieldaccess(Node* node, Scope* context);
 int compile_constructor(Node* node, Scope* context);
+int compile_indexing(Node* node, Scope* context);
 
 int emit(uint8_t instr, Scope* context);
 static int register_first(Scope* context);
@@ -148,6 +83,8 @@ static inline int compile_in_scope(Node* node, Scope* context);
 static inline void update_symbols(Scope* context);
 static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
+
+int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context);
 
 TValue close_context(Scope* context);
 

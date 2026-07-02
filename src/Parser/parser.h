@@ -14,8 +14,10 @@
 #define WHILE_TOKEN     ((Token){ .tt = TT_KWORD, .value = make_fstring("while") })
 #define ELSEIF_TOKEN    ((Token){ .tt = TT_KWORD, .value = make_fstring("elseif") })
 #define SELF_TOKEN      ((Token){ .tt = TT_IDENTIFIER, .value = make_fstring("self") })
-#define EXPECTED(exc)   { (exc); if (res->err_details) return NULL; }
 
+#define ERR_CHECK(exc)      exc; if (res->err_details) return NULL;
+#define OPTIONAL(exc)       ({ Node* _exp = (exc); if (!_exp) return NULL; _exp; })
+#define EXPECTED(exc, mes)  ({ Node* _exp = (exc); if (!_exp) { if (res->err_details) return NULL; else return (res->err_details = mes, NULL); } _exp; })
 
 typedef struct {
     Token* tokens;
@@ -26,7 +28,7 @@ typedef struct {
 
 typedef Node* (*ParseFunc)(ParseResult* res);
 
-static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2);
+static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2, char expected[]);
 static NodeArray separated(ParseResult* res, ParseFunc func, Token separator);
 static Node* call_like(Node* return_node, ParseResult* res, Node* num, NodeType nt);
 static Node* postfix_op(ParseResult* res, Node* num);
@@ -40,6 +42,7 @@ Node* repeat_expr(ParseResult* res);
 Node* import_expr(ParseResult* res);
 Node* func_expr(ParseResult* res);
 Node* class_expr(ParseResult* res);
+Node* table_expr(ParseResult* res);
 Node* numerics(ParseResult* res);
 Node* postfix(ParseResult* res);
 Node* power(ParseResult* res);

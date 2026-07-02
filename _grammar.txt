@@ -34,7 +34,7 @@ term :              factor ((MUL|DIV|IDIV|MOD) factor)*
 factor :            (PLUS|MINUS) factor
                     power
 
-power :             call ((POW) factor)*
+power :             postfix ((POW) factor)*
 
 postfix :           numerics ( postfix_op )*
 
@@ -50,7 +50,7 @@ numerics :          FLOAT
                     func-expr
 
 
-table-expr :        LCBRAC (expr (SEPARATOR expr)*)? RCBRAC
+table-expr :        LCBRAC (logical (SEPARATOR logical)*)? RCBRAC
 
 alloc-expr :        KEYWORD:"alloc" expr ARROW (expr (SEPARATOR expr)*)? KEYWORD:"end"
 

@@ -18,6 +18,7 @@ TypeResolver type_resolvers[] = {
     [NT_VAR_ACESS]      = resolve_type_var_access,
     [NT_NUMBER]         = resolve_type_number,
     [NT_STRING]         = resolve_type_string,
+    [NT_TABLE]          = resolve_type_table,
     [NT_ALLOCATION]     = resolve_type_allocation,
     [NT_IF]             = resolve_type_if_statement,
     [NT_NFOR]           = resolve_type_nfor_loop,
@@ -32,6 +33,7 @@ TypeResolver type_resolvers[] = {
     [NT_SELFDECLARE]    = resolve_type_selfdeclare,
     [NT_FIELDACCESS]    = resolve_type_fieldaccess,
     [NT_CONSTRUCTOR]    = resolve_type_constructor,
+    [NT_INDEXING]       = resolve_type_indexing
 };
 
 TValue resolve_type(Node* node, TypesContext* context) {
@@ -192,6 +194,14 @@ TValue resolve_type_number(Node* node, TypesContext* context) {
 
 TValue resolve_type_string(Node* node, TypesContext* context) {
     return (node->type = make_fstring("String"));
+}
+
+TValue resolve_type_table(Node* node, TypesContext* context) {
+    for (int i = 0; i < node->node.TableNode.values.len; i++) {
+        resolve_type(node->node.TableNode.values.nodes[i], context);
+    }
+
+    return (node->type = TableType);
 }
 
 TValue resolve_type_allocation(Node* node, TypesContext* context) {
@@ -426,7 +436,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
     TTable* args = AS_TABLE(desc->arg_types);
 
     check_call_types(node, args, context);
-    return desc->return_type;
+    return (node->type = desc->return_type);
 }
 
 TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
@@ -488,9 +498,38 @@ TValue resolve_type_fieldaccess(Node* node, TypesContext* context) {
 
 TValue resolve_type_constructor(Node* node, TypesContext* context) {
     TValue modifiers = node->node.methodDefNode.modifiers;
+    TValue func_type = node->node.methodDefNode.type_specifier;
+    TValue class = node->node.methodDefNode.class;
     if (!has_modifier(modifiers, "static")) call_error(new_type_error, "A class's constructor ('__new') must be static");
+    if (!EQUAL(func_type, varType) && !EQUAL(func_type, class)) call_error(new_type_error, "A class's constructor ('__new') must be return the object");;
 
     return resolve_type_method_def(node, context);
+}
+
+TValue resolve_type_indexing(Node* node, TypesContext* context) {
+    TValue target = resolve_type(node->node.IndexNode.target, context);
+    TValue index = resolve_type(node->node.IndexNode.index, context);
+
+    if (EQUAL(target, varType)) return varType;
+    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
+    TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
+
+    TValue desc = get_value_from_hashtable(class_map, indexer);
+    MethodDescriptor* descPtr = IS_NIL(desc) ? NULL : (MethodDescriptor*)PAYLOAD(desc);
+
+    if (!descPtr) {
+        TValue error_message = make_fstring("Cannot index type : <%s>");
+        error_message = format_string((TValue[4]){ error_message, target }, 2);
+        
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
+
+    if (EQUAL(index, varType) || in_table(descPtr->arg_types, index)) return descPtr->return_type;
+
+    TValue error_message = make_fstring("Cannot index type : <%s> with type <%s>");
+    error_message = format_string((TValue[4]){ error_message, target, index }, 3);
+    
+    call_error(new_type_error, AS_STRING(error_message)->str);
 }
 
 

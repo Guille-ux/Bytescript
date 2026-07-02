@@ -17,6 +17,7 @@ FoldingFunction fold_functions[] = {
     [NT_VAR_ACESS]      = fold_var_access,
     [NT_NUMBER]         = fold_number,
     [NT_STRING]         = fold_string,
+    [NT_TABLE]          = fold_table,
     [NT_ALLOCATION]     = fold_allocation,
     [NT_IF]             = fold_if_statement,
     [NT_NFOR]           = fold_nfor_loop,
@@ -28,9 +29,10 @@ FoldingFunction fold_functions[] = {
     [NT_METHODDEF]      = fold_func_def,
     [NT_CLASSDEF]       = fold_class_def,
     [NT_SELFCALL]       = fold_call,
-    [NT_SELFDECLARE]    = fold_selfdeclare,
+    [NT_SELFDECLARE]    = fold_var_declare,
     [NT_FIELDACCESS]    = fold_fieldaccess,
-    [NT_CONSTRUCTOR]    = fold_func_def
+    [NT_CONSTRUCTOR]    = fold_func_def,
+    [NT_INDEXING]       = fold_indexing
 };
 
 
@@ -145,6 +147,14 @@ TValue fold_number(Node* node) { return (node->cc = true, node->node.NumberNode.
 
 TValue fold_string(Node* node) { return (node->cc = true, node->node.StringNode.str); }
 
+TValue fold_table(Node* node) {
+    for (int i = 0; i < node->node.TableNode.values.len; i++) {
+        fold(node->node.TableNode.values.nodes[i]);
+    }
+    
+    return (node->cc = false, NIL);
+}
+
 TValue fold_allocation(Node* node) {
     fold(node->node.AllocNode.target);
     for (int i = 0; i < node->node.AllocNode.args.len; i++) {
@@ -217,10 +227,14 @@ TValue fold_class_def(Node* node) {
     return (node->cc = false, NIL);
 }
 
-TValue fold_selfdeclare(Node* node) {
-    
+TValue fold_fieldaccess(Node* node) {
+    fold(node->node.FieldAccessNode.target);
+    return (node->cc = false, NIL);
 }
 
-TValue fold_fieldaccess(Node* node) {
+TValue fold_indexing(Node* node) {
+    fold(node->node.IndexNode.target);
+    fold(node->node.IndexNode.index);
 
+    return (node->cc = false, NIL);
 }

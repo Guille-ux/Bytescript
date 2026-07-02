@@ -29,6 +29,7 @@ TValue resolve_type_call(Node* node, TypesContext* context);
 TValue resolve_type_var_access(Node* node, TypesContext* context);
 TValue resolve_type_number(Node* node, TypesContext* context);
 TValue resolve_type_string(Node* node, TypesContext* context);
+TValue resolve_type_table(Node* node, TypesContext* context);
 TValue resolve_type_allocation(Node* node, TypesContext* context);
 TValue resolve_type_if_statement(Node* node, TypesContext* context);
 TValue resolve_type_nfor_loop(Node* node, TypesContext* context);
@@ -43,6 +44,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context);
 TValue resolve_type_selfdeclare(Node* node, TypesContext* context);
 TValue resolve_type_fieldaccess(Node* node, TypesContext* context);
 TValue resolve_type_constructor(Node* node, TypesContext* context);
+TValue resolve_type_indexing(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
 TValue right_operation_method(TokenType op);

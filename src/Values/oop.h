@@ -3,7 +3,7 @@
 
 #include "Values/bytev.h"
 
-
+extern TValue indexer;
 extern TValue constructor;
 extern TValue native_methods;
 extern TValue native_methods_map;

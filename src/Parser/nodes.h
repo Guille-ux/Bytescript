@@ -19,6 +19,7 @@ typedef enum {
     NT_VAR_ACESS,
     NT_NUMBER,
     NT_STRING,
+    NT_TABLE,
     NT_ALLOCATION,
     NT_IF,
     NT_NFOR,
@@ -33,6 +34,7 @@ typedef enum {
     NT_SELFDECLARE,
     NT_FIELDACCESS,
     NT_CONSTRUCTOR,
+    NT_INDEXING,
     NT_PLACEHOLDER
 } NodeType;
 
@@ -60,6 +62,7 @@ typedef struct BNode {
         struct { TValue name; } VarAcess;
         struct { TValue num; } NumberNode;
         struct { TValue str; } StringNode;
+        struct { NodeArray values; } TableNode;
         struct { Node* target; NodeArray args; } AllocNode;
         struct { NodeArray cases; NodeArray statements; } IfNode;
         struct { TValue identifier; Node* values[3]; Node* statements; } nForNode;
@@ -73,6 +76,7 @@ typedef struct BNode {
         struct { Node* target; NodeArray args; TValue name; } SelfCallnode;
         struct { Node* value; TValue var_name; TValue type_specifier; } SelfDeclarenode;
         struct { Node* target; TValue name; } FieldAccessNode;
+        struct { Node* target; Node* index; } IndexNode;
     } node;
 } Node;
 

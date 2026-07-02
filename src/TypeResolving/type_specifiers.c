@@ -73,6 +73,7 @@ void initialize_type_specifiers() {
 
     table_map = new_table(NULL, 0);
     add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType }, varType, 2 ));
+    add_value_to_hashtable(table_map, make_fstring("__index"), make_method_descriptor((TValue[2]){ NumberType }, varType, 1));
 
     func_map = new_table(NULL, 0);
     return initialize_operation_methods();

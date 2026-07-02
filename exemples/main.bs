@@ -1,15 +1,2 @@
-class Idk
-    func static Idk __new()
-        Number self.num = 5
-        String self.str = "yes"
-        return self
-    end
-
-    func Number __add(Number b)
-        return b + self.num
-    end
-end
-
-Idk myIdk = Idk:new()
-Number myNum = myIdk + 2
-String myStr = myIdk.str
+Table a = {5, "yes"}
+var b = a[0]

@@ -18,6 +18,7 @@ TValue fold_call(Node* node);
 TValue fold_var_access(Node* node);
 TValue fold_number(Node* node);
 TValue fold_string(Node* node);
+TValue fold_table(Node* node);
 TValue fold_allocation(Node* node);
 TValue fold_if_statement(Node* node);
 TValue fold_nfor_loop(Node* node);
@@ -27,7 +28,7 @@ TValue fold_repeat_loop(Node* node);
 TValue fold_import(Node* node);
 TValue fold_func_def(Node* node);
 TValue fold_class_def(Node* node);
-TValue fold_selfdeclare(Node* node);
 TValue fold_fieldaccess(Node* node);
+TValue fold_indexing(Node* node);
 
 #endif

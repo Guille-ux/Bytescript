@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "Compiler/compiler.h"
+#include "TypeResolving/type_specifiers.h"
 #include "labeler.h"
 
 #define false 0
@@ -20,6 +21,7 @@ CompileFunction compiler_functions[] = {
     [NT_VAR_ACESS]      = compile_var_access,
     [NT_NUMBER]         = compile_number,
     [NT_STRING]         = compile_string,
+    [NT_TABLE]          = compile_table,
     [NT_ALLOCATION]     = compile_allocation,
     [NT_IF]             = compile_if_statement,
     [NT_NFOR]           = compile_nfor_loop,
@@ -28,12 +30,13 @@ CompileFunction compiler_functions[] = {
     [NT_REPEAT]         = compile_repeat_loop,
     [NT_IMPORT]         = compile_import,
     [NT_FUNCDEF]        = compile_func_def,
-    [NT_METHODDEF]      = compile_func_def,
+    [NT_METHODDEF]      = compile_method_def,
     [NT_CLASSDEF]       = compile_class_def,
     [NT_SELFCALL]       = compile_selfcall,
     [NT_SELFDECLARE]    = compile_selfdeclare,
     [NT_FIELDACCESS]    = compile_fieldaccess,
-    [NT_CONSTRUCTOR]    = compile_constructor
+    [NT_CONSTRUCTOR]    = compile_constructor,
+    [NT_INDEXING]       = compile_indexing
 };
 
 
@@ -175,6 +178,10 @@ int compile_bin_op(Node* node, Scope* context) {
         case TT_MOD:    emit(leftCC ? OP_MOD_CR    : rightCC ? OP_MOD_RC     : OP_MOD_RR, context); break;
         case TT_POW:    emit(leftCC ? OP_POW_CR    : rightCC ? OP_POW_RC     : OP_POW_RR, context); break;
         case TT_CONCAT: emit(leftCC ? OP_CONCAT_CR : rightCC ? OP_CONCAT_RC  : OP_CONCAT_RR, context); break;
+        case TT_RAND:
+        case TT_ROR:
+        case TT_AND:
+        case TT_OR:     compile_boolean_op(left, right, leftCC, rightCC, op, context);
 
         default :
             if (leftCC) { int temp = left; left = right; right = temp; }
@@ -182,8 +189,6 @@ int compile_bin_op(Node* node, Scope* context) {
             switch (op) {
                 case TT_PLUS:   emit(CC ? OP_ADD_RC  : OP_ADD_RR, context); break;
                 case TT_MUL:    emit(CC ? OP_MUL_RC  : OP_MUL_RR, context); break;
-                case TT_AND:    emit(CC ? OP_AND_RC  : OP_AND_RR, context); break;
-                case TT_OR:     emit(CC ? OP_OR_RC   : OP_OR_RR, context); break;
                 case TT_BAND:   emit(CC ? OP_BAND_RC : OP_BAND_RR, context); break;
                 case TT_BOR:    emit(CC ? OP_BOR_RC  : OP_BOR_RR, context); break;
                 case TT_BXOR:   emit(CC ? OP_BXOR_RC : OP_BXOR_RR, context); break;
@@ -278,6 +283,19 @@ int compile_number(Node* node, Scope* context) {
 int compile_string(Node* node, Scope* context) {
     node->cc = true;
     return cache_constant(node->node.StringNode.str, context);
+}
+
+int compile_table(Node* node, Scope* context) {
+    int r0 = free_register(register_top(context), context);
+    int len = node->node.TableNode.values.len;
+
+    for (int i = 0; i < len; i++) assign_to_reg(node->node.TableNode.values.nodes[i], register_top(context), context);
+    free_multiple(r0, len, context);
+
+    emit(OP_NEWTABLE, context);
+    emit(r0, context);
+    emit(len, context);
+    return free_register(emit(register_first(context), context), context);
 }
 
 int compile_allocation(Node* node, Scope* context) {
@@ -486,6 +504,10 @@ int compile_func_def(Node* node, Scope* context) {
     return idx;
 }
 
+int compile_method_def(Node* node, Scope* context) {
+    
+}
+
 int compile_class_def(Node* node, Scope* context) {
     return 0;
 }
@@ -504,6 +526,31 @@ int compile_fieldaccess(Node* node, Scope* context) {
 
 int compile_constructor(Node* node, Scope* context) {
     
+}
+
+int compile_indexing(Node* node, Scope* context) {
+    Node* target_node = node->node.IndexNode.target;
+    Node* index_node = node->node.IndexNode.index;
+
+    int target = compile(target_node, context);
+    int index = compile(node->node.IndexNode.index, context);
+
+    int free_target = target_node->cc ? 1 : register_try_free(target, context) + 1;
+
+    if (target_node->cc) target = register_constant(target, context, -1);
+    if (index_node->cc) index = free_register(register_constant(index, context, -1), context);
+    if (free_target) free_register(target, context);
+
+    if (EQUAL(target_node->type, TableType) || EQUAL(target_node->type, varType)) {
+        emit(OP_GETTABLE, context);
+        emit(target, context);
+        emit(index, context);
+        return emit(free_register(register_first(context), context), context);
+
+    } else {
+        
+
+    }
 }
 
 
@@ -748,6 +795,12 @@ static TValue get_symbol_register(Scope* context, TValue name) {
 
     return NIL;
 }
+
+
+int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context) {
+
+}
+
 
 TValue close_context(Scope* context) {
     emit(OP_HALT, context);

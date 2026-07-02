@@ -4,12 +4,13 @@
 #include "Globals/globals.h"
 #include "utils/utils.h"
 
-
+TValue indexer;
 TValue constructor;
 TValue native_methods;
 TValue native_methods_map;
 void initialize_oop() {
     constructor = make_fstring("__new");
+    indexer = make_fstring("__index");
     native_methods = new_table(NULL, 0);
     native_methods_map = new_table(NULL, 0);
     append_to_table(native_methods, constructor);
@@ -38,6 +39,7 @@ void initialize_oop() {
     append_to_table(native_methods, make_fstring("__unm"));
     append_to_table(native_methods, make_fstring("__unp"));
     append_to_table(native_methods, make_fstring("__not"));
+    append_to_table(native_methods, make_fstring("__index"));
 
     TTable* native_table = AS_TABLE(native_methods);
     for (int i = 0; i < native_table->array.len; i++) {
