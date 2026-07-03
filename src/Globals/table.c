@@ -4,35 +4,41 @@
 #include "Values/oop.h"
 #include "Globals/table.h"
 #include "Globals/string.h"
-#include "Globals/globals.h"
+#include "bytescript.h"
 
 
-TValue initialize_table_class() {
-    TValue Table_fields[][2] = {
-        NEW_METHOD(new, table),
-        NEW_METHOD(free, table),
-        NEW_METHOD(pop, table),
-        NEW_METHOD(shrink, table),
-        NEW_METHOD(expand, table),
-        NEW_METHOD(len, table),
-        NEW_METHOD(reserve, table),
-        NEW_METHOD(print, table),
-        NEW_METHOD(slice, table),
-        NEW_METHOD(fill, table),
-        NEW_METHOD(copy, table),
-        NEW_METHOD(insert, table),
-        NEW_METHOD(hash_value, table),
-        NEW_METHOD(append_hash, table),
-        NEW_METHOD(get, table),
-        NEW_METHOD(clean, table),
-        NEW_METHOD(reset, table),
-        NEW_METHOD(hashed_keys, table),
-        NEW_METHOD(hashed_values, table),
-        NEW_METHOD(buckets, table)
+TValue Table_class;
+TValue Table_obj_class;
+void initialize_table_class() {
+    TValue Table_obj_fields[] = {
+        new_cfunc(new_table),
+        new_cfunc(free_table),
+        new_cfunc(pop_table),
+        new_cfunc(shrink_table),
+        new_cfunc(expand_table),
+        new_cfunc(len_table),
+        new_cfunc(reserve_table),
+        new_cfunc(print_table),
+        new_cfunc(slice_table),
+        new_cfunc(fill_table),
+        new_cfunc(copy_table),
+        new_cfunc(insert_table),
+        new_cfunc(append_hash_table),
+        new_cfunc(get_table),
+        new_cfunc(clean_table),
+        new_cfunc(reset_table),
+        new_cfunc(hashed_keys_table),
+        new_cfunc(hashed_values_table),
+        new_cfunc(buckets_table)
     };
 
-    size_t fields_size = sizeof(Table_fields) / sizeof(Table_fields[0]);
-    return global_class_from_fields(Table_fields, fields_size, "Table");
+    TValue Table_fields[] = {
+        new_cfunc(hash_value_table)
+    };
+
+    easy_map("src/Globals/maps/table_map.bs");
+    Table_class = new_class(NULL, Table_fields, 0, sizeof(Table_fields) / sizeof(Table_fields[0]));
+    Table_obj_class = new_class(NULL, Table_obj_fields, 0, sizeof(Table_obj_fields) / sizeof(Table_obj_fields[0]));
 }
 
 
@@ -63,7 +69,7 @@ TValue new_table(TValue* argv, size_t argc) {
 }
 
 TValue free_table(TValue* argv, size_t argc) {
-    if (argc < 1) return NIL;
+    MIN_ARGC(1);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.appendKey> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -77,11 +83,11 @@ TValue free_table(TValue* argv, size_t argc) {
     free(ptr->hash_table.array);
     free(ptr);
 
-    return NIL;
+    return argv[0];
 }
 
 TValue pop_table(TValue* argv, size_t argc) {
-    if (argc < 1) return NIL;
+    MIN_ARGC(1)
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.pop> take type <Table> as first argument");
 
     size_t returnc = argc - 1 ? argc - 1 : argc;
@@ -92,6 +98,9 @@ TValue pop_table(TValue* argv, size_t argc) {
         returnv[0] = ptr->array.array[ptr->array.len - 1];
         ptr->array.array[ptr->array.len - 1] = NIL;
         ptr->array.len -= 1;
+
+        potential_shrink(ptr);
+        return to_return_value(returnv, returnc);
     }
 
     for (int i = 1; i < argc; i++) {
@@ -109,7 +118,7 @@ TValue pop_table(TValue* argv, size_t argc) {
 }
 
 TValue shrink_table(TValue* argv, size_t argc) {
-    if (argc < 1) return NIL;
+    MIN_ARGC(1)
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.shrink> take type <Table> as first argument");
     TTable* ptr = AS_TABLE(argv[0]);
     
@@ -117,7 +126,8 @@ TValue shrink_table(TValue* argv, size_t argc) {
     TValue* nptr = realloc(ptr->array.array, BSIZE(ptr->array.capacity));
     ptr->array.array = nptr;
 
-    if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.expand>");
+    if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.shrink>");
+    return argv[0];
 }
 
 TValue expand_table(TValue* argv, size_t argc) {
@@ -131,26 +141,23 @@ TValue expand_table(TValue* argv, size_t argc) {
     ptr->array.array = nptr;
 
     if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.expand>");
-    return NIL;
+    return argv[0];
 }
 
 TValue len_table(TValue* argv, size_t argc) {
-    size_t returnc = argc;
-    TValue returnv[returnc];
+    MIN_ARGC(1);
 
-    for (int i = 0; i < argc; i++) {
-        TValue value = argv[i];
-        if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.len> take type <Table> as arguments");
+    TValue value = argv[0];
+    if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.len> take type <Table> as arguments");
 
-        TTable* ptr = AS_TABLE(value);
-        returnv[i] = NUM_AS_TVALUE(ptr->array.len);
-    }
+    TTable* ptr = AS_TABLE(value);
+    TValue len = NUM_AS_TVALUE(ptr->array.len);
 
-    return to_return_value(returnv, returnc);
+    return to_return_value(&len, 1);
 }
 
 TValue reserve_table(TValue* argv, size_t argc) {
-    if (argc < 2) return NIL;
+    MIN_ARGC(2);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.reserve> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -163,35 +170,38 @@ TValue reserve_table(TValue* argv, size_t argc) {
 
         if (ptr->array.array == NULL) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation in function <Table.reserve>");
     }
+
+    return to_return_value(argv + 1, 1);
 }
 
 TValue print_table(TValue* argv, size_t argc) {
-    for (int i = 0; i < argc; i++) {
-        TTable* ptr = AS_TABLE(argv[i]);
+    MIN_ARGC(1)
+    TTable* ptr = AS_TABLE(argv[0]);
 
-        printf("{\n");
-        for (int i2 = 0; i2 < ptr->array.len; i2++) {
-            printf("\t");
-            print(ptr->array.array + i2, 1);
-        }
-        printf("}");
+    printf("{\n");
+    for (int i = 0; i < ptr->array.len; i++) {
+        printf("\t");
+        print(ptr->array.array + i, 1);
     }
+    printf("}");
+
+    return argv[0];
 }
 
 TValue slice_table(TValue* argv, size_t argc) {
-    if (argc < 1) return NIL;
+    MIN_ARGC(1);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.pop> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
     uint64_t start  = argc > 1 ? AS_NUM(argv[1]) : 0;
-    uint64_t end    = argc > 2 ? AS_NUM(argv[2]) : 0;
+    uint64_t end    = argc > 2 ? AS_NUM(argv[2]) : ptr->array.len - 1;
 
     if (OUT_OF_SCOPE(ptr, start) || OUT_OF_SCOPE(ptr, end)) call_error(new_index_error, "Index out of scope in function <Table.slice>");
     return new_table(ptr->array.array + start, end - start + 1);
 }
 
 TValue fill_table(TValue* argv, size_t argc) {
-    if (argc < 1) return NIL;
+    MIN_ARGC(1)
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.fill> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -201,26 +211,23 @@ TValue fill_table(TValue* argv, size_t argc) {
         ptr->array.array[i] = fillValue;
     }
 
-    return NIL;
+    return argv[0];
 }
 
 TValue copy_table(TValue* argv, size_t argc) {
-    size_t returnc = argc;
-    TValue returnv[returnc];
+    MIN_ARGC(1);
 
-    for (int i = 0; i < argc; i++) {
-        TValue value = argv[i];
-        if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.copy> take type <Table> as arguments");
+    TValue value = argv[0];
+    if (!IS_TABLE(value)) call_error(new_type_error, "function <Table.copy> take type <Table> as arguments");
 
-        TTable* ptr = AS_TABLE(value);
-        returnv[i] = new_table(ptr->array.array, ptr->array.len);
-    }
+    TTable* ptr = AS_TABLE(value);
+    TValue new = new_table(ptr->array.array, ptr->array.len);
 
-    return to_return_value(returnv, returnc);
+    return to_return_value(&new, 1);
 }
 
 TValue insert_table(TValue* argv, size_t argc) {
-    if (argc < 2) return NIL;
+    MIN_ARGC(2);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.insert> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -234,20 +241,8 @@ TValue insert_table(TValue* argv, size_t argc) {
     return value;
 }
 
-TValue hash_value_table(TValue* argv, size_t argc) {
-    size_t returnc = argc;
-    TValue returnv[returnc];
-
-    for (int i = 0; i < argc; i++) {
-        TValue value = argv[i];
-        returnv[i] = NAN_AS_TVALUE(hash_single_value(value));
-    }
-
-    return to_return_value(returnv, returnc);
-}
-
 TValue append_hash_table(TValue* argv, size_t argc) {
-    if (argc < 3) return NIL;
+    MIN_ARGC(3);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.appendKey> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -272,7 +267,7 @@ TValue append_hash_table(TValue* argv, size_t argc) {
 }
 
 TValue get_table(TValue* argv, size_t argc) {
-    if (argc < 2) return NIL;
+    MIN_ARGC(2);
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.get> take type <Table> as first argument");
 
     TTable* ptr = AS_TABLE(argv[0]);
@@ -385,6 +380,18 @@ TValue in_array_table(TValue*  argv, size_t argc) {
     return FALSE_TVALUE;
 }
 
+
+TValue hash_value_table(TValue* argv, size_t argc) {
+    size_t returnc = argc;
+    TValue returnv[returnc];
+
+    for (int i = 0; i < argc; i++) {
+        TValue value = argv[i];
+        returnv[i] = NAN_AS_TVALUE(hash_single_value(value));
+    }
+
+    return to_return_value(returnv, returnc);
+}
 
 
 static inline uint64_t hash_single_value(TValue value) {

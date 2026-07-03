@@ -1,0 +1,43 @@
+class Error
+    func static Error __new(String name, String details) end
+end
+
+class TypeError -> Error
+    func static TypeError __new(String details) end
+end
+
+class IndexError -> Error
+    func static IndexError __new(String details) end
+end
+
+class SyntaxError -> Error
+    func static SyntaxError __new(String details) end
+end
+
+class InvalidArgsError -> Error
+    func static InvalidArgsError __new(String details) end
+end
+
+class StackOverflowError -> Error
+    func static StackOverflowError __new(String details) end
+end
+
+class IncorrectLvalueError -> Error
+    func static IncorrectLvalueError __new(String details) end
+end
+
+class FailedAllocationError -> Error
+    func static FailedAllocationError __new(String details) end
+end
+
+class InvalidIdentifierError -> Error
+    func static InvalidIdentifierError __new(String details) end
+end
+
+class UnknownIdentifierError -> Error
+    func static UnknownIdentifierError __new(String details) end
+end
+
+class UnidentifiedCharacterError -> Error
+    func static UnidentifiedCharacterError __new(String details) end
+end

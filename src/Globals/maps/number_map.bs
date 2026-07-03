@@ -1,0 +1,26 @@
+class Number
+    func Number __add(Number b) end
+    func Number __sub(Number b) end
+    func Number __mul(Number b) end
+    func Number __pow(Number b) end
+    func Number __div(Number b) end
+    func Number __idiv(Number b) end
+    func Number __mod(Number b) end
+    func Number __eq(Number b) end
+    func Number __neq(Number b) end
+    func Number __lt(Number b) end
+    func Number __gt(Number b) end
+    func Number __lteq(Number b) end
+    func Number __gteq(Number b) end
+    func Number __rand(Number b) end
+    func Number __ror(Number b) end
+    func Number __and(Number b) end
+    func Number __or(Number b) end
+    func Number __band(Number b) end
+    func Number __bor(Number b) end
+    func Number __bxor(Number b) end
+    func Number __lshift(Number b) end
+    func Number __rshift(Number b) end
+    func Number __unm(Number b) end
+    func Number __unp(Number b) end
+end

@@ -3,6 +3,7 @@
 #include "Values/oop.h"
 #include "lib/Math/tmath.h"
 
+#include "bytescript.h"
 #include <stdbool.h>
 
 
@@ -10,93 +11,58 @@ const TTable* string_cache = NULL;
 uint8_t flag_flags[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3 };
 char valid_flags[] = { '0', ' ', '+', '-' };
 
-
-TValue initialize_string_class() {
-    string_cache = AS_TABLE(new_table(NULL, 0));
-
-    TValue String_fields[][2] = {
-        NEW_METHOD(compare, string),
-        NEW_METHOD(concat, string),
-        NEW_METHOD(to_string, string)
+TValue String_class;
+TValue String_obj_class;
+void initialize_string_class() {
+    TValue String_obj_fields[] = {
+        new_cfunc(compare_string),
+        new_cfunc(concat_string),
+        new_cfunc(format_string)
     };
 
-    size_t fields_size = sizeof(String_fields) / sizeof(String_fields[0]);
-    return global_class_from_fields(String_fields, fields_size, "String");
+    TValue String_fields[] = {
+        new_cfunc(to_string_string)
+    };
+
+    easy_map("src/Globals/maps/string_map.bs");
+    String_class = new_class(NULL, String_fields, 0, sizeof(String_fields) / sizeof(String_fields[0]));
+    String_obj_class = new_class(NULL, String_obj_fields, 0, sizeof(String_obj_fields) / sizeof(String_obj_fields[0]));
 }
 
 
 TValue compare_string(TValue* argv, size_t argc) {
-    for (int i = 0; i < argc; i++) {
-        TValue value = argv[i];
-        if (!IS_STRING(value)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
+    MIN_ARGC(2);
 
-        TTable* ptr = AS_TABLE(value);  // ??????????????????
-        free(ptr->array.array);
-        free(ptr->hash_table.array);
-        free(ptr);
-    }
+    TValue self = argv[0];
+    TValue other = argv[0];
+    if (!IS_STRING(self)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
+    if (!IS_STRING(other)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
 
-    return NIL;
+    TStr* self_ptr = AS_STRING(self);
+    TStr* other_ptr = AS_STRING(other);
+    
+    int res = strcmp(self_ptr->str, other_ptr->str);
+    return res == 0 ? TRUE_TVALUE : FALSE_TVALUE;
 }
 
 TValue concat_string(TValue* argv, size_t argc) {
     STRICT_MIN_ARGC(2, "function <String.concat> take 2 arguments")
-    if (!IS_STRING(argv[0]) || !IS_STRING(argv[1])) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
 
-    TStr* v0 = AS_STRING(argv[0]);
-    TStr* v1 = AS_STRING(argv[1]);
+    TValue self = argv[0];
+    TValue other = argv[0];
+    if (!IS_STRING(self)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
+    if (!IS_STRING(other)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
 
-    TStr* new = malloc(sizeof(TStr) + v0->len + v1->len + 1);
-    strcpy(new->str, v0->str);
-    strcat(new->str, v1->str);
-    new->len = v0->len + v1->len;
+    TStr* self_ptr = AS_STRING(self);
+    TStr* other_ptr = AS_STRING(other);
+
+    TStr* new = malloc(sizeof(TStr) + self_ptr->len + other_ptr->len + 1);
+    strcpy(new->str, self_ptr->str);
+    strcat(new->str, other_ptr->str);
+    new->len = self_ptr->len + other_ptr->len;
     new->str[new->len] = '\0';
 
     return cache_string(new);
-}
-
-TValue to_string_string(TValue* argv, size_t argc) {
-    TValue str1 = NIL;
-
-    for (int i = 0; i < argc; i++) {
-        TValue v = argv[i];
-        TValue object;
-        void* ptr;
-
-        switch (TYPE(v)) {
-            case STRING: {
-                str1 = IS_NIL(str1) ? v : concat_string(( TValue[2] ){ str1, v }, 2);
-                break;
-            }
-
-            case TABLE:
-            case FUNC: {
-                object = TYPE(v) == FUNC ? make_fstring("function at") : make_fstring("table at");;
-                void* ptr = (void*)PAYLOAD(v);
-
-
-                int needed = snprintf(NULL, 0, "<%p>", ptr);
-                char buffer[needed + 1];
-                snprintf(buffer, needed + 1, "<%p>", ptr);
-
-                TValue str = make_fstring(buffer);
-                str = concat_string(( TValue[2] ){ object, str }, 2);
-
-                str1 = IS_NIL(str1) ? str : concat_string(( TValue[2] ){ str1, str }, 2);
-                break;
-            }
-
-            default:
-                int needed = snprintf(NULL, 0, "%.15g", AS_NUM(v));
-                char buffer[needed + 1];
-                snprintf(buffer, needed + 1, "%.15g", AS_NUM(v));
-
-                str1 = IS_NIL(str1) ? make_fstring(buffer) : concat_string(( TValue[2] ){ str1, make_fstring(buffer) }, 2);
-                break;
-        }
-    }
-
-    return to_return_value(&str1, 1);
 }
 
 TValue format_string(TValue* argv, size_t argc) {
@@ -181,6 +147,51 @@ TValue format_string(TValue* argv, size_t argc) {
     strncpy(current, pre, ptr->str + ptr->len - pre);
     new->str[new->len] = '\0';
     return STR_TO_TVALUE(new);
+}
+
+
+TValue to_string_string(TValue* argv, size_t argc) {
+    TValue str1 = NIL;
+
+    for (int i = 0; i < argc; i++) {
+        TValue v = argv[i];
+        TValue object;
+        void* ptr;
+
+        switch (TYPE(v)) {
+            case STRING: {
+                str1 = IS_NIL(str1) ? v : concat_string(( TValue[2] ){ str1, v }, 2);
+                break;
+            }
+
+            case TABLE:
+            case FUNC: {
+                object = TYPE(v) == FUNC ? make_fstring("function at") : make_fstring("table at");;
+                void* ptr = (void*)PAYLOAD(v);
+
+
+                int needed = snprintf(NULL, 0, "<%p>", ptr);
+                char buffer[needed + 1];
+                snprintf(buffer, needed + 1, "<%p>", ptr);
+
+                TValue str = make_fstring(buffer);
+                str = concat_string(( TValue[2] ){ object, str }, 2);
+
+                str1 = IS_NIL(str1) ? str : concat_string(( TValue[2] ){ str1, str }, 2);
+                break;
+            }
+
+            default:
+                int needed = snprintf(NULL, 0, "%.15g", AS_NUM(v));
+                char buffer[needed + 1];
+                snprintf(buffer, needed + 1, "%.15g", AS_NUM(v));
+
+                str1 = IS_NIL(str1) ? make_fstring(buffer) : concat_string(( TValue[2] ){ str1, make_fstring(buffer) }, 2);
+                break;
+        }
+    }
+
+    return to_return_value(&str1, 1);
 }
 
 

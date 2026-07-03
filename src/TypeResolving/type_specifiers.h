@@ -3,22 +3,18 @@
 
 #include "Values/bytev.h"
 #include "Globals/string.h"
+#include "Lexer/lexer.h"
 
 extern TValue varType;
 extern TValue numType;
 extern TValue strType;
 extern TValue tableType;
-extern TValue funcType;
+extern TValue FunctionType;
 extern TValue NumberType;
 extern TValue StringType;
 extern TValue TableType;
 
-extern TValue num_map;
-extern TValue str_map;
-extern TValue table_map;
-extern TValue func_map;
-
-extern TValue* typeTable[][2];
+extern TValue* typeTable[];
 
 typedef struct {
     CDATA_HEADER;
@@ -44,5 +40,6 @@ TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t arg
 TValue make_class_descriptor(TValue func_map, TValue id_map);
 MethodDescriptor* as_method_descriptor(TValue value);
 ClassDescriptor* as_class_descriptor(TValue value);
+TValue right_operation_method(TokenType op);
 
 #endif

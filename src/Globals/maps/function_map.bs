@@ -1,0 +1,3 @@
+class Function
+    func __call() end
+end

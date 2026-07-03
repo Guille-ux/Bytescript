@@ -1,0 +1,27 @@
+class Table
+    func static Table __new() end
+    func Table free() end
+    func pop(index) end
+    func Table shrink() end
+    func Table expand() end
+    func Number len() end
+    func Number reserve(Number bytes) end
+    func Table print() end
+    func Table slice(Number start, Number end) end
+    func Table fill(value) end
+    func Table copy() end
+    func insert(value, Number idx) end
+    func appendHash(key, value) end
+    func get(key) end
+    func Table clean() end
+    func Table reset() end
+    func Table hashedKeys() end
+    func Table hashedValues() end
+    func Table buckets() end
+    func Number inArray(value) end
+
+    func __iter(Number i, value) end
+    func __index(Number i) end
+
+    func static hashValue(value) end
+end

@@ -3,14 +3,18 @@
 TCDataType FileData_Type = { .name = "FileData" }, *FileDataType = &FileData_Type;
 
 TValue File_class;
-TValue initialize_file_class() {
-    TValue File_fields[][2] = {
-        NEW_METHOD(read, file),
-        NEW_METHOD(write, file)
+TValue File_obj_class;
+void initialize_file_class() {
+    TValue File_fields[] = {
+
     };
 
-    size_t fields_size = sizeof(File_fields) / sizeof(File_fields[0]);
-    return (File_class = global_class_from_fields(File_fields, fields_size, "File"));
+    TValue File_obj_fields[] = {
+        new_cfunc(read_file)
+    };
+
+    File_class = new_class(NULL, NULL, 0, sizeof(File_fields) / sizeof(TValue));
+    File_obj_class = new_class(NULL, File_obj_fields, 0, sizeof(File_obj_fields) / sizeof(File_obj_fields[0]));
 }
 
 

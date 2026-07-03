@@ -74,13 +74,18 @@ typedef struct BNode {
         struct { TValue name; TValue type_specifier; TValue modifiers; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; TValue class; } methodDefNode;
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;
         struct { Node* target; NodeArray args; TValue name; } SelfCallnode;
-        struct { Node* value; TValue var_name; TValue type_specifier; } SelfDeclarenode;
+        struct { Node* value; TValue var_name; TValue type_specifier; TValue class; } SelfDeclarenode;
         struct { Node* target; TValue name; } FieldAccessNode;
         struct { Node* target; Node* index; } IndexNode;
     } node;
 } Node;
 
 
+void clean_node_array(NodeArray* nda, size_t start_index);
+NodeArray make_node_array();
+Node* append_to_node_array(NodeArray* nda, Node* node);
+
+static inline Node* new_node(NodeType nt) { Node* node =  malloc(sizeof(Node)); node->nt = nt; node->cc = false; return node; }
 static inline int node_equal(Node* node1, Node* node2) {
     if (node1->nt != node2->nt) return 0;
     switch (node1->nt) {

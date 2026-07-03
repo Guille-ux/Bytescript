@@ -1,0 +1,7 @@
+class File
+    func String read() end
+end
+
+class IO
+    func File open(String filename) end
+end

@@ -17,7 +17,8 @@ extern TValue InvalidIdentifierError;
 extern TValue UnknownIdentifierError;
 extern TValue UnidentifiedCharacterError;
 
-TValue initialize_error_class();
+void initialize_error_class();
+
 TValue new_error(TValue* argv, size_t argc);
 TValue new_type_error(TValue* argv, size_t argc);
 TValue new_index_error(TValue* argv, size_t argc);

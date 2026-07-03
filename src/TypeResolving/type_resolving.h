@@ -4,10 +4,10 @@
 #include "Parser/nodes.h"
 #include "TypeResolving/type_specifiers.h"
 
+extern TValue type_namespace;
 typedef struct {
     TValue current_class;
     TValue return_type;
-    TTable* type_namespace;
     TTable* func_namespace;
     TTable* id_namespace;
 } TypesContext;
@@ -47,7 +47,6 @@ TValue resolve_type_constructor(Node* node, TypesContext* context);
 TValue resolve_type_indexing(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
-TValue right_operation_method(TokenType op);
 TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context);
 
 #endif

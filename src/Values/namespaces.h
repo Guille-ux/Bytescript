@@ -12,6 +12,9 @@ typedef struct {
 extern TCDataType NamespaceEntry_Type, *NamespaceEntryType;
 
 TValue new_namespace_entry(TValue value, TTable* map);
+TValue set_namespace_value(TValue namespace, TValue value);
+TValue get_namespace_value(TValue namespace);
+TValue get_namespace_map(TValue namespace);
 NamespaceEntry* as_namespace_entry(TValue value);
 
 #endif

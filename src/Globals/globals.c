@@ -1,8 +1,29 @@
 #include "Globals/globals.h"
 #include "Globals/string.h"
+#include "Globals/number.h"
+#include "Globals/function.h"
+#include "Globals/IO/IO.h"
 
 
 TTable* globals_namespace;
+TValue globals_map;
+void initialize_globals() {
+    globals_namespace = AS_TABLE(new_table(NULL, 0));
+    globals_map = TBL_TO_TVALUE(globals_namespace);
+
+    printf("function\n");
+    initialize_function_class();
+    printf("number\n");
+    initialize_number_class();
+    printf("string\n");
+    initialize_string_class();
+    printf("table\n");
+    initialize_table_class();
+    printf("error\n");
+    initialize_error_class();
+    printf("io\n");
+    initialize_io_class();
+}
 
 
 TValue print(TValue* argv, size_t argc) {
@@ -73,18 +94,4 @@ TValue tfree(TValue* argv, size_t argc) {
     }
 
     return NIL;
-}
-
-void initialize_globals() {
-    globals_namespace = AS_TABLE(new_table(NULL, 0));
-
-    initialize_string_class();
-    initialize_table_class();
-}
-
-void append_methods_to_map(TValue map, TValue fields[][2], TValue fieldvalues[], size_t fields_size) {
-    for (int i = 0; i < fields_size; i++) {
-        fieldvalues[i] = fields[i][1];
-        add_value_to_hashtable(map, fields[i][0], NUM_AS_TVALUE(i));
-    }
 }

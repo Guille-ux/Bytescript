@@ -6,6 +6,8 @@
 #include "Parser/parser.h"
 #include "TypeResolving/type_specifiers.h"
 
+TValue user_types;
+
 
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2, char expected[]) {
     if (func2 == NULL) func2 = func1;
@@ -318,6 +320,8 @@ Node* class_expr(ParseResult* res) {
     class_node->node.classDefNode.inherited.next = NULL;
     class_node->node.classDefNode.inherited.value = NIL;
     if (res->tokens->tt == TT_ARROW) {
+        res->tokens++;
+
         while (res->tokens->tt == TT_IDENTIFIER) {
             struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
 
@@ -325,11 +329,11 @@ Node* class_expr(ParseResult* res) {
             new->next =  class_node->node.classDefNode.inherited.next;
             class_node->node.classDefNode.inherited.next = new;
 
-            if (++(res->tokens)->tt != TT_SEPARATOR) break; else res->tokens++;
+            if ((++res->tokens)->tt != TT_SEPARATOR) break; else res->tokens++;
         }
     }
 
-    add_value_to_hashtable(TBL_TO_TVALUE(res->user_types), class_node->node.classDefNode.name, NUM_AS_TVALUE(1));
+    add_value_to_hashtable(user_types, class_node->node.classDefNode.name, NUM_AS_TVALUE(1));
 
     class_node->node.classDefNode.statements = ERR_CHECK(main_parse(res));
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
@@ -532,15 +536,14 @@ Node* get_parsed(ParseFunc func, ParseResult* res, Token stopToken) {
 }
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count) { while ( (**tokens).tt == TT_NEWLINE && ++*adv_count ) ++*tokens; }
-static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err_details = NULL, .adv_count = 0, .tokens = tokens, .user_types = AS_TABLE(new_table(NULL, 0)) }; }
-static inline Node* new_node(NodeType nt) { Node* node =  malloc(sizeof(Node)); node->nt = nt; node->cc = false; return node; }
+static inline ParseResult new_res(Token* tokens) { return (ParseResult){ .err_details = NULL, .adv_count = 0, .tokens = tokens }; }
 
 
-static inline void clean_node_array(NodeArray* nda, size_t start_index) {
+void clean_node_array(NodeArray* nda, size_t start_index) {
     for (int i = start_index; i < nda->cap; i++) nda->nodes[i] = NULL;
 }
 
-static NodeArray make_node_array() {
+NodeArray make_node_array() {
     size_t cap = 8;
     Node** ndarray = malloc(sizeof(Node*) * cap);
     if (ndarray == NULL) call_error(new_failed_allocation_error, "Failed allocation while making node");
@@ -550,7 +553,7 @@ static NodeArray make_node_array() {
     return nda;
 }
 
-static Node* append_to_node_array(NodeArray* nda, Node* node) {
+Node* append_to_node_array(NodeArray* nda, Node* node) {
     if (nda->len >= nda->cap) {
         nda->nodes = realloc(nda->nodes, sizeof(Node*) * (nda->cap *= 2));
         if (nda->nodes == NULL) call_error(new_failed_allocation_error, "Failed allocation while making node");
@@ -571,6 +574,7 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
 }
 
 static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
+    if (tt == TT_IDENTIFIER && res->tokens->tt == TT_KWORD) res->tokens->tt = TT_IDENTIFIER;
     if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err_details = expected;
     if (value != NULL) *value = res->tokens->value;
     res->tokens++;
@@ -578,8 +582,8 @@ static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value
 
 TValue type_specifier(ParseResult* res) {
     if (res->tokens->tt != TT_KWORD && res->tokens->tt != TT_IDENTIFIER) return NIL;
-    if (is_native_type_specifier(&res->tokens->value) ||
-        (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(TBL_TO_TVALUE(res->user_types), res->tokens->value)))) return res->tokens->value;
+    if ((EQUAL(res->tokens->value, varType)) ||
+        (res->tokens->tt == TT_IDENTIFIER && TRUTHY(get_value_from_hashtable(user_types, res->tokens->value)))) return res->tokens->value;
 
     return NIL;
 }

@@ -23,9 +23,9 @@ typedef struct {
     Token* tokens;
     char* err_details;
     size_t adv_count;
-    TTable* user_types;
 } ParseResult;
 
+extern TValue user_types;
 typedef Node* (*ParseFunc)(ParseResult* res);
 
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2, char expected[]);
@@ -62,11 +62,6 @@ Node* get_parsed(ParseFunc func, ParseResult* res, Token stopToken);
 
 static inline void clean_newlines(Token** tokens, size_t* adv_count);
 static inline ParseResult new_res(Token* tokens);
-static inline Node* new_node(NodeType nt);
-
-static inline void clean_node_array(NodeArray* nda, size_t start_index);
-static NodeArray make_node_array();
-static Node* append_to_node_array(NodeArray* nda, Node* node);
 
 static inline bool is_correct_operator(Token op, Token ops[], int opc);
 static void expect(ParseResult* res, TokenType tt, char* expect, TValue* value, char* kword);

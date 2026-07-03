@@ -5,24 +5,20 @@ TValue varType;
 TValue numType;
 TValue strType;
 TValue tableType;
-TValue funcType;
+TValue FunctionType;
 TValue NumberType;
 TValue StringType;
 TValue TableType;
 
-TValue num_map;
-TValue str_map;
-TValue table_map;
-TValue func_map;
-
-TValue* typeTable[][2] = {
-    { &varType, NULL },
-    { &numType, &num_map },
-    { &NumberType, &num_map },
-    { &strType, &str_map },
-    { &StringType, &str_map },
-    { &tableType, &table_map },
-    { &TableType, &table_map },
+TValue* typeTable[] = {
+    &varType,
+    &numType,
+    &NumberType,
+    &strType,
+    &StringType,
+    &tableType,
+    &TableType,
+    &FunctionType,
 };
 
 TValue operation_methods;
@@ -35,47 +31,11 @@ void initialize_type_specifiers() {
     numType     = make_fstring("num");
     strType     = make_fstring("str");
     tableType   = make_fstring("table");
-    funcType    = make_fstring("func");
+    FunctionType= make_fstring("Function");
     NumberType  = make_fstring("Number");
     StringType  = make_fstring("String");
-    TableType  = make_fstring("Table");
+    TableType   = make_fstring("Table");
 
-    num_map = new_table(NULL, 0);
-    TValue num_descriptor = make_method_descriptor((TValue[1]){ NumberType }, NumberType, 1);
-    add_value_to_hashtable(num_map, make_fstring("__add"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__sub"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__mul"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__pow"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__div"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__idiv"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__mod"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__eq"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__neq"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__lt"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__gt"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__lteq"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__gteq"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__rand"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__ror"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__and"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__or"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__band"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__bor"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__lshift"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__rshift"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__unm"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__unp"), num_descriptor);
-    add_value_to_hashtable(num_map, make_fstring("__not"), num_descriptor);
-
-    str_map = new_table(NULL, 0);
-    TValue str_descriptor = make_method_descriptor((TValue[1]){ StringType }, StringType, 1);
-    add_value_to_hashtable(str_map, make_fstring("__concat"), str_descriptor);
-
-    table_map = new_table(NULL, 0);
-    add_value_to_hashtable(table_map, make_fstring("__iter"), make_method_descriptor((TValue[2]){ varType, varType }, varType, 2 ));
-    add_value_to_hashtable(table_map, make_fstring("__index"), make_method_descriptor((TValue[2]){ NumberType }, varType, 1));
-
-    func_map = new_table(NULL, 0);
     return initialize_operation_methods();
 }
 
@@ -115,7 +75,7 @@ int is_native_type_specifier(TValue* value) {
     else if (EQUAL(*value, strType)) *value = StringType;
     else if (EQUAL(*value, tableType)) *value = TableType;
 
-    for (int i = 0; i < sizeof(typeTable) / sizeof(typeTable[0]); i++) if (EQUAL(*value, *typeTable[i][0])) return 1;
+    for (int i = 0; i < sizeof(typeTable) / sizeof(typeTable[0]); i++) if (EQUAL(*value, *typeTable[i])) return 1;
     return 0;
 }
 
@@ -149,4 +109,16 @@ ClassDescriptor* as_class_descriptor(TValue value) {
     if (*data != ClassDescriptorType) call_error(new_type_error, "Failed to cast tvalue into class descriptor");
 
     return (ClassDescriptor*)data;
+}
+
+
+TValue right_operation_method(TokenType op) {
+    TValue op_method = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(op));
+    TStr* ptr = AS_STRING(op_method);
+
+    char buffer[ptr->len + 2];
+    buffer[0] = '_'; buffer[1] = '_'; buffer[2] = 'r';
+
+    strcpy(buffer + 3, ptr->str + 2);
+    return make_fstring(buffer);
 }

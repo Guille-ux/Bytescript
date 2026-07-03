@@ -19,7 +19,9 @@
 #define MAX_TOMBSTONE_FACTOR        (0.18)
 
 
-TValue initialize_table_class();
+extern TValue Table_class;
+extern TValue Table_obj_class;
+void initialize_table_class();
 
 TValue new_table(TValue* argv, size_t argc);
 TValue free_table(TValue* argv, size_t argc);
@@ -33,7 +35,6 @@ TValue slice_table(TValue* argv, size_t argc);
 TValue fill_table(TValue* argv, size_t argc);
 TValue copy_table(TValue* argv, size_t argc);
 TValue insert_table(TValue* argv, size_t argc);
-TValue hash_value_table(TValue* argv, size_t argc);
 TValue append_hash_table(TValue* argv, size_t argc);
 TValue get_table(TValue* argv, size_t argc);
 TValue clean_table(TValue* argv, size_t argc);
@@ -43,6 +44,7 @@ TValue hashed_values_table(TValue* argv, size_t argc);
 TValue buckets_table(TValue* argv, size_t argc);
 TValue in_array_table(TValue*  argv, size_t argc);
 
+TValue hash_value_table(TValue* argv, size_t argc);
 
 
 static inline uint64_t hash_single_value(TValue value);

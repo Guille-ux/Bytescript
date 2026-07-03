@@ -5,6 +5,7 @@
 #include "Globals/tError.h"
 
 
+TValue type_namespace;
 TypeResolver type_resolvers[] = {
     [NT_STATEMENTS]     = resolve_type_statements,
     [NT_RETURN]         = resolve_type_return,
@@ -116,8 +117,8 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
-    TValue lcdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), ltype);
-    TValue rcdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), rtype);
+    TValue lcdesc = get_value_from_hashtable(type_namespace, ltype);
+    TValue rcdesc = get_value_from_hashtable(type_namespace, rtype);
     TValue lmap = TBL_TO_TVALUE(as_class_descriptor(lcdesc)->func_namespace);
     TValue rmap = TBL_TO_TVALUE(as_class_descriptor(rcdesc)->func_namespace);
     TValue ldesc = get_value_from_hashtable(lmap, op);
@@ -125,8 +126,8 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     MethodDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (MethodDescriptor*)PAYLOAD(ldesc);
     MethodDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : (MethodDescriptor*)PAYLOAD(rdesc);
 
-    if (ldescPtr && in_table(ldescPtr->arg_types, rtype)) return ldescPtr->return_type;
-    if (rdescPtr && in_table(rdescPtr->arg_types, ltype)) return rdescPtr->return_type;
+    if (ldescPtr && in_table(ldescPtr->arg_types, rtype)) return (node->type = ldescPtr->return_type);
+    if (rdescPtr && in_table(rdescPtr->arg_types, ltype)) return (node->type = rdescPtr->return_type);
 
     TValue error_message = make_fstring("Cannot proceed to operation : %s with types : <%s> and <%s>");
     error_message = format_string((TValue[4]){ error_message, op, ltype, rtype }, 4);
@@ -139,12 +140,13 @@ TValue resolve_type_uni_op(Node* node, TypesContext* context) {
     if (IS_VAR(return_type)) return varType;
 
     TValue op = get_value_from_hashtable(unary_operation_methods, NUM_AS_TVALUE(node->node.UniOpNode.op.tt));
-    TValue cdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), return_type);
+    TValue cdesc = get_value_from_hashtable(type_namespace, return_type);
     TValue map = TBL_TO_TVALUE(as_class_descriptor(cdesc)->id_namespace);
     TValue desc = get_value_from_hashtable(map, op);
     MethodDescriptor* descPtr = IS_NIL(desc) ? NULL : (MethodDescriptor*)PAYLOAD(desc);
 
-    if (descPtr && in_table(descPtr->arg_types, return_type)) return descPtr->return_type;
+    if (descPtr && in_table(descPtr->arg_types, return_type)) return (node->type = descPtr->return_type);
+    else if (node->node.UniOpNode.op.tt == TT_NOT) return (node->type = NumberType);
 
     TValue error_message = make_fstring("Cannot proceed to unary operation : %s with type : <%s>");
     error_message = format_string((TValue[3]){ error_message, op, return_type }, 3);
@@ -155,7 +157,7 @@ TValue resolve_type_uni_op(Node* node, TypesContext* context) {
 TValue resolve_type_call(Node* node, TypesContext* context) {
     TValue target_type = resolve_type(node->node.CallNode.target, context);
 
-    if (!EQUAL(target_type, funcType) && !EQUAL(target_type, varType)) {
+    if (!EQUAL(target_type, FunctionType) && !EQUAL(target_type, varType)) {
         TValue error_message = make_fstring("Cannot call value of type <%s>");
         error_message = format_string((TValue[3]){ error_message, target_type }, 2);
 
@@ -248,7 +250,7 @@ TValue resolve_type_gfor_loop(Node* node, TypesContext* context) {
     TValue target_type = resolve_type(node->node.gForNode.target, context);
 
     if (!EQUAL(target_type, varType)) {
-        TValue target_cdesc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_type);
+        TValue target_cdesc = get_value_from_hashtable(type_namespace, target_type);
         TValue target_map = TBL_TO_TVALUE(as_class_descriptor(target_cdesc)->id_namespace);
         TValue iter_desc = get_value_from_hashtable(target_map, make_fstring("__iter"));
 
@@ -309,11 +311,11 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
         for (int i = 0; i < argc; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
 
         TValue desc = make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc);
-        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, funcType);
+        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, FunctionType);
         add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), name, desc);
     }
 
-    return (node->type = funcType);
+    return (node->type = FunctionType);
 }
 
 TValue resolve_type_method_def(Node* node, TypesContext* context) {
@@ -349,8 +351,9 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
 
         TValue desc = make_method_descriptor(arg_list, node->node.funcDefNode.type_specifier, argc);
         TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
+        node->node.methodDefNode.class = target_class;
 
-        TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target_class);
+        TValue class_desc = get_value_from_hashtable(type_namespace, target_class);
         TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
         TValue class_func = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
@@ -361,11 +364,17 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
             call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
         }
         
-        add_value_to_hashtable(class_map, name, funcType);
+        add_value_to_hashtable(class_map, name, FunctionType);
         add_value_to_hashtable(class_func, name, desc);
+    } else {
+
+        TValue error_message = make_fstring("Methods must have names");
+        error_message = format_string((TValue[2]){ error_message }, 2);
+
+        call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
     }
 
-    return (node->type = funcType);
+    return (node->type = FunctionType);
 }
 
 TValue resolve_type_class_def(Node* node, TypesContext* context) {
@@ -383,8 +392,8 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
     TValue dunder_class = dunder(context->current_class);
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), context->current_class, dunder_class);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder_class, make_class_descriptor(NIL, NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), context->current_class, make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(type_namespace, dunder_class, make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(type_namespace, context->current_class, make_class_descriptor(NIL, NIL));
 
     context->current_class = dunder_class;
     for (int i = 0; i < node->node.classDefNode.statements->node.StatementsNode.len; i++) {
@@ -413,7 +422,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
     node->node.SelfCallnode.name = name;
 
     if (EQUAL(target, varType)) call_error(new_type_error, "Must specify type of value in order to self-call");
-    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
+    TValue class_desc = get_value_from_hashtable(type_namespace, target);
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
     if (IS_NIL(class_map)) {
@@ -451,7 +460,7 @@ TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
     }
 
     TValue name = node->node.SelfDeclarenode.var_name;
-    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), context->current_class);
+    TValue class_desc = get_value_from_hashtable(type_namespace, context->current_class);
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
 
     if (in_table(native_methods, dunder(name))) {
@@ -461,6 +470,7 @@ TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
         call_error(new_invalid_identifier_error, AS_STRING(error_message)->str);
     }
     
+    node->node.SelfDeclarenode.class = context->current_class;
     add_value_to_hashtable(class_map, name, return_type);
     return (node->type = var_type);
 }
@@ -475,7 +485,7 @@ TValue resolve_type_fieldaccess(Node* node, TypesContext* context) {
 
     node->node.FieldAccessNode.name = name;
 
-    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
+    TValue class_desc = get_value_from_hashtable(type_namespace, target);
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
 
     if (IS_NIL(class_map)) {
@@ -501,7 +511,12 @@ TValue resolve_type_constructor(Node* node, TypesContext* context) {
     TValue func_type = node->node.methodDefNode.type_specifier;
     TValue class = node->node.methodDefNode.class;
     if (!has_modifier(modifiers, "static")) call_error(new_type_error, "A class's constructor ('__new') must be static");
-    if (!EQUAL(func_type, varType) && !EQUAL(func_type, class)) call_error(new_type_error, "A class's constructor ('__new') must be return the object");;
+    if (!EQUAL(func_type, varType) && !EQUAL(func_type, class)) {
+        TValue error_message = make_fstring("A class's constructor ('__new') must be return the object\n\tTried returning type <%s> in method of class <%s>");
+        error_message = format_string((TValue[3]){ error_message, func_type, class }, 3);
+
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
 
     return resolve_type_method_def(node, context);
 }
@@ -511,7 +526,7 @@ TValue resolve_type_indexing(Node* node, TypesContext* context) {
     TValue index = resolve_type(node->node.IndexNode.index, context);
 
     if (EQUAL(target, varType)) return varType;
-    TValue class_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->type_namespace), target);
+    TValue class_desc = get_value_from_hashtable(type_namespace, target);
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
     TValue desc = get_value_from_hashtable(class_map, indexer);
@@ -537,41 +552,15 @@ TypesContext* new_resolve_context() {
     TypesContext* context = malloc(sizeof(TypesContext));
     context->current_class = NIL;
     context->return_type = varType;
-    context->type_namespace = AS_TABLE(new_table(NULL, 0));
     context->id_namespace = AS_TABLE(new_table(NULL, 0));
     context->func_namespace = AS_TABLE(new_table(NULL, 0));
-
-    TValue num_desc = make_class_descriptor(num_map, NIL);
-    TValue str_desc = make_class_descriptor(str_map, NIL);
-    TValue tbl_desc = make_class_descriptor(table_map, NIL);
-
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), numType, num_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), strType, str_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), tableType, tbl_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), NumberType, num_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), StringType, str_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), TableType, tbl_desc);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), funcType, make_class_descriptor(func_map, NIL));
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), NumberType, dunder(NumberType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), StringType, dunder(StringType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(TableType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(NumberType), make_class_descriptor(NIL, NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(StringType), make_class_descriptor(NIL, NIL));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->type_namespace), dunder(TableType), make_class_descriptor(NIL, NIL));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(FunctionType));
 
     return context;
-}
-
-TValue right_operation_method(TokenType op) {
-    TValue op_method = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(op));
-    TStr* ptr = AS_STRING(op_method);
-
-    char buffer[ptr->len + 2];
-    buffer[0] = '_'; buffer[1] = '_'; buffer[2] = 'r';
-
-    strcpy(buffer + 3, ptr->str + 2);
-    return make_fstring(buffer);
 }
 
 TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context) {

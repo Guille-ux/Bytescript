@@ -1,5 +1,13 @@
 #include <stdio.h>
 #include "bytescript.h"
+#include "Lexer/lexer.h"
+#include "Parser/parser.h"
+#include "TypeResolving/type_resolving.h"
+#include "Compiler/constant_folding.h"
+#include "Compiler/class_mapping.h"
+#include "Compiler/compiler.h"
+#include "Compiler/ast_cleaner.h"
+#include "utils/disassembler.h"
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
 
@@ -16,9 +24,13 @@ void get_flags(int argc, char* argv[], char* byte_args[]) {
 }
 
 int main(int argc, char* argv[]) {
-    initialize_globals();
+    intialize_dependencies();
     initialize_type_specifiers();
     initialize_oop();
+    printf("here?\n");
+    initialize_globals();
+    printf("maybe?\n");
+    printf("yeah\n");
 
     char* byte_args[argc];
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;
@@ -26,27 +38,51 @@ int main(int argc, char* argv[]) {
     get_flags(argc, argv, byte_args);
     if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
-    TValue file = open_IO((TValue[2]){ NIL, make_fstring(byte_args[filename]) }, 2);
+    TValue main = easy_compile(byte_args[filename]);
+    
+    printf("main");
+    full_disassemble(main);
+
+    reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
+    return 0;
+}
+
+
+void intialize_dependencies() {
+    type_namespace = new_table(NULL, 0);
+    user_types = new_table(NULL, 0);
+    string_cache = AS_TABLE(new_table(NULL, 0));
+}
+
+Node* easy_parse(char bsname[]) {
+    TValue file = open_IO((TValue[2]){ NIL, make_fstring(bsname) }, 2);
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
 
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
 
-    Node* ast = parse(tokens, byte_args[filename]);
+    Node* ast = parse(tokens, bsname);
 
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
 
     fold(ast);
+    return ast;
+}
+
+Node* easy_map(char bsname[]) {
+    Node* ast = easy_parse(bsname);
+    classmap(ast);
+
+    return ast;
+}
+
+TValue easy_compile(char bsname[]) {
+    Node* ast = easy_map(bsname);
     
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 
-    TValue main = close_context(compile_context);
-    printf("main");
-    full_disassemble(main);
-
-    reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
-    return 0;
+    return close_context(compile_context);
 }
