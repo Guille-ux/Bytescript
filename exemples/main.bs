@@ -1,2 +1,18 @@
-Table a = {5, "yes"}
-var b = a[0]
+class Idk
+    func static Idk __new(Number num, String str)
+        Number self.num = num
+        String self.str = str
+    end
+
+    func Number __add(Number b)
+        return self.num + b
+    end
+
+    func String __concat(String b)
+        return self.str..b
+    end
+end
+
+Idk myIdk = Idk:new(5, "yes")
+Number numm = myIdk + 2
+String yesyes = myIdk.."yes"

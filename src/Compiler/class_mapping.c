@@ -64,13 +64,13 @@ void classmap_bin_op(Node* node) {
     classmap(left);
     classmap(right);
 
-    if ((EQUAL(left->type, varType) || EQUAL(right->type, NumberType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, NumberType))) return;
-    if ((EQUAL(left->type, varType) || EQUAL(right->type, StringType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, StringType))) return;
+    if ((EQUAL(left->type, varType) || EQUAL(left->type, NumberType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, NumberType))) return;
+    if ((EQUAL(left->type, varType) || EQUAL(left->type, StringType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, StringType))) return;
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
-    TValue lmap = get_value_from_hashtable(globals_map, left->type);
-    TValue rmap = get_value_from_hashtable(globals_map, right->type);
+    TValue lmap = get_namespace_map(get_value_from_hashtable(globals_map, left->type));
+    TValue rmap = get_namespace_map(get_value_from_hashtable(globals_map, right->type));
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
 
