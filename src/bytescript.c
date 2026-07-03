@@ -27,10 +27,7 @@ int main(int argc, char* argv[]) {
     intialize_dependencies();
     initialize_type_specifiers();
     initialize_oop();
-    printf("here?\n");
     initialize_globals();
-    printf("maybe?\n");
-    printf("yeah\n");
 
     char* byte_args[argc];
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;

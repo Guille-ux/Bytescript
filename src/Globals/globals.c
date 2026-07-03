@@ -11,17 +11,11 @@ void initialize_globals() {
     globals_namespace = AS_TABLE(new_table(NULL, 0));
     globals_map = TBL_TO_TVALUE(globals_namespace);
 
-    printf("function\n");
     initialize_function_class();
-    printf("number\n");
     initialize_number_class();
-    printf("string\n");
     initialize_string_class();
-    printf("table\n");
     initialize_table_class();
-    printf("error\n");
     initialize_error_class();
-    printf("io\n");
     initialize_io_class();
 }
 
