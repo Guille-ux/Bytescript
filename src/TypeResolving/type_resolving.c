@@ -332,8 +332,9 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
     TValue arg_array[argc]; linked_list_to_array(node->node.funcDefNode.args, arg_array, argc);
     TValue argtype_array[argc]; linked_list_to_array(node->node.funcDefNode.arg_types, argtype_array, argc);
 
-    if (TYPE(arg_array[0]) == STRING) printf("%s %d %s %s\n", AS_STRING(node->node.funcDefNode.name)->str, argc, AS_STRING(arg_array[0])->str, 
-        AS_STRING(node->node.funcDefNode.arg_types.next->value)->str);
+    if (TYPE(node->node.funcDefNode.args.next->value) == STRING)
+        printf("%s %d %s %s\n", AS_STRING(node->node.funcDefNode.name)->str, argc, AS_STRING(node->node.funcDefNode.args.next->value)->str, 
+            AS_STRING(node->node.funcDefNode.arg_types.next->value)->str);
 
     for (int i = 0; i < argc; i++) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg_array[i], argtype_array[i]);
 
