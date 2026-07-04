@@ -1,4 +1,5 @@
 #include "TypeResolving/type_specifiers.h"
+#include "bytescript.h"
 #include "Globals/table.h"
 
 TValue varType;
@@ -46,6 +47,7 @@ void initialize_operation_methods() {
     add_value_to_hashtable(unary_operation_methods, NUM_AS_TVALUE(TT_NOT), make_fstring("__not"));
 
     operation_methods = new_table(NULL, 0);
+
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_PLUS),   make_fstring("__add"));
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MINUS),  make_fstring("__sub"));
     add_value_to_hashtable(operation_methods, NUM_AS_TVALUE(TT_MUL),    make_fstring("__mul"));

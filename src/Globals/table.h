@@ -20,7 +20,6 @@
 
 
 extern TValue Table_class;
-extern TValue Table_obj_class;
 void initialize_table_class();
 
 TValue new_table(TValue* argv, size_t argc);

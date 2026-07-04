@@ -2,22 +2,19 @@
 #include "Globals/IO/File.h"
 #include "Globals/string.h"
 #include "bytescript.h"
+#include "Globals/globals.h"
 
 
 TValue IO_class;
-TValue IO_obj_class;
 void initialize_io_class() {
     TValue IO_fields[] = {
         new_cfunc(open_IO)
     };
 
-    TValue IO_obj_fields[] = {
-
-    };
-
     easy_map("src/Globals/maps/IO_map.bs");
     IO_class = new_class(NULL, IO_fields, 0, sizeof(IO_fields) / sizeof(IO_fields[0]));
-    IO_obj_class = new_class(NULL, NULL, 0, sizeof(IO_obj_fields) / sizeof(TValue));
+
+    add_global(IO_class, make_fstring("IO"));
     initialize_file_class();
 }
 

@@ -8,9 +8,8 @@
 
 
 TValue Table_class;
-TValue Table_obj_class;
 void initialize_table_class() {
-    TValue Table_obj_fields[] = {
+    TValue Table_fields[] = {
         new_cfunc(new_table),
         new_cfunc(free_table),
         new_cfunc(pop_table),
@@ -29,16 +28,18 @@ void initialize_table_class() {
         new_cfunc(reset_table),
         new_cfunc(hashed_keys_table),
         new_cfunc(hashed_values_table),
-        new_cfunc(buckets_table)
-    };
+        new_cfunc(buckets_table),
 
-    TValue Table_fields[] = {
-        new_cfunc(hash_value_table)
+        new_cfunc(hash_value_table),
+
+        NIL,
+        NIL
     };
 
     easy_map("src/Globals/maps/table_map.bs");
     Table_class = new_class(NULL, Table_fields, 0, sizeof(Table_fields) / sizeof(Table_fields[0]));
-    Table_obj_class = new_class(NULL, Table_obj_fields, 0, sizeof(Table_obj_fields) / sizeof(Table_obj_fields[0]));
+    
+    add_global(Table_class, make_fstring("Table"));
 }
 
 

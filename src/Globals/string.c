@@ -12,21 +12,20 @@ uint8_t flag_flags[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3 };
 char valid_flags[] = { '0', ' ', '+', '-' };
 
 TValue String_class;
-TValue String_obj_class;
 void initialize_string_class() {
-    TValue String_obj_fields[] = {
-        new_cfunc(compare_string),
-        new_cfunc(concat_string),
-        new_cfunc(format_string)
-    };
-
     TValue String_fields[] = {
-        new_cfunc(to_string_string)
+        new_cfunc(compare_string),
+        new_cfunc(format_string),
+
+        new_cfunc(to_string_string),
+
+        new_cfunc(concat_string),
     };
 
     easy_map("src/Globals/maps/string_map.bs");
     String_class = new_class(NULL, String_fields, 0, sizeof(String_fields) / sizeof(String_fields[0]));
-    String_obj_class = new_class(NULL, String_obj_fields, 0, sizeof(String_obj_fields) / sizeof(String_obj_fields[0]));
+
+    add_global(String_class, make_fstring("String"));
 }
 
 

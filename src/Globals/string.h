@@ -24,7 +24,6 @@ extern uint8_t flag_flags[];
 extern char valid_flags[];
 
 extern TValue String_class;
-extern TValue String_obj_class;
 void initialize_string_class();
 
 TValue compare_string(TValue* argv, size_t argc);

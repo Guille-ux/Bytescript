@@ -12,7 +12,6 @@ typedef struct {
 extern TCDataType FileData_Type, *FileDataType;
 
 extern TValue File_class;
-extern TValue File_obj_class;
 void initialize_file_class();
 
 TValue read_file(TValue* argv, size_t argc);

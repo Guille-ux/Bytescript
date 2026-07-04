@@ -3,5 +3,5 @@ class File
 end
 
 class IO
-    func File open(String filename) end
+    func static File open(String filename) end
 end

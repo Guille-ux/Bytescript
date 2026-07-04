@@ -1,7 +1,8 @@
 #ifndef DISASSMBLER
 #define DISASSMBLER
 
-#include "Compiler/compiler.h"
+#include "Compiler/instructions.h"
+#include "Values/bytev.h"
 
 int get_instr_jump_lenght(const uint8_t* instr);
 void disassemble(TValue tfunc);

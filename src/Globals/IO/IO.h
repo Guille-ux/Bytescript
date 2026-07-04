@@ -5,7 +5,6 @@
 #include "Globals/globals.h"
 
 extern TValue IO_class;
-extern TValue IO_obj_class;
 void initialize_io_class();
 
 TValue open_IO(TValue* argv, size_t argc);

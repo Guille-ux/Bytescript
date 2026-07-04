@@ -345,7 +345,7 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
 
         TValue desc = make_method_descriptor(argtype_array, node->node.funcDefNode.type_specifier, argc);
         TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
-        node->node.methodDefNode.class = target_class;
+        node->node.methodDefNode.class = context->current_class;
 
         TValue class_desc = get_value_from_hashtable(type_namespace, target_class);
         TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);

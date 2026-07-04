@@ -20,8 +20,8 @@ class Table
     func Table buckets() end
     func Number inArray(value) end
 
+    func static hashValue(value) end
+
     func __iter(Number i, value) end
     func __index(Number i) end
-
-    func static hashValue(value) end
 end

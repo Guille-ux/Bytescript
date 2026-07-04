@@ -2,7 +2,7 @@ class String
     func Number compare(String other) end
     func String format(var value) end
 
-    func String __concat(String other) end
-
     func static String toString(var value) end
+    
+    func String __concat(String other) end
 end

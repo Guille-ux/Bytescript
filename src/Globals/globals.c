@@ -5,9 +5,11 @@
 #include "Globals/IO/IO.h"
 
 
+TValue globals;
 TTable* globals_namespace;
 TValue globals_map;
 void initialize_globals() {
+    globals = new_table(NULL, 0);
     globals_namespace = AS_TABLE(new_table(NULL, 0));
     globals_map = TBL_TO_TVALUE(globals_namespace);
 
@@ -17,6 +19,16 @@ void initialize_globals() {
     initialize_table_class();
     initialize_error_class();
     initialize_io_class();
+}
+
+int add_global(TValue value, TValue name) {
+    TTable* glob_table = AS_TABLE(globals);
+    int idx = glob_table->array.len;
+
+    add_value_to_hashtable(globals, name, NUM_AS_TVALUE(idx));
+    append_to_table(globals, value);
+
+    return idx;
 }
 
 

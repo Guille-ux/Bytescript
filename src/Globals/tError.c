@@ -15,7 +15,6 @@ TValue UnidentifiedCharacterError;
 TValue InvalidIdentifierError;
 
 
-extern TValue Error_class;
 void initialize_error_class() {
     TValue Error_fields[] = {
         new_cfunc(new_error)
@@ -33,6 +32,17 @@ void initialize_error_class() {
     FailedAllocationError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_failed_allocation_error) }, 1, 1);
     UnknownIdentifierError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_unknown_identifier_error) }, 1, 1);
     InvalidIdentifierError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_invalid_identifier_error) }, 1, 1);
+
+    add_global(Error_class, make_fstring("Error"));
+    add_global(TypeError, make_fstring("TypeError"));
+    add_global(IndexError, make_fstring("IndexError"));
+    add_global(SyntaxError, make_fstring("SyntaxError"));
+    add_global(InvalidArgsError, make_fstring("InvalidArgsError"));
+    add_global(StackOverflowError, make_fstring("StackOverflowError"));
+    add_global(IncorrectLvalueError, make_fstring("IncorrectLvalueError"));
+    add_global(FailedAllocationError, make_fstring("FailedAllocationError"));
+    add_global(UnknownIdentifierError, make_fstring("UnknownIdentifierError"));
+    add_global(InvalidIdentifierError, make_fstring("InvalidIdentifierError"));
 }
 
 
