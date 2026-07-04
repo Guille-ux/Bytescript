@@ -332,10 +332,6 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
     TValue arg_array[argc]; linked_list_to_array(node->node.funcDefNode.args, arg_array, argc);
     TValue argtype_array[argc]; linked_list_to_array(node->node.funcDefNode.arg_types, argtype_array, argc);
 
-    if (TYPE(node->node.funcDefNode.args.next->value) == STRING)
-        printf("%s %d %s %s\n", AS_STRING(node->node.funcDefNode.name)->str, argc, AS_STRING(node->node.funcDefNode.args.next->value)->str, 
-            AS_STRING(node->node.funcDefNode.arg_types.next->value)->str);
-
     for (int i = 0; i < argc; i++) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg_array[i], argtype_array[i]);
 
     resolve_type(node->node.funcDefNode.statements, context);
@@ -347,9 +343,9 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
     if (!IS_NIL(node->node.funcDefNode.name)) {
         TValue name = node->node.funcDefNode.name;
 
-        TValue desc = make_method_descriptor(arg_array, node->node.funcDefNode.type_specifier, argc);
+        TValue desc = make_method_descriptor(argtype_array, node->node.funcDefNode.type_specifier, argc);
         TValue target_class = has_modifier(node->node.methodDefNode.modifiers, "static") ? context->current_class : node->node.methodDefNode.class;
-        //node->node.methodDefNode.class = target_class;
+        node->node.methodDefNode.class = target_class;
 
         TValue class_desc = get_value_from_hashtable(type_namespace, target_class);
         TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
