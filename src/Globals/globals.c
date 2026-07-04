@@ -115,5 +115,5 @@ TValue disassemble(TValue* argv, size_t argc) {
     TValue file = argc > 1 ? open_IO(open_args, 2) : IO_stdout;
 
     TValue disassembled = full_disassemble(func);
-    write_file((TValue[2]){ file, full_disassemble(func) }, 2);
+    write_file((TValue[2]){ file, disassembled }, 2);
 }

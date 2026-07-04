@@ -36,6 +36,16 @@ int main(int argc, char* argv[]) {
     if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
     TValue main = easy_compile(byte_args[filename]);
+
+    TValue Idk = get_value_from_hashtable(globals, make_fstring("Idk"));
+    if (!IS_NIL(Idk)) {
+        TValue IdkClass = get_from_table(globals, Idk);
+        TValue constr = AS_CLASS(IdkClass)->fields[0];
+
+        disassemble(&constr, 1);
+
+    } else { printf("oh no"); }
+
     disassemble(&main, 1);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);

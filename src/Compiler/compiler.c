@@ -558,7 +558,9 @@ int compile_class_def(Node* node, Scope* context) {
     set_namespace_value(get_value_from_hashtable(globals_map, node->node.classDefNode.name), NIL);
 
     class_entry->value = class;
+    add_global(class, node->node.classDefNode.name);
     compile(node->node.classDefNode.statements, context);
+
     return 0;
 }
 
@@ -580,7 +582,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
     TValue class_map = get_namespace_map(class_namespace);
 
     if (IS_NIL(class_entry->value)) {
-        int class_r = register_global(get_value_from_hashtable(globals, dunder(class_name)).num, context, -1);
+        int class_r = register_global(get_value_from_hashtable(globals, class_name).num, context, -1);
 
         emit(OP_SETFIELD, context);
         emit(free_register(class_r, context), context);
@@ -597,7 +599,7 @@ int compile_fieldaccess(Node* node, Scope* context) {
 }
 
 int compile_constructor(Node* node, Scope* context) {
-    
+    compile_method_def(node, context);
 }
 
 int compile_indexing(Node* node, Scope* context) {
