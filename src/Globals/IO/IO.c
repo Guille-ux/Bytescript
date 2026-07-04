@@ -5,14 +5,27 @@
 #include "Globals/globals.h"
 
 
+TValue IO_stdout;
 TValue IO_class;
 void initialize_io_class() {
+    // IO.stdout
+
+    TValue stdout_data = new_filedata(stdout);
+
+    IO_stdout = new_object(File_class, NULL, 1);
+    TObject* io_tstdout = AS_OBJECT(IO_stdout);
+    io_tstdout->fields[0] = stdout_data;
+
+    // IO_init
+
     TValue IO_fields[] = {
+        IO_stdout,
         new_cfunc(open_IO)
     };
 
     easy_map("src/Globals/maps/IO_map.bs");
     IO_class = new_class(NULL, IO_fields, 0, sizeof(IO_fields) / sizeof(IO_fields[0]));
+    
 
     add_global(IO_class, make_fstring("IO"));
     initialize_file_class();

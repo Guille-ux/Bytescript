@@ -33,7 +33,7 @@ TValue compare_string(TValue* argv, size_t argc) {
     MIN_ARGC(2);
 
     TValue self = argv[0];
-    TValue other = argv[0];
+    TValue other = argv[1];
     if (!IS_STRING(self)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
     if (!IS_STRING(other)) call_error(new_type_error, "function <String.compare> take type <String> as arguments");
 
@@ -48,7 +48,7 @@ TValue concat_string(TValue* argv, size_t argc) {
     STRICT_MIN_ARGC(2, "function <String.concat> take 2 arguments")
 
     TValue self = argv[0];
-    TValue other = argv[0];
+    TValue other = argv[1];
     if (!IS_STRING(self)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
     if (!IS_STRING(other)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
 

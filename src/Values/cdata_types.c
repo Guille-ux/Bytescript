@@ -40,6 +40,6 @@ TValue get_namespace_map(TValue namespace) {
 NamespaceEntry* as_namespace_entry(TValue value) {
     TCData* data = AS_CDATA(value);
     if (*data != (TCData)NamespaceEntryType) call_error(new_type_error, "Failed to cast cdata into namespace entry");
-
+    
     return (NamespaceEntry*)data;
 }

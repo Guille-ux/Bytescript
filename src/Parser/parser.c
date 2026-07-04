@@ -476,11 +476,17 @@ Node* expr(ParseResult* res) {
             else { res->tokens--; return assignement(res); }
         }
 
-        ERR_CHECK(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
 
-        Node* nexpr = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
         return_node->node.VarDeclareNode.type_specifier = vartype;
         return_node->node.VarDeclareNode.var_name = var_name;
+        if (res->tokens->tt == TT_NEWLINE) {
+            return_node->node.VarDeclareNode.value = NULL;
+
+            return return_node;
+        }
+
+        ERR_CHECK(expect(res, TT_EQ, "(EQ : '=') EXPECTED", NULL, NULL))
+        Node* nexpr = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
         return_node->node.VarDeclareNode.value = nexpr;
 
         return return_node;

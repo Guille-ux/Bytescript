@@ -124,10 +124,17 @@ int compile_continue(Node* node, Scope* context) {
 }
 
 int compile_var_declare(Node* node, Scope* context) {
-    int r = -1;
-    int value = compile(node->node.VarDeclareNode.value, context);
+    if (node->node.VarDeclareNode.value) {
+        int r = -1;
+        int value = compile(node->node.VarDeclareNode.value, context);
 
-    if (node->node.VarDeclareNode.value->cc) r = register_constant(value, context, -1); else r = register_register(value, context, -1);
+        if (node->node.VarDeclareNode.value->cc) r = register_constant(value, context, -1); else r = register_register(value, context, -1);
+        append_symbol(context, node->node.VarDeclareNode.var_name, r);
+
+        return r;
+    }
+
+    int r = register_first(context);
     append_symbol(context, node->node.VarDeclareNode.var_name, r);
 
     return r;

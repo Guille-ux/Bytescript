@@ -20,5 +20,6 @@ int add_global(TValue value, TValue name);
 
 TValue print(TValue* argv, size_t argc);
 TValue tfree(TValue* argv, size_t argc);
+TValue disassemble(TValue* argv, size_t argc);
 
 #endif

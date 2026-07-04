@@ -36,9 +36,7 @@ int main(int argc, char* argv[]) {
     if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
     TValue main = easy_compile(byte_args[filename]);
-    
-    printf("main");
-    full_disassemble(main);
+    disassemble(&main, 1);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
     return 0;

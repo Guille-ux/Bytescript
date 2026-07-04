@@ -33,7 +33,6 @@ void classmap_class_def(Node* node);
 void classmap_selfcall(Node* node);
 void classmap_selfdeclare(Node* node);
 void classmap_fieldaccess(Node* node);
-void classmap_constructor(Node* node);
 void classmap_indexing(Node* node);
 
 #endif

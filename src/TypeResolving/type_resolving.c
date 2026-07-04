@@ -82,14 +82,16 @@ TValue resolve_type_continue(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_declare(Node* node, TypesContext* context) {
-    TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
-    if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
-        TValue error_message = make_fstring("Cannot assign value of type <%s> to variable of type <%s>");
-        error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
+    if (node->node.VarDeclareNode.value) {
+        TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
+        if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
+            TValue error_message = make_fstring("Cannot assign value of type <%s> to variable of type <%s>");
+            error_message = format_string((TValue[3]){ error_message, return_type, var_type }, 3);
 
-        call_error(new_type_error, AS_STRING(error_message)->str);
+            call_error(new_type_error, AS_STRING(error_message)->str);
+        }
     }
 
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarDeclareNode.var_name, var_type);

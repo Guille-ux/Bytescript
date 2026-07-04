@@ -3,6 +3,8 @@
 #include "Globals/number.h"
 #include "Globals/function.h"
 #include "Globals/IO/IO.h"
+#include "Globals/IO/File.h"
+#include "utils/disassembler.h"
 
 
 TValue globals;
@@ -100,4 +102,18 @@ TValue tfree(TValue* argv, size_t argc) {
     }
 
     return NIL;
+}
+
+TValue disassemble(TValue* argv, size_t argc) {
+    MIN_ARGC(1);
+    if (TYPE(argv[0]) != FUNC) call_error(new_type_error, "function <disassemble> take type <Function> as first argument");
+    if (argc > 1 && TYPE(argv[1]) != STRING) call_error(new_type_error, "function <disassemble> take type <String> as second argument");
+
+    TValue open_args[2] = { argv[1], make_fstring("w") };
+
+    TValue func = argv[0];
+    TValue file = argc > 1 ? open_IO(open_args, 2) : IO_stdout;
+
+    TValue disassembled = full_disassemble(func);
+    write_file((TValue[2]){ file, full_disassemble(func) }, 2);
 }

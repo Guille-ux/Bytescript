@@ -42,7 +42,20 @@ TValue read_file(TValue* argv, size_t argc) {
 }
 
 TValue write_file(TValue* argv, size_t argc) {
+    MIN_ARGC(2);
+    if (TYPE(argv[0]) != OBJECT || TYPE(argv[1]) != STRING) call_error(new_type_error, "function <File.write> take types <File> and <String> as arguments");
 
+    TObject* obj = AS_OBJECT(argv[0]);
+    TStr* content = AS_STRING(argv[1]);
+    TValue tfile = obj->fields[0];
+
+    TCData* filedata = AS_CDATA(tfile);
+    if (!(*filedata == FileDataType)) call_error(new_type_error, "Invalid FileData in <File> object. in function <File.write>");
+
+    FileData* file = (FileData*)filedata;
+    fwrite(content->str, 1, content->len, file->handle);
+    
+    return argv[1];
 }
 
 

@@ -71,8 +71,8 @@ int get_instr_jump_lenght(const uint8_t* instr) {
     return off24_to_int32(hihi, hi, lo);
 }
 
-void disassemble(TValue tfunc) {
-    // collecting labels
+TValue dis(TValue tfunc) {
+    TValue str = make_fstring("disassembling :\n\n");
 
     TFunc* func = AS_FUNC(tfunc);
     const uint8_t* bytecode = func->bytescriptFunction.bytecode;
@@ -96,9 +96,7 @@ void disassemble(TValue tfunc) {
         bytecode += 4;
     }
 
-    // printing
-
-    printf("\ndisassembling :\n\n");
+    // concatenating
 
     bytecode = func->bytescriptFunction.bytecode;
     while (*bytecode != OP_HALT) {
@@ -108,49 +106,77 @@ void disassemble(TValue tfunc) {
         uint8_t arg2 = bytecode[2];
         uint8_t arg3 = bytecode[3];
 
-        const char* opcode = opcodes_names[instr];
+        char* opcode = (char*)opcodes_names[instr];
         TValue current_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4));
 
-        if (!IS_NIL(current_label)) printf("\n%s\n", AS_STRING(current_label)->str);
+        if (!IS_NIL(current_label)) {
+            TValue label_s = format_string((TValue[2]){ make_fstring("\n%s\n"), current_label }, 2);
+            str = concat_string((TValue[2]){ str, label_s }, 2);
+        }
 
-        printf("%-12s", opcode);
+        TValue opcodeed = format_string((TValue[2]){ make_fstring("%-12s"), make_fstring(opcode) }, 2);
+        str = concat_string((TValue[2]){ str, opcodeed }, 2);
+        
         if (instr == OP_JUMP || instr == OP_JFALSE || instr == OP_GFOR_LOOP || instr == OP_NFOR_LOOP || instr == OP_NFOR_INIT || instr == OP_GFOR_INIT) {
             int jump_lenght = get_instr_jump_lenght(bytecode);
             TValue target_label = get_value_from_hashtable(labels, NUM_AS_TVALUE(i / 4 + jump_lenght + 1));
             
-            if (instr == OP_JUMP) printf("%s\n", AS_STRING(target_label)->str);
-            else printf("%d %s\n", arg1, AS_STRING(target_label)->str);
+            if (instr == OP_JUMP) {
+                TValue label_s = format_string((TValue[2]){ make_fstring("%s\n"), target_label }, 2);
+                str = concat_string((TValue[2]){ str, label_s }, 2);
 
-        } else printf("%d %d %d\n", arg1, arg2, arg3);
+            } else {
+                TValue label_s = format_string((TValue[3]){ make_fstring("%.0f %s\n"), NUM_AS_TVALUE(arg1), target_label }, 3);
+                str = concat_string((TValue[2]){ str, label_s }, 2);
+            }
+
+        } else {
+            TValue args_s = format_string((TValue[4]){ make_fstring("%.0f %.0f %.0f\n"), NUM_AS_TVALUE(arg1), NUM_AS_TVALUE(arg2),NUM_AS_TVALUE(arg3) }, 4);
+            str = concat_string((TValue[2]){ str, args_s }, 2);
+        }
 
         bytecode += 4;
     }
 
-    printf("%-12s %d %d %d\n\n", opcodes_names[*bytecode], bytecode[1], bytecode[2], bytecode[3]);
+    TValue halt_s = format_string((TValue[5]){ make_fstring("%-12s %.0f %.0f %.0f\n\n"), make_fstring((char*)opcodes_names[*bytecode]), NUM_AS_TVALUE(bytecode[1]), NUM_AS_TVALUE(bytecode[2]), NUM_AS_TVALUE(bytecode[3]) }, 5);
+    str = concat_string((TValue[2]){ str, halt_s }, 2);
+
+    return str;
 }
 
-void disassemble_constants(TValue tfunc) {
-    printf("disassembling constants :\n\n");
+TValue disassemble_constants(TValue tfunc) {
+    TValue str = make_fstring("disassembling constants :\n\n");
+    TValue tab = make_fstring("\t");
 
     TFunc* func = AS_FUNC(tfunc);
     size_t len = func->bytescriptFunction.const_len;
-    TValue buffer[len];
-    memcpy(buffer, func->bytescriptFunction.constPool, BSIZE(len));
 
-    print(buffer, len);
-    printf("\n");
+    for (int i = 0; i < len; i++) {
+        str = concat_string((TValue[2]){ str, to_string_string((TValue*)func->bytescriptFunction.constPool + i, 1) }, 2);
+        str = concat_string((TValue[2]){ str, tab }, 2);
+    }
+
+    str = concat_string((TValue[2]){ str, make_fstring("\n") }, 2);
+    return str;
 }
 
-void full_disassemble(TValue tfunc) {
-    disassemble(tfunc);
-    disassemble_constants(tfunc);
+TValue full_disassemble(TValue tfunc) {
+    TValue str = make_fstring("\n");
+
+    TValue dissed = dis(tfunc);
+    TValue constants = disassemble_constants(tfunc);
+
+    str = concat_string((TValue[2]){ str, dissed }, 2);
+    str = concat_string((TValue[2]){ str, constants }, 2);
 
     TFunc* func = AS_FUNC(tfunc);
     for (int i = 0; i < func->bytescriptFunction.const_len; i++) {
         TValue v = func->bytescriptFunction.constPool[i];
         if (TYPE(v) == FUNC) {
-            printf("anonymous");
+            str = concat_string((TValue[2]){ str, to_string_string(&v, 1) }, 2);
             full_disassemble(v);
         }
     }
+
+    return str;
 }

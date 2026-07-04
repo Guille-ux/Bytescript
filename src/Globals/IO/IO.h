@@ -4,6 +4,7 @@
 #include "Values/bytev.h"
 #include "Globals/globals.h"
 
+extern TValue IO_stdout;
 extern TValue IO_class;
 void initialize_io_class();
 

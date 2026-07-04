@@ -29,7 +29,7 @@ ClassMapper class_mappers[] = {
     [NT_SELFCALL]       = classmap_selfcall,
     [NT_SELFDECLARE]    = classmap_selfdeclare,
     [NT_FIELDACCESS]    = classmap_fieldaccess,
-    [NT_CONSTRUCTOR]    = classmap_constructor,
+    [NT_CONSTRUCTOR]    = classmap_method_def,
     [NT_INDEXING]       = classmap_indexing
 };
 
@@ -50,7 +50,7 @@ void classmap_break(Node* node) {}
 void classmap_continue(Node* node) {}
 
 void classmap_var_declare(Node* node) {
-    classmap(node->node.VarDeclareNode.value);
+    if (node->node.VarDeclareNode.value) classmap(node->node.VarDeclareNode.value);
 }
 
 void classmap_assignement(Node* node) {
@@ -197,17 +197,6 @@ void classmap_selfdeclare(Node* node) {
 
 void classmap_fieldaccess(Node* node) {
     classmap(node->node.FieldAccessNode.target);
-}
-
-void classmap_constructor(Node* node) {
-    TValue class_namespace = get_value_from_hashtable(globals_map, dunder(node->node.methodDefNode.class));
-    NamespaceEntry* class_entry = as_namespace_entry(class_namespace);
-    TValue class_map = get_namespace_map(class_namespace);
-
-    add_value_to_hashtable(class_map, node->node.methodDefNode.name, class_entry->value);
-    class_entry->value.num++;
-
-    classmap(node->node.methodDefNode.statements);
 }
 
 void classmap_indexing(Node* node) {

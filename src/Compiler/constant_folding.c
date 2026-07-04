@@ -63,7 +63,7 @@ TValue fold_break(Node* node) { return (node->cc = false, NIL); }
 
 TValue fold_continue(Node* node) { return (node->cc = false, NIL); }
 
-TValue fold_var_declare(Node* node) { return (node->cc = false, fold(node->node.VarDeclareNode.value)); }
+TValue fold_var_declare(Node* node) { return (node->cc = false, node->node.VarDeclareNode.value ? fold(node->node.VarDeclareNode.value) : NIL); }
 
 TValue fold_assignement(Node* node) { fold(node->node.AssignementNode.lvalue); return (node->cc = false, fold(node->node.AssignementNode.value)); }
 
