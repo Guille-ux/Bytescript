@@ -509,6 +509,11 @@ int compile_method_def(Node* node, Scope* context) {
 }
 
 int compile_class_def(Node* node, Scope* context) {
+    int inherited_count = get_linked_list_len(node->node.classDefNode.inherited);
+    TValue inherited[inherited_count]; linked_list_to_array(node->node.classDefNode.inherited, inherited, inherited_count);
+
+    //TClass class = new_class(NULL, NULL, node->node.classDefNode.)
+
     return 0;
 }
 

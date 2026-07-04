@@ -5,6 +5,7 @@
 #include "Globals/table.h"
 #include "Globals/globals.h"
 #include "Lexer/lexer.h"
+#include "Values/helper_structs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,5 +24,7 @@ static inline int32_t off24_to_int32(uint8_t hihi, uint8_t hi, uint8_t lo) {
 TValue to_return_value(TValue returnv[], size_t returnc);
 char* read_string();
 void print_tokens(Token* tokens);
+int get_linked_list_len(struct TValueLinkedList list);
+void linked_list_to_array(struct TValueLinkedList list, TValue array[], size_t len);
 
 #endif

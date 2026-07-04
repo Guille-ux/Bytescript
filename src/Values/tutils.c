@@ -46,3 +46,17 @@ void print_tokens(Token* tokens) {
 void print_hash_table(TTable* tab) {
     
 }
+
+int get_linked_list_len(struct TValueLinkedList list) {
+    int argc = 0;
+    struct TValueLinkedList* arg = list.next;
+
+    for (; arg; arg = arg->next) { argc++; }
+    return argc;
+}
+
+void linked_list_to_array(struct TValueLinkedList list, TValue array[], size_t len) {
+    TValue arg_list[len];
+    struct TValueLinkedList* arg = list.next;
+    for (int i = 0; i < len; (arg = arg->next ,i++)) { arg_list[i] = arg->value; }
+}
