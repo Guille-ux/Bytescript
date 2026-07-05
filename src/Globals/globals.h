@@ -17,6 +17,7 @@ extern TValue globals_map;
 
 void initialize_globals();
 int add_global(TValue value, TValue name);
+TValue get_global(TValue name);
 
 TValue print(TValue* argv, size_t argc);
 TValue tfree(TValue* argv, size_t argc);

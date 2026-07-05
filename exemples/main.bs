@@ -4,6 +4,9 @@ class Idk
         String self.str = str
     end
 
+    var idk = 2
+    Number self.a = idk
+
     func Number __add(Number b)
         return self.num + b
     end

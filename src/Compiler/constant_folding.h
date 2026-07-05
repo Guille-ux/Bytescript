@@ -28,6 +28,7 @@ TValue fold_repeat_loop(Node* node);
 TValue fold_import(Node* node);
 TValue fold_func_def(Node* node);
 TValue fold_class_def(Node* node);
+TValue fold_selfdeclare(Node* node);
 TValue fold_fieldaccess(Node* node);
 TValue fold_indexing(Node* node);
 

@@ -85,7 +85,7 @@ typedef struct Table {
 
 
 typedef struct {
-    uint8_t inherited_count;
+    size_t inherited_count;
     TValue fields[];
 } TClass;
 

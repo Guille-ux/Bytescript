@@ -29,7 +29,7 @@ FoldingFunction fold_functions[] = {
     [NT_METHODDEF]      = fold_func_def,
     [NT_CLASSDEF]       = fold_class_def,
     [NT_SELFCALL]       = fold_call,
-    [NT_SELFDECLARE]    = fold_var_declare,
+    [NT_SELFDECLARE]    = fold_selfdeclare,
     [NT_FIELDACCESS]    = fold_fieldaccess,
     [NT_CONSTRUCTOR]    = fold_func_def,
     [NT_INDEXING]       = fold_indexing
@@ -224,6 +224,13 @@ TValue fold_func_def(Node* node) {
 
 TValue fold_class_def(Node* node) {
     fold(node->node.classDefNode.statements);
+    return (node->cc = false, NIL);
+}
+
+TValue fold_selfdeclare(Node* node) {
+    TValue value = fold(node->node.SelfDeclarenode.value);
+    if (node->node.SelfDeclarenode.value->cc) return (node->cc = true, value);
+
     return (node->cc = false, NIL);
 }
 

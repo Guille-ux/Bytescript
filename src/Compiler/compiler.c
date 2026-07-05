@@ -574,23 +574,36 @@ int compile_selfdeclare(Node* node, Scope* context) {
     int value = compile(node->node.SelfDeclarenode.value, context);
     int free_value = 1;
 
-    if (node->node.VarDeclareNode.value->cc) value = register_constant(value, context, -1);
-    else free_value = register_try_free(value, context) + 1;
-
     TValue class_namespace = get_value_from_hashtable(globals_map, class_name);
     NamespaceEntry* class_entry = as_namespace_entry(class_namespace);
     TValue class_map = get_namespace_map(class_namespace);
 
     if (IS_NIL(class_entry->value)) {
-        int class_r = register_global(get_value_from_hashtable(globals, class_name).num, context, -1);
+        TValue self = get_symbol_register(context, node->node.VarAcess.name);
+        int r = self.num;
+
+        if (node->node.VarDeclareNode.value->cc) value = register_constant(value, context, -1);
+        else free_value = register_try_free(value, context) + 1;
 
         emit(OP_SETFIELD, context);
-        emit(free_register(class_r, context), context);
+        emit(r, context);
         emit(get_value_from_hashtable(class_map, node->node.SelfDeclarenode.var_name).num, context);
         emit(free_value ? free_register(value, context) : value, context);
-
+        
     } else {
+        TValue idx = get_value_from_hashtable(class_map, node->node.SelfDeclarenode.var_name);
+        TValue tclass = get_global(class_entry->value);
+        TClass* class = AS_CLASS(tclass);
 
+        if (node->node.VarDeclareNode.value->cc) { class->fields[class->inherited_count + (int)idx.num] = get_constant(value, context); return value; }
+        else free_value = register_try_free(value, context) + 1;
+
+        int class_r = register_global(get_value_from_hashtable(globals, undunder(class_name)).num, context, -1);
+
+        emit(OP_SETFIELD, context);
+        emit(class_r, context);
+        emit(idx.num, context);
+        emit(free_value ? free_register(value, context) : value, context);
     }
 }
 

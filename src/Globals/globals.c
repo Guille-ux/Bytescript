@@ -33,6 +33,10 @@ int add_global(TValue value, TValue name) {
     return idx;
 }
 
+TValue get_global(TValue name) {
+    return get_from_table(globals, get_value_from_hashtable(globals, name));
+}
+
 
 TValue print(TValue* argv, size_t argc) {
     for (int i = 0; i < argc; i++) {
