@@ -271,10 +271,16 @@ int compile_var_access(Node* node, Scope* context) {
     TValue tidx = get_symbol_register(context, node->node.VarAcess.name);
 
     if (IS_NIL(tidx)) {
-        TValue details = make_fstring("identifier '%s' does not exist");
-        details = format_string((TValue[2]){ details, node->node.VarAcess.name }, 2);
+        TValue global_idx = get_value_from_hashtable(globals, node->node.VarAcess.name);
 
-        call_error(new_unknown_identifier_error, AS_STRING(details)->str);
+        if (IS_NIL(global_idx)) {
+            TValue details = make_fstring("identifier '%s' does not exist");
+            details = format_string((TValue[2]){ details, node->node.VarAcess.name }, 2);
+
+            call_error(new_unknown_identifier_error, AS_STRING(details)->str);
+        }
+
+        return free_register(register_global(global_idx.num, context, -1), context);
     }
 
     return (int)(AS_NUM(tidx));
@@ -490,10 +496,12 @@ int compile_func_def(Node* node, Scope* context) {
     Scope* func_context = new_scope();
     func_context->parent = context;
 
-    struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
-    for (; arg; arg = arg->next) {
+    int argc = get_linked_list_len(node->node.funcDefNode.args);
+    TValue args[argc]; linked_list_to_array(node->node.funcDefNode.args, args, argc);
+
+    for (int i = 0; i < argc; i++) {
         int r = register_first(func_context);
-        append_symbol(func_context, arg->value, r);
+        append_symbol(func_context, args[i], r);
     }
 
     compile(node->node.funcDefNode.statements, func_context);
@@ -519,10 +527,12 @@ int compile_method_def(Node* node, Scope* context) {
     int self_r = register_first(func_context);
     append_symbol(func_context, make_fstring("self"), self_r);
 
-    struct TValueLinkedList* arg = node->node.funcDefNode.args.next;
-    for (; arg; arg = arg->next) {
+    int argc = get_linked_list_len(node->node.funcDefNode.args);
+    TValue args[argc]; linked_list_to_array(node->node.funcDefNode.args, args, argc);
+
+    for (int i = 0; i < argc; i++) {
         int r = register_first(func_context);
-        append_symbol(func_context, arg->value, r);
+        append_symbol(func_context, args[i], r);
     }
 
     compile(node->node.funcDefNode.statements, func_context);
@@ -565,13 +575,33 @@ int compile_class_def(Node* node, Scope* context) {
 }
 
 int compile_selfcall(Node* node, Scope* context) {
+    Node* target_node = node->node.SelfCallnode.target;
+    int call_method = !is_dunder(target_node->type).num;
+    int func;
     
+    if (call_method) {
+        Node var_access = { .cc = false, .nt = NT_VAR_ACESS, .node.VarAcess.name = target_node->type, .type = dunder(target_node->type) };
+        Node field_acess = { .cc = false, .nt = NT_FIELDACCESS, .node.FieldAccessNode.name = node->node.SelfCallnode.name };
+        field_acess.node.FieldAccessNode.target = &var_access;
+
+        func = register_specific_top(compile(&field_acess, context), context);
+        register_specific_top(compile(target_node, context), context);
+
+    } else func = register_specific_top(get_target_field(target_node, node->node.SelfCallnode.name, !call_method, context), context);
+    
+    for (int i = 0; i < node->node.SelfCallnode.args.len; i++) assign_to_reg(node->node.SelfCallnode.args.nodes[i], register_top(context), context);
+    free_multiple(func, node->node.SelfCallnode.args.len + 1 + call_method, context);
+
+    emit(OP_CALL, context);
+    emit(func, context);
+    emit(node->node.SelfCallnode.args.len + call_method, context);
+    return free_register(emit(register_first(context), context), context);
 }
 
 int compile_selfdeclare(Node* node, Scope* context) {
     TValue class_name = node->node.SelfDeclarenode.class;
 
-    int value = compile(node->node.SelfDeclarenode.value, context);
+    int value = node->node.SelfDeclarenode.value ? compile(node->node.SelfDeclarenode.value, context) : free_register(register_first(context), context);
     int free_value = 1;
 
     TValue class_namespace = get_value_from_hashtable(globals_map, class_name);
@@ -579,7 +609,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
     TValue class_map = get_namespace_map(class_namespace);
 
     if (IS_NIL(class_entry->value)) {
-        TValue self = get_symbol_register(context, node->node.VarAcess.name);
+        TValue self = get_symbol_register(context, make_fstring("self"));
         int r = self.num;
 
         if (node->node.VarDeclareNode.value->cc) value = register_constant(value, context, -1);
@@ -589,7 +619,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
         emit(r, context);
         emit(get_value_from_hashtable(class_map, node->node.SelfDeclarenode.var_name).num, context);
         emit(free_value ? free_register(value, context) : value, context);
-        
+
     } else {
         TValue idx = get_value_from_hashtable(class_map, node->node.SelfDeclarenode.var_name);
         TValue tclass = get_global(class_entry->value);
@@ -598,7 +628,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
         if (node->node.VarDeclareNode.value->cc) { class->fields[class->inherited_count + (int)idx.num] = get_constant(value, context); return value; }
         else free_value = register_try_free(value, context) + 1;
 
-        int class_r = register_global(get_value_from_hashtable(globals, undunder(class_name)).num, context, -1);
+        int class_r = free_register(register_global(get_value_from_hashtable(globals, undunder(class_name)).num, context, -1), context);
 
         emit(OP_SETFIELD, context);
         emit(class_r, context);
@@ -608,7 +638,8 @@ int compile_selfdeclare(Node* node, Scope* context) {
 }
 
 int compile_fieldaccess(Node* node, Scope* context) {
-    
+    Node* target_node = node->node.FieldAccessNode.target;
+    return get_target_field(target_node, node->node.FieldAccessNode.name, 1, context);
 }
 
 int compile_constructor(Node* node, Scope* context) {
@@ -628,16 +659,10 @@ int compile_indexing(Node* node, Scope* context) {
     if (index_node->cc) index = free_register(register_constant(index, context, -1), context);
     if (free_target) free_register(target, context);
 
-    if (EQUAL(target_node->type, TableType) || EQUAL(target_node->type, varType)) {
-        emit(OP_GETTABLE, context);
-        emit(target, context);
-        emit(index, context);
-        return emit(free_register(register_first(context), context), context);
-
-    } else {
-        
-
-    }
+    emit(OP_GETTABLE, context);
+    emit(target, context);
+    emit(index, context);
+    return emit(free_register(register_first(context), context), context);
 }
 
 
@@ -756,8 +781,8 @@ static int register_specific_top(uint8_t r, Scope* context) {
 }
 
 static int free_multiple(uint8_t r0, uint8_t len, Scope* context) {
-    for (int i = len - 1; i >= r0; i--) {
-        free_register(i, context);
+    for (int i = len - 1; i >= 0; i--) {
+        free_register(r0 + i, context);
     }
 
     return r0;
@@ -828,6 +853,7 @@ static int full_assignement_analysis(Node* node, Node* target, int* depth, int* 
     if (node_equal(target, node)) target_count++;
     if (*depth > 1 && *target_count > 0) return 0;
 
+    int endv;
     switch (node->nt) {
         case NT_VAR_DECLARE: return 0;
         case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, target_count);
@@ -838,11 +864,25 @@ static int full_assignement_analysis(Node* node, Node* target, int* depth, int* 
 
         case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, target_count) &&
                                full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, target_count);
+
+        case NT_FIELDACCESS: return
+            full_assignement_analysis(node->node.FieldAccessNode.target, target, ADD_DEPTH, target_count);
+
+        case NT_TABLE:
+            endv = 1;
             
+            for (int i = 0; i < node->node.TableNode.values.len; i++)
+                endv = endv && full_assignement_analysis(node->node.TableNode.values.nodes[i], target, ADD_DEPTH, target_count);
+
+            return endv;
+        
+        case NT_SELFCALL: *depth += 1;
         case NT_CALL:
-            int endv = 1;
-            *depth += node->node.CallNode.args.len;
-            for (int i = 0; i < node->node.CallNode.args.len; i++) endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, depth, target_count);
+            endv = 1;
+
+            for (int i = 0; i < node->node.CallNode.args.len; i++)
+                endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, ADD_DEPTH, target_count);
+
             return endv;
 
         default: return 1;
@@ -891,6 +931,24 @@ static TValue get_symbol_register(Scope* context, TValue name) {
     }
 
     return NIL;
+}
+
+static int get_target_field(Node* target_node, TValue name, int free_target, Scope* context) {
+    int target = compile(target_node, context);
+
+    if (target_node->cc) target = register_constant(target, context, -1);
+    else free_target = register_try_free(target, context) + 1 && free_target;
+
+    TValue class_name = target_node->type;
+
+    TValue class_namespace = get_value_from_hashtable(globals_map, class_name);
+    TValue class_map = get_namespace_map(class_namespace);
+    TValue idx = get_value_from_hashtable(class_map, name);
+
+    emit(OP_LOAD_FIELD, context);
+    emit(free_target ? free_register(target, context) : target, context);
+    emit(idx.num, context);
+    return emit(free_register(register_first(context), context), context);
 }
 
 

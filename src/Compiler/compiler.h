@@ -84,6 +84,7 @@ static inline int compile_in_scope(Node* node, Scope* context);
 static inline void update_symbols(Scope* context);
 static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
+static int get_target_field(Node* target_node, TValue name, int free_target, Scope* context);
 
 int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context);
 

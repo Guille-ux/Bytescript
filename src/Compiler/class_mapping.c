@@ -68,8 +68,8 @@ void classmap_bin_op(Node* node) {
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
-    TValue lmap = get_namespace_map(get_value_from_hashtable(globals_map, left->type));
-    TValue rmap = get_namespace_map(get_value_from_hashtable(globals_map, right->type));
+    TValue lmap = get_namespace_map(get_value_from_hashtable(globals_map, dunder(left->type)));
+    TValue rmap = get_namespace_map(get_value_from_hashtable(globals_map, dunder(right->type)));
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
 
@@ -200,6 +200,23 @@ void classmap_fieldaccess(Node* node) {
 }
 
 void classmap_indexing(Node* node) {
-    classmap(node->node.IndexNode.target);
+    Node* target = node->node.IndexNode.target;
+
+    classmap(target);
     classmap(node->node.IndexNode.index);
+
+    if (EQUAL(target->type, varType) || EQUAL(target->type, TableType)) return;
+
+    TValue __index = make_fstring("__index");
+    TValue lmap = get_value_from_hashtable(globals_map, target->type);
+    TValue desc = get_value_from_hashtable(lmap, __index);
+
+    if (IS_NIL(desc)) return;
+
+    node->nt = NT_SELFCALL;
+    node->node.SelfCallnode.name = __index;
+    node->node.SelfCallnode.target = target;
+    node->node.SelfCallnode.args = make_node_array();
+
+    append_to_node_array(&node->node.SelfCallnode.args, node->node.IndexNode.index);
 }

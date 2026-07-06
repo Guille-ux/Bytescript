@@ -52,6 +52,7 @@ typedef enum {
     OP_LOAD_GLOBAL,
     OP_LOAD_FIELD,
     OP_CALL,
+    OP_CALL_METHOD,
     OP_RETURN,
     OP_NEWTABLE,
     OP_ADDTABLE,

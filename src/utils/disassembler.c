@@ -53,6 +53,7 @@ const char* opcodes_names[] = {
     [OP_LOAD_GLOBAL] = "LOAD_GLOBAL",
     [OP_LOAD_FIELD] = "LOAD_FIELD",
     [OP_CALL] = "CALL",
+    [OP_CALL_METHOD] = "CALL_METHID",
     [OP_RETURN] = "RETURN",
     [OP_NEWTABLE] = "NEWTABLE",
     [OP_ADDTABLE] = "ADDTABLE",
@@ -174,8 +175,7 @@ TValue full_disassemble(TValue tfunc) {
     for (int i = 0; i < func->bytescriptFunction.const_len; i++) {
         TValue v = func->bytescriptFunction.constPool[i];
         if (TYPE(v) == FUNC) {
-            str = concat_string((TValue[2]){ str, to_string_string(&v, 1) }, 2);
-            full_disassemble(v);
+            str = concat_string((TValue[2]){ str, full_disassemble(v) }, 2);
         }
     }
 

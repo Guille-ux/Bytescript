@@ -172,7 +172,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
             MethodDescriptor* desc = as_method_descriptor(target_desc);
             TTable* args = AS_TABLE(desc->arg_types);
 
-            check_call_types(node, args, context);
+            check_call_types(node, args, context, node->node.CallNode.target->node.VarAcess.name);
             return desc->return_type;
         }
     }
@@ -309,7 +309,7 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     if (!IS_NIL(node->node.funcDefNode.name)) {
         TValue name = node->node.funcDefNode.name;
 
-        TValue desc = make_method_descriptor(arg_array, node->node.funcDefNode.type_specifier, argc);
+        TValue desc = make_method_descriptor(argtype_array, node->node.funcDefNode.type_specifier, argc);
         add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, FunctionType);
         add_value_to_hashtable(TBL_TO_TVALUE(context->func_namespace), name, desc);
     }
@@ -378,7 +378,7 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
     TValue pre_class = context->current_class;
 
     context->current_class = node->node.classDefNode.name;
-    if (name->str[0] == '_' && name->str[1] == '_') {
+    if (is_dunder(STR_TO_TVALUE(name)).num) {
         TValue error_message = make_fstring("Invalid class name <%s>, class name cannot start with '__'");
         error_message = format_string((TValue[2]){ error_message, context->current_class }, 2);
 
@@ -440,7 +440,9 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
     MethodDescriptor* desc = as_method_descriptor(method);
     TTable* args = AS_TABLE(desc->arg_types);
 
-    check_call_types(node, args, context);
+    TValue full_method = format_string((TValue[3]){ make_fstring("%s.%s"), target, name }, 3);
+    check_call_types(node, args, context, full_method);
+
     return (node->type = desc->return_type);
 }
 
@@ -559,16 +561,16 @@ TypesContext* new_resolve_context() {
     return context;
 }
 
-TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context) {
+TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context, TValue func_name) {
     if (expecteds->array.len < call_node->node.CallNode.args.len) call_error(new_invalid_args_error, "Called function with too many args");
     for (int i = 0; i < expecteds->array.len; i++) {
         Node* cur_arg = call_node->node.CallNode.args.nodes[i];
         TValue cur_type = resolve_type(cur_arg, context);
-        TValue expected_arg = expecteds->array.array[expecteds->array.len - i - 1];
+        TValue expected_arg = expecteds->array.array[i];
 
         if (!EQUAL(expected_arg, cur_type) && !EQUAL(expected_arg, varType) && !EQUAL(cur_type, varType)) {
             TValue error_message = make_fstring("Passed argument of type <%s> when type <%s> was expected, in function <%s>");
-            error_message = format_string((TValue[4]){ error_message, cur_type, expected_arg, call_node->node.CallNode.target->node.VarAcess.name }, 4);
+            error_message = format_string((TValue[4]){ error_message, cur_type, expected_arg, func_name }, 4);
             
             call_error(new_type_error, AS_STRING(error_message)->str);
         }

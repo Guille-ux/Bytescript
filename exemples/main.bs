@@ -1,21 +1,2 @@
-class Idk
-    func static Idk __new(Number num, String str)
-        Number self.num = num
-        String self.str = str
-    end
-
-    var idk = 2
-    Number self.a = idk
-
-    func Number __add(Number b)
-        return self.num + b
-    end
-
-    func String __concat(String b)
-        return self.str..b
-    end
-end
-
-Idk myIdk = Idk:new(5, "yes")
-Number numm = myIdk + 2
-String yesyes = myIdk.."yes"
+Table a = { 5, 6, 7 }
+Number b = a[0]

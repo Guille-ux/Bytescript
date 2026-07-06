@@ -47,6 +47,6 @@ TValue resolve_type_constructor(Node* node, TypesContext* context);
 TValue resolve_type_indexing(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
-TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context);
+TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context, TValue func_name);
 
 #endif

@@ -44,3 +44,10 @@ TValue dunder(TValue str) {
 TValue undunder(TValue str) {
     return make_fstring(AS_STRING(str)->str + 2);
 }
+
+TValue is_dunder(TValue tstr) {
+    TStr* str = AS_STRING(tstr);
+
+    if (str->str[0] == '_' && str->str[1] == '_') return TRUE_TVALUE;
+    return FALSE_TVALUE;
+}
