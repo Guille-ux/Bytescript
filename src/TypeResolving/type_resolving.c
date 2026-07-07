@@ -5,6 +5,8 @@
 #include "Globals/tError.h"
 
 
+TValue global_types;
+TValue global_functypes;
 TValue type_namespace;
 TypeResolver type_resolvers[] = {
     [NT_STATEMENTS]     = resolve_type_statements,
@@ -598,7 +600,7 @@ TypesContext* new_resolve_context() {
 
 TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context, TValue func_name) {
     if (expecteds->array.len < call_node->node.CallNode.args.len) call_error(new_invalid_args_error, "Called function with too many args");
-    for (int i = 0; i < expecteds->array.len; i++) {
+    for (int i = 0; i < call_node->node.CallNode.args.len; i++) {
         Node* cur_arg = call_node->node.CallNode.args.nodes[i];
         TValue cur_type = resolve_type(cur_arg, context);
         TValue expected_arg = expecteds->array.array[i];

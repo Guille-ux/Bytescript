@@ -4,6 +4,8 @@
 #include "Parser/nodes.h"
 #include "TypeResolving/type_specifiers.h"
 
+extern TValue global_types;
+extern TValue global_functypes;
 extern TValue type_namespace;
 typedef struct {
     TValue current_class;

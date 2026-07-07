@@ -37,7 +37,6 @@ int main(int argc, char* argv[]) {
     if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
     TValue main = easy_compile(byte_args[filename]);
-    disassemble(&main, 1);
     TValue return_value = vm_run(main);
     disassemble(&main, 1);
 
@@ -48,6 +47,8 @@ int main(int argc, char* argv[]) {
 
 void intialize_dependencies() {
     type_namespace = new_table(NULL, 0);
+    global_types = new_table(NULL, 0);
+    global_functypes = new_table(NULL, 0);
     user_types = new_table(NULL, 0);
     string_cache = AS_TABLE(new_table(NULL, 0));
 }
