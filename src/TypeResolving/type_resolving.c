@@ -167,7 +167,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
     }
 
     if (node->node.CallNode.target->nt == NT_VAR_ACESS) {
-        TValue target_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.CallNode.target->node.VarAcess.name);
+        TValue target_desc = get_symbol_type(node->node.CallNode.target->node.VarAcess.name, context);
         if (!IS_NIL(target_desc)) {
             MethodDescriptor* desc = as_method_descriptor(target_desc);
             TTable* args = AS_TABLE(desc->arg_types);
@@ -181,7 +181,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
-    TValue var_type = get_value_from_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.VarAcess.name);
+    TValue var_type = get_symbol_type(node->node.VarAcess.name, context);
     if (EQUAL(var_type, NIL)) {
         TValue error_message = make_fstring("Unknown identifier : '%s'");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
@@ -224,7 +224,7 @@ TValue resolve_type_if_statement(Node* node, TypesContext* context) {
     }
 
     for (int i = 0; i < node->node.IfNode.statements.len; i++) {
-        resolve_type(node->node.IfNode.statements.nodes[i], context);
+        resolve_in_scope(node->node.IfNode.statements.nodes[i], context);
     }
 
     return (node->type = varType);
@@ -235,48 +235,71 @@ TValue resolve_type_nfor_loop(Node* node, TypesContext* context) {
     v2 = resolve_type(node->node.nForNode.values[1], context),
     v3 = resolve_type(node->node.nForNode.values[2], context);
 
-    int v1cond = EQUAL(v1, varType) || EQUAL(v1, numType);
-    int v2cond = EQUAL(v2, varType) || EQUAL(v2, numType);
-    int v3cond = EQUAL(v3, varType) || EQUAL(v3, numType);
+    int v1cond = EQUAL(v1, varType) || EQUAL(v1, NumberType);
+    int v2cond = EQUAL(v2, varType) || EQUAL(v2, NumberType);
+    int v3cond = EQUAL(v3, varType) || EQUAL(v3, NumberType);
 
     if (!v1cond || !v2cond || !v3cond) {
-        TValue error_message = make_fstring("numeric for loops can only use type 'num'");
+        TValue error_message = make_fstring("numeric for loops can only use type <Number>");
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
+    open_type_scope(context);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.nForNode.identifier, NumberType);
     resolve_type(node->node.nForNode.statements, context);
+    close_type_scope(context);
+
     return (node->type = varType);
 }
 
 TValue resolve_type_gfor_loop(Node* node, TypesContext* context) {
     TValue target_type = resolve_type(node->node.gForNode.target, context);
+    TValue v = node->node.gForNode.identifiers[1];
+    TValue i_type = varType;
+    TValue v_type = varType;
 
     if (!EQUAL(target_type, varType)) {
         TValue target_cdesc = get_value_from_hashtable(type_namespace, target_type);
-        TValue target_map = TBL_TO_TVALUE(as_class_descriptor(target_cdesc)->id_namespace);
+        TValue target_map = TBL_TO_TVALUE(as_class_descriptor(target_cdesc)->func_namespace);
         TValue iter_desc = get_value_from_hashtable(target_map, make_fstring("__iter"));
 
         if (IS_NIL(iter_desc)) {
             TValue error_message = make_fstring("Type <%s> do not have an __iter method");
-            error_message = format_string((TValue[4]){ error_message, target_type }, 2);
+            error_message = format_string((TValue[2]){ error_message, target_type }, 2);
             
             call_error(new_type_error, AS_STRING(error_message)->str);
         }
+
+        TTable* arg_types = AS_TABLE(as_method_descriptor(iter_desc)->arg_types);
+        if (arg_types->array.len < 2) {
+            TValue error_message = make_fstring("__iter method of type <%s> must have 2 arguments");
+            error_message = format_string((TValue[2]){ error_message, target_type }, 2);
+            
+            call_error(new_type_error, AS_STRING(error_message)->str);
+        }
+
+        i_type = arg_types->array.array[0];
+        v_type = arg_types->array.array[1];
     }
 
+    open_type_scope(context);
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.gForNode.identifiers[0], i_type);
+    if (!IS_NIL(v)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), v, v_type);
     resolve_type(node->node.gForNode.statements, context);
+    close_type_scope(context);
+
     return (node->type = varType);
 }
 
 TValue resolve_type_while_loop(Node* node, TypesContext* context) {
     resolve_type(node->node.whileNode.condition, context);
-    resolve_type(node->node.whileNode.statements, context);
+    resolve_in_scope(node->node.whileNode.statements, context);
     return (node->type = varType);
 }
 
 TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
     resolve_type(node->node.repeatNode.condition, context);
-    resolve_type(node->node.repeatNode.statements, context);
+    resolve_in_scope(node->node.repeatNode.statements, context);
     return (node->type = varType);
 }
 
@@ -287,12 +310,14 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 TValue resolve_type_func_def(Node* node, TypesContext* context) {
     TValue pre_return_type = context->return_type;
     TValue pre_class = context->current_class;
-    TTable* id_namespace = context->id_namespace;
-    TTable* func_namespace = context->func_namespace;
+    TTable* id_stack = context->id_stack;
+    TTable* func_stack = context->func_stack;
 
-    context->id_namespace = AS_TABLE(new_table(NULL, 0));
-    context->func_namespace = AS_TABLE(new_table(NULL, 0));
+    context->id_stack = AS_TABLE(new_table(NULL, 0));
+    context->func_stack = AS_TABLE(new_table(NULL, 0));
     context->return_type = node->node.funcDefNode.type_specifier;
+
+    open_type_scope(context);
 
     int argc = get_linked_list_len(node->node.funcDefNode.arg_types);
     TValue arg_array[argc]; linked_list_to_array(node->node.funcDefNode.args, arg_array, argc);
@@ -301,8 +326,10 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     for (int i = 0; i < argc; i++) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg_array[i], argtype_array[i]);
 
     resolve_type(node->node.funcDefNode.statements, context);
-    context->id_namespace = id_namespace;
-    context->func_namespace = func_namespace;
+    close_type_scope(context);
+
+    context->id_namespace = id_stack;
+    context->func_namespace = func_stack;
     context->return_type = pre_return_type;
     context->current_class = pre_class;
 
@@ -320,12 +347,14 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
 TValue resolve_type_method_def(Node* node, TypesContext* context) {
     TValue pre_return_type = context->return_type;
     TValue pre_class = context->current_class;
-    TTable* id_namespace = context->id_namespace;
-    TTable* func_namespace = context->func_namespace;
+    TTable* id_stack = context->id_stack;
+    TTable* func_stack = context->func_stack;
 
-    context->id_namespace = AS_TABLE(new_table(NULL, 0));
-    context->func_namespace = AS_TABLE(new_table(NULL, 0));
+    context->id_stack = AS_TABLE(new_table(NULL, 0));
+    context->func_stack = AS_TABLE(new_table(NULL, 0));
     context->return_type = node->node.funcDefNode.type_specifier;
+
+    open_type_scope(context);
 
     context->current_class = node->node.methodDefNode.class;
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), make_fstring("self"), node->node.methodDefNode.class);
@@ -337,8 +366,10 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
     for (int i = 0; i < argc; i++) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), arg_array[i], argtype_array[i]);
 
     resolve_type(node->node.funcDefNode.statements, context);
-    context->id_namespace = id_namespace;
-    context->func_namespace = func_namespace;
+    close_type_scope(context);
+
+    context->id_stack = id_stack;
+    context->func_stack = func_stack;
     context->return_type = pre_return_type;
     context->current_class = pre_class;
 
@@ -362,8 +393,8 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
         
         add_value_to_hashtable(class_map, name, FunctionType);
         add_value_to_hashtable(class_func, name, desc);
-    } else {
 
+    } else {
         TValue error_message = make_fstring("Methods must have names");
         error_message = format_string((TValue[2]){ error_message }, 2);
 
@@ -391,6 +422,8 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
     add_value_to_hashtable(type_namespace, dunder_class, make_class_descriptor(NIL, NIL));
     add_value_to_hashtable(type_namespace, context->current_class, make_class_descriptor(NIL, NIL));
 
+    open_type_scope(context);
+
     context->current_class = dunder_class;
     for (int i = 0; i < node->node.classDefNode.statements->node.StatementsNode.len; i++) {
         Node* cur = node->node.classDefNode.statements->node.StatementsNode.nodes[i];
@@ -404,6 +437,7 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
         resolve_type(cur, context);
     }
 
+    close_type_scope(context);
     context->current_class = pre_class;
     return (node->type = dunder_class);
 }
@@ -550,13 +584,14 @@ TypesContext* new_resolve_context() {
     TypesContext* context = malloc(sizeof(TypesContext));
     context->current_class = NIL;
     context->return_type = varType;
-    context->id_namespace = AS_TABLE(new_table(NULL, 0));
-    context->func_namespace = AS_TABLE(new_table(NULL, 0));
+    context->id_stack = AS_TABLE(new_table(NULL, 0));
+    context->func_stack = AS_TABLE(new_table(NULL, 0));
 
+    open_type_scope(context);
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), NumberType, dunder(NumberType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), StringType, dunder(StringType));
     add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(TableType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(FunctionType));
+    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), FunctionType, dunder(FunctionType));
 
     return context;
 }
@@ -575,4 +610,56 @@ TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* contex
             call_error(new_type_error, AS_STRING(error_message)->str);
         }
     }
+}
+
+static TValue get_symbol_type(TValue name, TypesContext* context) {
+    for (int i = context->id_stack->array.len - 1; i >= 0; i--) {
+        TValue id_table = context->id_stack->array.array[i];
+        TValue tidx = get_value_from_hashtable(id_table, name);
+        if (!IS_NIL(tidx)) return tidx;
+    }
+
+    return NIL;
+}
+
+static TValue get_func_descriptor(TValue name, TypesContext* context) {
+    for (int i = context->func_stack->array.len - 1; i >= 0; i--) {
+        TValue func_table = context->func_stack->array.array[i];
+        TValue tidx = get_value_from_hashtable(func_table, name);
+        if (!IS_NIL(tidx)) return tidx;
+    }
+
+    return NIL;
+}
+
+static inline TValue resolve_in_scope(Node* node, TypesContext* context) {
+    open_type_scope(context);
+    TValue res = resolve_type(node, context);
+    close_type_scope(context);
+
+    return res;
+}
+
+static void open_type_scope(TypesContext* context) {
+    append_to_table(TBL_TO_TVALUE(context->id_stack), new_table(NULL, 0));
+    append_to_table(TBL_TO_TVALUE(context->func_stack), new_table(NULL, 0));
+    update_types(context);
+}
+
+static void close_type_scope(TypesContext* context) {
+    TValue last_id = get_from_table(TBL_TO_TVALUE(context->id_stack), NUM_AS_TVALUE(context->id_stack->array.len - 1));
+    TValue last_func = get_from_table(TBL_TO_TVALUE(context->func_stack), NUM_AS_TVALUE(context->func_stack->array.len - 1));
+
+    free_table(&last_id, 1);
+    free_table(&last_func, 1);
+
+    remove_from_table(TBL_TO_TVALUE(context->id_stack), NUM_AS_TVALUE(context->id_stack->array.len - 1));
+    remove_from_table(TBL_TO_TVALUE(context->func_stack), NUM_AS_TVALUE(context->func_stack->array.len - 1));
+    update_types(context);
+}
+
+static inline void update_types(TypesContext* context) {
+    if (!context->id_stack->array.len) return;
+    context->id_namespace = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->id_stack), NUM_AS_TVALUE(context->id_stack->array.len - 1)));
+    context->func_namespace = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->func_stack), NUM_AS_TVALUE(context->func_stack->array.len - 1)));
 }

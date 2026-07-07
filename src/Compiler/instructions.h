@@ -1,6 +1,11 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
+
+
+
+
+
 typedef enum {
     OP_ADD_RC,
     OP_ADD_RR,
@@ -40,6 +45,7 @@ typedef enum {
     OP_BXOR_RC,
     OP_BXOR_RR,
     OP_BNOT,
+    OP_NOT,
     OP_JUMP,
     OP_JFALSE,
     OP_NFOR_INIT,

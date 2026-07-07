@@ -9,7 +9,9 @@ typedef struct {
     TValue current_class;
     TValue return_type;
     TTable* func_namespace;
+    TTable* func_stack;
     TTable* id_namespace;
+    TTable* id_stack;
 } TypesContext;
 
 typedef TValue (*TypeResolver)(Node* node, TypesContext* context);
@@ -48,5 +50,11 @@ TValue resolve_type_indexing(Node* node, TypesContext* context);
 
 TypesContext* new_resolve_context();
 TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* context, TValue func_name);
+static TValue get_symbol_type(TValue name, TypesContext* context);
+static TValue get_func_descriptor(TValue name, TypesContext* context);
+static inline TValue resolve_in_scope(Node* node, TypesContext* context);
+static void open_type_scope(TypesContext* context);
+static void close_type_scope(TypesContext* context);
+static inline void update_types(TypesContext* context);
 
 #endif

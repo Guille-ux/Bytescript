@@ -71,7 +71,6 @@ int compile_return(Node* node, Scope* context) {
         int return_v = compile(nd, context);
 
         if (nd->cc) r0 = register_constant(return_v, context, -1); else r0 = register_specific(return_v, context);
-        free(nd);
 
     } else if (node->node.ReturnNode.len > 1) {
         for (int i = 0; i < node->node.ReturnNode.len; i++) register_top(context);
@@ -80,7 +79,6 @@ int compile_return(Node* node, Scope* context) {
             int return_v = compile(nd, context);
 
             if (nd->cc) register_constant(return_v, context, r0 + i); else register_register(return_v, context, r0 + i);
-            free(nd);
         }
     }
 
@@ -154,6 +152,10 @@ int compile_assignement(Node* node, Scope* context) {
             if (node->node.AssignementNode.value->cc) value = register_constant(value, context, lvalue);
 
             break;
+        }
+
+        case NT_INDEXING: {
+            
         }
 
         default : call_error(new_incorrect_lvalue_error, "cannot assign value to rvalue");
@@ -237,7 +239,7 @@ int compile_uni_op(Node* node, Scope* context) {
             if (node->cc) return cache_constant(NUM_AS_TVALUE(!TRUTHY(get_constant(target, context))), context);
 
             int r = free_register(register_first(context), context);
-            emit(OP_BNOT, context);
+            emit(OP_NOT, context);
             emit(r, context);
             emit(target, context);
             emit(0x000, context);
@@ -380,8 +382,9 @@ int compile_nfor_loop(Node* node, Scope* context) {
     int r1 = register_top(context);
     int r2 = register_top(context);
 
-    assign_to_reg(step_value_node, r2, context);
+    //assign_to_reg(step_value_node, r2, context);
     assign_to_reg(end_value_node, r1, context);
+    assign_to_reg(step_value_node, r2, context);
 
     append_symbol(context, node->node.nForNode.identifier, r0);
 

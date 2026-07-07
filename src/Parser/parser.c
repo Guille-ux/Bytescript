@@ -190,7 +190,7 @@ Node* for_expr(ParseResult* res) {
 
         case TT_SEPARATOR:
         case TT_KWORD: {
-            if (res->tokens++->tt == TT_SEPARATOR) ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &v, NULL))
+            if (res->tokens->tt == TT_SEPARATOR) { res->tokens++; ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &v, NULL)) }
             ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'in') EXPECTED", NULL, "in"))
 
             Node* target = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
