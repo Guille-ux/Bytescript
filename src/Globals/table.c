@@ -115,9 +115,6 @@ TValue pop_table(TValue* argv, size_t argc) {
         ptr->array.len -= 1;
     }
 
-
-    // 10, 5, 3
-    // 10, 5, NIL
     shift_table(ptr, returnc);
     potential_shrink(ptr);
     return to_return_value(returnv, returnc);

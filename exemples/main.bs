@@ -1,5 +1,4 @@
 Table a = { 5, 6, 7 }
-print("\n\nhello\n\n")
 Number b = a:insert(2)
 
 print(b)

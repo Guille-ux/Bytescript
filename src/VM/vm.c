@@ -301,7 +301,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_load_field:
-        context.sp[arg3] = AS_OBJECT(context.sp[arg1])->fields[(int64_t)context.sp[arg2].num];
+        context.sp[arg3] = AS_OBJECT(context.sp[arg1])->fields[arg2];
         NEXT_INSTR;
 
     instr_call: {
@@ -322,6 +322,9 @@ static TValue run_function(TValue func, VMState context) {
             context.frame = caller_frame;
             context.frame.ip -= 4;
             context.sp[arg3] = (context.sp += arg1 + 1, run_function(caller, context));
+
+            context.sp -= arg1 - 1;
+            context.frame = *caller_frame.prev;
         }
 
         NEXT_INSTR;
