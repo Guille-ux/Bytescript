@@ -5,9 +5,14 @@
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
 #include "utils/disassembler.h"
+#include "TypeResolving/type_specifiers.h"
+#include "Parser/nodes.h"
+#include "bytescript.h"
 
 
 TValue globals;
+TValue global_types;
+TValue global_functypes;
 TTable* globals_namespace;
 TValue globals_map;
 void initialize_globals() {
@@ -25,20 +30,8 @@ void initialize_globals() {
     initialize_table_class();
     initialize_error_class();
     initialize_io_class();
-}
 
-int add_global(TValue value, TValue name) {
-    TTable* glob_table = AS_TABLE(globals);
-    int idx = glob_table->array.len;
-
-    add_value_to_hashtable(globals, name, NUM_AS_TVALUE(idx));
-    append_to_table(globals, value);
-
-    return idx;
-}
-
-TValue get_global(TValue name) {
-    return get_from_table(globals, get_value_from_hashtable(globals, name));
+    make_globals_types_from_file(make_fstring("src/Globals/maps/globals.bs"));
 }
 
 
@@ -124,4 +117,59 @@ TValue disassemble(TValue* argv, size_t argc) {
 
     TValue disassembled = full_disassemble(func);
     write_file((TValue[2]){ file, disassembled }, 2);
+
+    return NIL;
+}
+
+
+int add_global(TValue value, TValue name) {
+    TTable* glob_table = AS_TABLE(globals);
+    int idx = glob_table->array.len;
+
+    add_value_to_hashtable(globals, name, NUM_AS_TVALUE(idx));
+    append_to_table(globals, value);
+
+    return idx;
+}
+
+int make_global(TValue value, TValue name, TValue type) {
+    add_value_to_hashtable(global_types, name, type);
+    return add_global(value, name);
+}
+
+int make_global_function(TValue value, TValue name, TValue desc) {
+    add_value_to_hashtable(global_functypes, name, desc);
+    return make_global(value, name, FunctionType);
+}
+
+TValue get_global(TValue name) {
+    return get_from_table(globals, get_value_from_hashtable(globals, name));
+}
+
+TValue make_globals_types_from_file(TValue filename) {
+    Node* ast = easy_parse(AS_STRING(filename)->str);
+    NodeArray statements = ast->node.StatementsNode;
+
+    for (int i = 0; i < statements.len; i++) {
+        Node* node = statements.nodes[i];
+
+        switch (node->nt) {
+            case NT_VAR_DECLARE: {
+                add_value_to_hashtable(global_types, node->node.VarDeclareNode.var_name, node->type);
+            }
+
+            case NT_FUNCDEF: {
+                int argc = get_linked_list_len(node->node.funcDefNode.arg_types);
+                TValue arg_array[argc]; linked_list_to_array(node->node.funcDefNode.args, arg_array, argc);
+                TValue argtype_array[argc]; linked_list_to_array(node->node.funcDefNode.arg_types, argtype_array, argc);
+
+                TValue name = node->node.funcDefNode.name;
+                TValue desc = make_method_descriptor(argtype_array, node->node.funcDefNode.type_specifier, argc);
+                
+                add_value_to_hashtable(global_types, name, node->type);
+                add_value_to_hashtable(global_functypes, name, desc);
+                break;
+            }
+        }
+    }
 }

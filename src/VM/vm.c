@@ -321,7 +321,7 @@ static TValue run_function(TValue func, VMState context) {
 
             context.frame = caller_frame;
             context.frame.ip -= 4;
-            context.sp[arg3] = (context.sp += arg1, run_function(caller, context));
+            context.sp[arg3] = (context.sp += arg1 + 1, run_function(caller, context));
         }
 
         NEXT_INSTR;

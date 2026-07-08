@@ -11,6 +11,9 @@ TARGET := $(patsubst src/%.c, dist/%.exe, $(MAIN_SRC))
 
 main : $(TARGET)
 
+o_o : CFLAGS += -O0 -march=native
+o_o : post_build
+
 o_one : CFLAGS += -O1 -march=native
 o_one : main
 

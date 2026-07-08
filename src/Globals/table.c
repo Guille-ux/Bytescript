@@ -95,7 +95,9 @@ TValue pop_table(TValue* argv, size_t argc) {
     TTable* ptr = AS_TABLE(argv[0]);
     TValue returnv[returnc];
 
-    if (argc == 1) {
+    if (argc <= 1) {
+        if ( OUT_OF_SCOPE(ptr, ptr->array.len - 1) ) call_error(new_index_error, "Index out of scope in function <Table.pop>");
+
         returnv[0] = ptr->array.array[ptr->array.len - 1];
         ptr->array.array[ptr->array.len - 1] = NIL;
         ptr->array.len -= 1;
@@ -108,11 +110,14 @@ TValue pop_table(TValue* argv, size_t argc) {
         int idx = AS_NUM(argv[i]);
         if ( OUT_OF_SCOPE(ptr, idx) ) call_error(new_index_error, "Index out of scope in function <Table.pop>");
 
-        returnv[i - 2] = ptr->array.array[idx];
+        returnv[i - 1] = ptr->array.array[idx];
         ptr->array.array[idx] = NIL;
         ptr->array.len -= 1;
     }
 
+
+    // 10, 5, 3
+    // 10, 5, NIL
     shift_table(ptr, returnc);
     potential_shrink(ptr);
     return to_return_value(returnv, returnc);
@@ -122,7 +127,7 @@ TValue shrink_table(TValue* argv, size_t argc) {
     MIN_ARGC(1)
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.shrink> take type <Table> as first argument");
     TTable* ptr = AS_TABLE(argv[0]);
-    
+
     ptr->array.capacity = ptr->array.capacity / 2;
     TValue* nptr = realloc(ptr->array.array, BSIZE(ptr->array.capacity));
     ptr->array.array = nptr;
@@ -622,7 +627,7 @@ static inline TValue potential_shrink(TTable* table) {
 }
 
 TTable* shift_table(TTable* table, size_t dead_values) {
-    for (int i = 0; i < table->array.len + dead_values; i++) {
+    for (int i = 0; i < table->array.len + dead_values - 1; i++) {
         if (IS_NIL(table->array.array[i])) {
             table->array.array[i] = table->array.array[i + 1];
             table->array.array[i + 1] = NIL;

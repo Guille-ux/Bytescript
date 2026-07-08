@@ -5,8 +5,6 @@
 #include "Globals/tError.h"
 
 
-TValue global_types;
-TValue global_functypes;
 TValue type_namespace;
 TypeResolver type_resolvers[] = {
     [NT_STATEMENTS]     = resolve_type_statements,
@@ -170,6 +168,8 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
 
     if (node->node.CallNode.target->nt == NT_VAR_ACESS) {
         TValue target_desc = get_symbol_type(node->node.CallNode.target->node.VarAcess.name, context);
+        target_desc = IS_NIL(target_desc) ? get_value_from_hashtable(global_functypes, node->node.CallNode.target->node.VarAcess.name) : target_desc;
+
         if (!IS_NIL(target_desc)) {
             MethodDescriptor* desc = as_method_descriptor(target_desc);
             TTable* args = AS_TABLE(desc->arg_types);
@@ -184,6 +184,8 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
     TValue var_type = get_symbol_type(node->node.VarAcess.name, context);
+    var_type = IS_NIL(var_type) ? get_value_from_hashtable(global_types, node->node.VarAcess.name) : var_type;
+
     if (EQUAL(var_type, NIL)) {
         TValue error_message = make_fstring("Unknown identifier : '%s'");
         error_message = format_string((TValue[3]){ error_message, node->node.VarAcess.name }, 2);
@@ -420,7 +422,7 @@ TValue resolve_type_class_def(Node* node, TypesContext* context) {
 
     TValue dunder_class = dunder(context->current_class);
 
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), context->current_class, dunder_class);
+    add_value_to_hashtable(global_types, context->current_class, dunder_class);
     add_value_to_hashtable(type_namespace, dunder_class, make_class_descriptor(NIL, NIL));
     add_value_to_hashtable(type_namespace, context->current_class, make_class_descriptor(NIL, NIL));
 
@@ -590,11 +592,6 @@ TypesContext* new_resolve_context() {
     context->func_stack = AS_TABLE(new_table(NULL, 0));
 
     open_type_scope(context);
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), NumberType, dunder(NumberType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), StringType, dunder(StringType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), TableType, dunder(TableType));
-    add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), FunctionType, dunder(FunctionType));
-
     return context;
 }
 
