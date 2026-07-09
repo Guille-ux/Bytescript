@@ -320,11 +320,13 @@ static TValue run_function(TValue func, VMState context) {
                 .prev = &context.frame
             };
 
+            TValue* pre_sp = context.sp;
             context.frame = caller_frame;
             context.frame.ip -= 4;
-            context.sp[arg3] = (context.sp += arg1 + 1, run_function(caller, context));
+            context.sp += arg1 + 1;
+            pre_sp[arg3] = run_function(caller, context);
 
-            context.sp -= arg1 - 1;
+            context.sp  = pre_sp;
             context.frame = *caller_frame.prev;
         }
 
@@ -342,6 +344,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_addtable:
+        insert_table(context.sp + arg1, arg2 + 1);
         NEXT_INSTR;
 
     instr_gettable: {

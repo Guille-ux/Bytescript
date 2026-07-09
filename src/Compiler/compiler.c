@@ -271,13 +271,20 @@ int compile_call(Node* node, Scope* context) {
     int target_cc = node->node.CallNode.target->cc;
     int pre = target;
 
-    if (target_cc) target = register_constant(target, context, register_top(context)); else target = register_specific_top(target, context);
+    int free_target = target_cc ? 1 : register_try_free(target, context) + 1;
+    if (target_cc) target = register_constant(target, context, register_top(context));
+    else {
+        if (free_target) free_register(target, context);
+        target = register_specific_top(target, context);
+
+        if (pre != target) free_target = true;
+    }
 
     for (int i = 0; i < node->node.CallNode.args.len; i++) assign_to_reg(node->node.CallNode.args.nodes[i], register_top(context), context);
-    free_multiple(!target_cc && pre == target ? target + 1 : target, node->node.CallNode.args.len, context);
+    free_multiple(target + 1, node->node.CallNode.args.len, context);
 
     emit(OP_CALL, context);
-    emit(target, context);
+    emit(free_target ? free_register(target, context) : target, context);
     emit(node->node.CallNode.args.len, context);
     return free_register(emit(register_first(context), context), context);
 }
@@ -323,7 +330,28 @@ int compile_table(Node* node, Scope* context) {
 }
 
 int compile_allocation(Node* node, Scope* context) {
-    //
+    int target = compile(node->node.AllocNode.target, context);
+    int target_cc = node->node.AllocNode.target->cc;
+    int pre = target;
+
+    int free_target = target_cc ? 1 : register_try_free(target, context) + 1;
+    if (target_cc) target = register_constant(target, context, register_top(context));
+    else {
+        if (free_target) free_register(target, context);
+        target = register_specific_top(target, context);
+
+        if (pre != target) free_target = true;
+    }
+
+    for (int i = 0; i < node->node.AllocNode.args.len; i++) assign_to_reg(node->node.AllocNode.args.nodes[i], register_top(context), context);
+    free_multiple(target + 1, node->node.AllocNode.args.len, context);
+
+    emit(OP_ADDTABLE, context);
+    emit(free_target ? free_register(target, context) : target, context);
+    emit(node->node.CallNode.args.len, context);
+    emit(0x00, context);
+
+    return target;
 }
 
 int compile_if_statement(Node* node, Scope* context) {

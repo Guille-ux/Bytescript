@@ -114,7 +114,7 @@ Node* alloc_expr(ParseResult* res) {
     Node* target = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
     ERR_CHECK(expect(res, TT_ARROW, "(ARROW) EXPECTED", NULL, NULL))
 
-    clean_newlines(&res->tokens, &res->adv_count); res->tokens++;
+    clean_newlines(&res->tokens, &res->adv_count);
     NodeArray args =  separated(res, expr, SEPARATOR);
 
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))

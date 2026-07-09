@@ -167,7 +167,7 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
     }
 
     if (node->node.CallNode.target->nt == NT_VAR_ACESS) {
-        TValue target_desc = get_symbol_type(node->node.CallNode.target->node.VarAcess.name, context);
+        TValue target_desc = get_value_from_hashtable(TBL_TO_TVALUE(context->func_namespace), node->node.CallNode.target->node.VarAcess.name);
         target_desc = IS_NIL(target_desc) ? get_value_from_hashtable(global_functypes, node->node.CallNode.target->node.VarAcess.name) : target_desc;
 
         if (!IS_NIL(target_desc)) {
@@ -175,11 +175,11 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
             TTable* args = AS_TABLE(desc->arg_types);
 
             check_call_types(node, args, context, node->node.CallNode.target->node.VarAcess.name);
-            return desc->return_type;
+            return (node->type = desc->return_type);
         }
     }
 
-    return varType;
+    return (node->type = varType);
 }
 
 TValue resolve_type_var_access(Node* node, TypesContext* context) {
@@ -218,7 +218,7 @@ TValue resolve_type_allocation(Node* node, TypesContext* context) {
         resolve_type(node->node.AllocNode.args.nodes[i], context);
     }
 
-    if (EQUAL(target_type, varType) || EQUAL(target_type, tableType)) return (node->type = tableType);
+    if (EQUAL(target_type, varType) || EQUAL(target_type, TableType)) return (node->type = tableType);
     call_error(new_type_error, "Allocation only work on type <Table>");
 }
 
@@ -332,8 +332,12 @@ TValue resolve_type_func_def(Node* node, TypesContext* context) {
     resolve_type(node->node.funcDefNode.statements, context);
     close_type_scope(context);
 
-    context->id_namespace = id_stack;
-    context->func_namespace = func_stack;
+    context->id_stack = id_stack;
+    context->func_stack = func_stack;
+
+    open_type_scope(context);
+    close_type_scope(context);
+
     context->return_type = pre_return_type;
     context->current_class = pre_class;
 

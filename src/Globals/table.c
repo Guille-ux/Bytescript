@@ -186,7 +186,7 @@ TValue print_table(TValue* argv, size_t argc) {
         printf("\t");
         print(ptr->array.array + i, 1);
     }
-    printf("}");
+    printf("}\n");
 
     return argv[0];
 }
