@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     TValue main = easy_compile(byte_args[filename]);
     TValue return_value = vm_run(main);
-    disassemble(&main, 1);
+    //disassemble(&main, 1);
 
     reset_table((TValue[1]){ TBL_TO_TVALUE(string_cache) }, 1);
     return 0;

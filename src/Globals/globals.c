@@ -2,6 +2,7 @@
 #include "Globals/string.h"
 #include "Globals/number.h"
 #include "Globals/function.h"
+#include "Globals/cdata.h"
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
 #include "utils/disassembler.h"
@@ -29,6 +30,7 @@ void initialize_globals() {
     initialize_string_class();
     initialize_table_class();
     initialize_error_class();
+    initialize_cdata_class();
     initialize_io_class();
 
     make_globals_types_from_file(make_fstring("src/Globals/maps/globals.bs"));
@@ -55,6 +57,18 @@ TValue print(TValue* argv, size_t argc) {
             case FUNC : {
                 TFunc* ptr = AS_FUNC(v);
                 printf("function <%p>", ptr);
+                break;
+            }
+
+            case CLASS: {
+                TClass* ptr = AS_CLASS(v);
+                printf("class : <%p>", v);
+                break;
+            }
+
+            case OBJECT: {
+                TObject* ptr = AS_OBJECT(v);
+                printf("object : <%p>", v);
                 break;
             }
 
@@ -103,6 +117,26 @@ TValue tfree(TValue* argv, size_t argc) {
     }
 
     return NIL;
+}
+
+TValue ttypeof(TValue* argv, size_t argc) {
+    size_t returnc = argc;
+    TValue returnv[returnc];
+
+    for (int i = 0; i < argc; i++) {
+        TValue value = argv[i];
+        switch (TYPE(value)) {
+            case STRING:    returnv[i] = String_class; break;
+            case TABLE:     returnv[i] = Table_class; break;
+            case FUNC:      returnv[i] = Function_class; break;
+            case CLASS:     returnv[i] = value; break;
+            case OBJECT:    returnv[i] = CLS_TO_TVALUE(AS_OBJECT(value)->class); break;
+            case CDATA:     returnv[i] = CData_class; break;
+            default:        returnv[i] = Number_class; break;
+        }
+    }
+
+    return to_return_value(returnv, returnc);
 }
 
 TValue disassemble(TValue* argv, size_t argc) {

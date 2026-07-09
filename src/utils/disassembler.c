@@ -60,6 +60,7 @@ const char* opcodes_names[] = {
     [OP_GETTABLE] = "GETTABLE",
     [OP_SETTABLE] = "SETTABLE",
     [OP_SETFIELD] = "SETFIELD",
+    [OP_NEWOBJECT] = "NEWOBJECT",
     [OP_HALT] = "HALT",
 };
 

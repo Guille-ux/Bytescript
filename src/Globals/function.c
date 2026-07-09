@@ -1,4 +1,3 @@
-#include "Globals/number.h"
 #include "Values/oop.h"
 #include "bytescript.h"
 #include "Globals/globals.h"

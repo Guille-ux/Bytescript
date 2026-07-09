@@ -12,6 +12,9 @@ void initialize_oop();
 TValue new_class(TValue inherited[], TValue fields[], size_t inherited_count, size_t field_count);
 TValue new_object(TValue cls, CFunc constructor, size_t fields_count);
 
+TClass* _as_class(TValue cls);
+TObject* _as_object(TValue cls);
+
 static inline TValue get_class_field(TValue class, int idx) {
     TClass* tclass = AS_CLASS(class);
     return tclass->fields[tclass->inherited_count + idx];

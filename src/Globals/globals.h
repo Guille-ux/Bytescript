@@ -21,6 +21,7 @@ void initialize_globals();
 
 TValue print(TValue* argv, size_t argc);
 TValue tfree(TValue* argv, size_t argc);
+TValue ttypeof(TValue* argv, size_t argc);
 TValue disassemble(TValue* argv, size_t argc);
 
 int add_global(TValue value, TValue name);

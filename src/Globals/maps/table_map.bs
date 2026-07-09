@@ -22,6 +22,6 @@ class Table
 
     func static hashValue(value) end
 
-    func __iter(Number i, value) end
-    func __index(Number i) end
+    func __iter(Number i, var value) end
+    func __index(var i) end
 end

@@ -73,6 +73,7 @@ static TValue run_function(TValue func, VMState context) {
         [OP_GETTABLE] = 	&&instr_gettable,
         [OP_SETTABLE] = 	&&instr_settable,
         [OP_SETFIELD] = 	&&instr_setfield,
+        [OP_NEWOBJECT] = 	&&instr_newobject,
         [OP_HALT] = 		&&instr_halt
     };
 
@@ -250,12 +251,12 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
         
     instr_jfalse:
-        if (TRUTHY(context.sp[arg1])) frame.ip += off16_to_in16(arg2, arg3) * 4;
+        if (TRUTHY(context.sp[arg1])) frame.ip += off16_to_int16(arg2, arg3) * 4;
         NEXT_INSTR;
         
     instr_nfor_init:
         context.sp[arg1].num -= context.sp[arg1 + 2].num;
-        frame.ip += off16_to_in16(arg2, arg3) * 4;
+        frame.ip += off16_to_int16(arg2, arg3) * 4;
         NEXT_INSTR;
 
     instr_nfor_loop: {
@@ -263,9 +264,9 @@ static TValue run_function(TValue func, VMState context) {
         context.sp[arg1].num += step;
 
         if (step >= 0) {
-            if (context.sp[arg1].num < context.sp[arg1 + 1].num) frame.ip += off16_to_in16(arg2, arg3) * 4;
+            if (context.sp[arg1].num < context.sp[arg1 + 1].num) frame.ip += off16_to_int16(arg2, arg3) * 4;
         } else {
-            if (context.sp[arg1].num > context.sp[arg1 + 1].num) frame.ip += off16_to_in16(arg2, arg3) * 4;
+            if (context.sp[arg1].num > context.sp[arg1 + 1].num) frame.ip += off16_to_int16(arg2, arg3) * 4;
         }
 
         NEXT_INSTR;
@@ -273,14 +274,14 @@ static TValue run_function(TValue func, VMState context) {
 
     instr_gfor_init:
         context.sp[arg1].num = -1;
-        frame.ip += off16_to_in16(arg2, arg3) * 4;
+        frame.ip += off16_to_int16(arg2, arg3) * 4;
 
     instr_gfor_loop: {
         uint64_t idx = ++context.sp[arg1].num;
         TTable* tbl = AS_TABLE(context.sp[arg1 + 2]);
 
         if (idx < tbl->array.len) context.sp[arg1 + 1] = tbl->array.array[idx];
-        else frame.ip += off16_to_in16(arg2, arg3) * 4;
+        else frame.ip += off16_to_int16(arg2, arg3) * 4;
 
         NEXT_INSTR;
     }
@@ -297,7 +298,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_load_global:
-        context.sp[arg3] = AS_TABLE(globals)->array.array[off16_to_in16(arg1, arg2)];
+        context.sp[arg3] = AS_TABLE(globals)->array.array[off16_to_int16(arg1, arg2)];
         NEXT_INSTR;
 
     instr_load_field:
@@ -343,15 +344,39 @@ static TValue run_function(TValue func, VMState context) {
     instr_addtable:
         NEXT_INSTR;
 
-    instr_gettable:
-        context.sp[arg3] = AS_TABLE(context.sp[arg1])->array.array[(int64_t)context.sp[arg2].num];
-        NEXT_INSTR;
+    instr_gettable: {
+        TValue  ttarget = context.sp[arg1];
+        TTable* target = AS_TABLE(ttarget);
+        TValue idx = context.sp[arg2];
 
-    instr_settable:
+        TValue value = IS_NUM(idx) ? target->array.array[(int64_t)context.sp[arg2].num] : NIL;
+        value = IS_NIL(value) ? get_value_from_hashtable(ttarget, idx) : value;
+
+        context.sp[arg3] = value;
+
         NEXT_INSTR;
+    }
+
+    instr_settable: {
+        TValue ttarget = context.sp[arg1];
+        TTable* target = AS_TABLE(ttarget);
+        TValue idx = context.sp[arg3];
+        TValue value = context.sp[arg2];
+
+        if (!IS_TABLE(ttarget)) call_error(new_type_error, "Tried Indexing a non-table value");
+
+        if (IS_NUM(idx) && (size_t)idx.num == target->array.len) insert_table(context.sp + arg1, 2);
+        else add_value_to_hashtable(ttarget, idx, value);
+
+        NEXT_INSTR;
+    }
 
     instr_setfield:
         AS_OBJECT(context.sp[arg1])->fields[(int64_t)context.sp[arg2].num] = context.sp[arg3];
+        NEXT_INSTR;
+
+    instr_newobject:
+        context.sp[arg3] = new_object(context.sp[arg1], NULL, arg2);
         NEXT_INSTR;
 
     instr_halt:

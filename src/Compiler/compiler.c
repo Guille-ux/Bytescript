@@ -43,13 +43,11 @@ CompileFunction compiler_functions[] = {
 int compile(Node* node, Scope* context) { return compiler_functions[node->nt](node, context); }
 
 int compile_statements(Node* node, Scope* context) {
-    node->cc = false;
     int res = 0;
     
     for (int i = 0; i < node->node.StatementsNode.len; i++) {
         Node* compile_node = node->node.StatementsNode.nodes[i];
         res = compile(compile_node, context);
-        free(compile_node);
     }
 
     return res;
@@ -63,9 +61,8 @@ int compile_return(Node* node, Scope* context) {
         emit(0x00, context);
     }
 
-    node->cc = false;
+    
     int r0 = free_register(register_top(context), context);
-
     if (node->node.ReturnNode.len == 1) {
         Node* nd = node->node.ReturnNode.nodes[0];
         int return_v = compile(nd, context);
@@ -139,31 +136,51 @@ int compile_var_declare(Node* node, Scope* context) {
 }
 
 int compile_assignement(Node* node, Scope* context) {
-    node->cc = false;
-    int lvalue = compile(node->node.AssignementNode.lvalue, context);
-    int value = -1;
+    Node* lvalue_node = node->node.AssignementNode.lvalue;
+    Node* value_node = node->node.AssignementNode.value;
 
-    switch (node->node.AssignementNode.lvalue->nt) {
+    switch (lvalue_node->nt) {
         case NT_VAR_ACESS: {
+            int lvalue = compile(lvalue_node, context);
+
             int analysis_res = assignement_analysis(node);
             if (analysis_res) free_register(lvalue, context);
 
-            value = compile(node->node.AssignementNode.value, context);
-            if (node->node.AssignementNode.value->cc) value = register_constant(value, context, lvalue);
+            int value = compile(value_node, context);
+            if (value_node->cc) value = register_constant(value, context, lvalue);
 
-            break;
+            return register_register(value, context, lvalue);
         }
 
         case NT_INDEXING: {
-            
+            Node* target_node = lvalue_node->node.IndexNode.target;
+            Node* index_node = lvalue_node->node.IndexNode.index;
+
+            int target = compile(target_node, context);
+            int free_target = target_node->cc ? 1 : register_try_free(target, context) + 1;
+
+            int index = compile(index_node, context);
+            int free_index = index_node->cc ? 1 : register_try_free(index, context) + 1;
+
+            int value = compile(node->node.AssignementNode.value, context);
+
+            if (target_node->cc) target = register_constant(target, context, -1);
+            if (index_node->cc) index = register_constant(index, context, -1);
+            if (value_node->cc) value = free_register(register_constant(value, context, -1), context);
+
+            if (free_target) free_register(target, context);
+            if (free_index) free_register(index, context);
+
+            emit(OP_SETTABLE, context);
+            emit(target, context);
+            emit(value, context);
+            emit(index, context);
+
+            return value;
         }
 
         default : call_error(new_incorrect_lvalue_error, "cannot assign value to rvalue");
     }
-
-    free(node->node.AssignementNode.lvalue);
-    free(node->node.AssignementNode.value);
-    return register_register(value, context, lvalue);
 }
 
 int compile_bin_op(Node* node, Scope* context) {
@@ -246,13 +263,10 @@ int compile_uni_op(Node* node, Scope* context) {
         }
     }
 
-    free(node->node.UniOpNode.target);
     return r;
 }
 
 int compile_call(Node* node, Scope* context) {
-    node->cc = false;
-
     int target = compile(node->node.CallNode.target, context);
     int target_cc = node->node.CallNode.target->cc;
     int pre = target;
@@ -269,7 +283,6 @@ int compile_call(Node* node, Scope* context) {
 }
 
 int compile_var_access(Node* node, Scope* context) {
-    node->cc = false;
     TValue tidx = get_symbol_register(context, node->node.VarAcess.name);
 
     if (IS_NIL(tidx)) {
@@ -289,12 +302,10 @@ int compile_var_access(Node* node, Scope* context) {
 }
 
 int compile_number(Node* node, Scope* context) {
-    node->cc = true;
     return cache_constant(node->node.NumberNode.num, context);
 }
 
 int compile_string(Node* node, Scope* context) {
-    node->cc = true;
     return cache_constant(node->node.StringNode.str, context);
 }
 
@@ -323,13 +334,13 @@ int compile_if_statement(Node* node, Scope* context) {
     struct { uint8_t* ptr[cases.len]; size_t len; } ends;
     ends.len = 0;
 
-    node->cc = false;
+    
     for (int i = 0; i < cases.len; i++) {
         int condition = compile(cases.nodes[i], context);
 
         if (cases.nodes[i]->cc) {
             if (AS_NUM(get_constant(condition, context))) {
-                node->cc = true;
+                
                 
                 compile_in_scope(stments.nodes[i], context);
 
@@ -369,7 +380,7 @@ int compile_if_statement(Node* node, Scope* context) {
 }
 
 int compile_nfor_loop(Node* node, Scope* context) {
-    node->cc = false;
+    
 
     open_scope(context);
 
@@ -409,7 +420,7 @@ int compile_nfor_loop(Node* node, Scope* context) {
 }
 
 int compile_gfor_loop(Node* node, Scope* context) {
-    node->cc = false;
+    
 
     open_scope(context);
 
@@ -443,7 +454,7 @@ int compile_gfor_loop(Node* node, Scope* context) {
 }
 
 int compile_while_loop(Node* node, Scope* context) {
-    node->cc = false;
+    
 
     uint8_t* pre_condition = CURRENT_INSTR;
     int condition = compile(node->node.whileNode.condition, context);
@@ -466,7 +477,7 @@ int compile_while_loop(Node* node, Scope* context) {
 }
 
 int compile_repeat_loop(Node* node, Scope* context) {
-    node->cc = false;
+    
 
     uint8_t* pre_statement = CURRENT_INSTR;
     compile_in_scope(node->node.whileNode.statements, context);
@@ -488,14 +499,10 @@ int compile_repeat_loop(Node* node, Scope* context) {
 }
 
 int compile_import(Node* node, Scope* context) {
-    node->cc = true;
-
-
+    
 }
 
 int compile_func_def(Node* node, Scope* context) {
-    node->cc = true;
-
     Scope* func_context = new_scope();
     func_context->parent = context;
 
@@ -513,7 +520,7 @@ int compile_func_def(Node* node, Scope* context) {
     int idx = cache_constant(func, context);
     if (!IS_NIL(node->node.funcDefNode.name)) {
         idx = register_constant(idx, context, -1);
-        node->cc = false;
+        
 
         append_symbol(context, node->node.funcDefNode.name, idx);
     }
@@ -522,13 +529,24 @@ int compile_func_def(Node* node, Scope* context) {
 }
 
 int compile_method_def(Node* node, Scope* context) {
-    node->cc = false;
+    TValue class_name = node->node.methodDefNode.class;
+    int class_idx = get_global(class_name).num;
 
     Scope* func_context = new_scope();
     func_context->parent = context;
 
     int self_r = register_first(func_context);
     append_symbol(func_context, make_fstring("self"), self_r);
+
+    if (node->nt == NT_CONSTRUCTOR) {
+        int class_r = register_global(class_idx, context, -1);
+        int field_count = get_namespace_value(get_value_from_hashtable(globals_map, undunder(class_name))).num;
+
+        emit(OP_NEWOBJECT, func_context);
+        emit(class_r, func_context);
+        emit(field_count, func_context);
+        emit(self_r, func_context);
+    }
 
     int argc = get_linked_list_len(node->node.funcDefNode.args);
     TValue args[argc]; linked_list_to_array(node->node.funcDefNode.args, args, argc);
@@ -540,15 +558,14 @@ int compile_method_def(Node* node, Scope* context) {
 
     compile(node->node.funcDefNode.statements, func_context);
     TValue func = close_context(func_context);
-    TValue class_name = node->node.methodDefNode.class;
 
     TValue class_namespace = get_value_from_hashtable(globals_map, class_name);
     TValue class_map = get_namespace_map(class_namespace);
     TValue tclass = get_namespace_value(class_namespace);
 
     TClass* class = AS_CLASS(tclass);
-    int idx = get_value_from_hashtable(class_map, node->node.methodDefNode.name).num;
-    class->fields[class->inherited_count + idx] = func;
+    int func_idx = get_value_from_hashtable(class_map, node->node.methodDefNode.name).num;
+    class->fields[class->inherited_count + func_idx] = func;
 
     return 0;
 }
@@ -568,7 +585,6 @@ int compile_class_def(Node* node, Scope* context) {
 
     int field_count = class_entry->value.num;
     TValue class = new_class(inherited, NULL, inherited_count, field_count);
-    set_namespace_value(get_value_from_hashtable(globals_map, node->node.classDefNode.name), NIL);
 
     class_entry->value = class;
     add_global(class, node->node.classDefNode.name);
@@ -611,7 +627,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
     NamespaceEntry* class_entry = as_namespace_entry(class_namespace);
     TValue class_map = get_namespace_map(class_namespace);
 
-    if (IS_NIL(class_entry->value)) {
+    if (TYPE(class_entry->value) != CLASS) {
         TValue self = get_symbol_register(context, make_fstring("self"));
         int r = self.num;
 
@@ -625,11 +641,14 @@ int compile_selfdeclare(Node* node, Scope* context) {
 
     } else {
         TValue idx = get_value_from_hashtable(class_map, node->node.SelfDeclarenode.var_name);
-        TValue tclass = get_global(class_entry->value);
+        TValue tclass = class_entry->value;
         TClass* class = AS_CLASS(tclass);
 
-        if (node->node.VarDeclareNode.value->cc) { class->fields[class->inherited_count + (int)idx.num] = get_constant(value, context); return value; }
-        else free_value = register_try_free(value, context) + 1;
+        if (node->node.SelfDeclarenode.value->cc) {
+            class->fields[class->inherited_count + (int)idx.num] = get_constant(value, context);
+            return value;
+
+        }  else free_value = register_try_free(value, context) + 1;
 
         int class_r = free_register(register_global(get_value_from_hashtable(globals, undunder(class_name)).num, context, -1), context);
 
@@ -646,7 +665,7 @@ int compile_fieldaccess(Node* node, Scope* context) {
 }
 
 int compile_constructor(Node* node, Scope* context) {
-    compile_method_def(node, context);
+    return compile_method_def(node, context);
 }
 
 int compile_indexing(Node* node, Scope* context) {
@@ -654,9 +673,8 @@ int compile_indexing(Node* node, Scope* context) {
     Node* index_node = node->node.IndexNode.index;
 
     int target = compile(target_node, context);
-    int index = compile(node->node.IndexNode.index, context);
-
     int free_target = target_node->cc ? 1 : register_try_free(target, context) + 1;
+    int index = compile(node->node.IndexNode.index, context);
 
     if (target_node->cc) target = register_constant(target, context, -1);
     if (index_node->cc) index = free_register(register_constant(index, context, -1), context);

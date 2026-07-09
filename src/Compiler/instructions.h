@@ -65,6 +65,7 @@ typedef enum {
     OP_GETTABLE,
     OP_SETTABLE,
     OP_SETFIELD,
+    OP_NEWOBJECT,
     OP_HALT
 } BytecodeInstruction;
 

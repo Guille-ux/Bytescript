@@ -105,5 +105,7 @@ static inline int in_table(TValue table, TValue value) {
     return TRUTHY(in_array_table(args, 2)) ? 1 : 0;
 }
 
+static TTable* _as_table(TValue tbl) { return AS_TABLE(tbl); }
+
 
 #endif

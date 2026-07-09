@@ -20,7 +20,7 @@ static inline int32_t off24_to_int32(uint8_t hihi, uint8_t hi, uint8_t lo) {
     return (int32_t)(x << 8) >> 8;
 }
 
-static inline int16_t off16_to_in16(uint8_t hi, uint8_t lo) { return (hi << 8) | lo; }
+static inline int16_t off16_to_int16(uint8_t hi, uint8_t lo) { return (hi << 8) | lo; }
 
 
 TValue to_return_value(TValue returnv[], size_t returnc);

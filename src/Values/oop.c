@@ -66,3 +66,6 @@ TValue new_object(TValue cls, CFunc constructor, size_t fields_count) {
     return tobj;
 
 }
+
+TClass* _as_class(TValue cls) { return AS_CLASS(cls); }
+TObject* _as_object(TValue cls) { return AS_OBJECT(cls); }

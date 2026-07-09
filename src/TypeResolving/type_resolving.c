@@ -575,7 +575,8 @@ TValue resolve_type_indexing(Node* node, TypesContext* context) {
         call_error(new_type_error, AS_STRING(error_message)->str);
     }
 
-    if (EQUAL(index, varType) || in_table(descPtr->arg_types, index)) return descPtr->return_type;
+    TValue expected_type = get_from_table(descPtr->arg_types, NUM_AS_TVALUE(0));
+    if (EQUAL(index, varType) || EQUAL(expected_type, varType) || EQUAL(expected_type, index)) return descPtr->return_type;
 
     TValue error_message = make_fstring("Cannot index type : <%s> with type <%s>");
     error_message = format_string((TValue[4]){ error_message, target, index }, 3);
