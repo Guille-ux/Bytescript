@@ -1,3 +1,4 @@
 func var print(var target) end
 func var free(var value) end
 func var disassemble(Function func, String output) end
+func var exec(String src) end

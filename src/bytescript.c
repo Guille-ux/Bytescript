@@ -85,3 +85,34 @@ TValue easy_compile(char bsname[]) {
 
     return close_context(compile_context);
 }
+
+TValue exec(TValue* argv, size_t argc) {
+    MIN_ARGC(1);
+
+    size_t returnc = argc;
+    TValue returnv[returnc];
+
+    for (int i = 0; i < argc; i++) {
+        TValue source_code = argv[i];
+        if (TYPE(source_code) != STRING) call_error(new_type_error, "function <exec> take type <String> as args");
+
+        TStr* srcode_str = AS_STRING(source_code);
+
+        Token* tokens = make_tokens(srcode_str->str);
+        Node* ast = parse(tokens, "Anonymous");
+
+        TypesContext* type_context = new_resolve_context();
+        resolve_type(ast, type_context);
+
+        fold(ast);
+        classmap(ast);
+
+        Scope* compile_context = new_scope();
+        compile(ast, compile_context);
+
+        TValue func = close_context(compile_context);
+        returnv[i] = vm_run(func);
+    }
+
+    return to_return_value(returnv, returnc);
+}

@@ -9,12 +9,13 @@ TValue vm_run(TValue func) {
     VMState context = { .sp = stack, .frame = NULL };
     TValue return_value = run_function(func, context);
 
+    free(stack);
     return return_value;
 }
 
 
 static TValue run_function(TValue func, VMState context) {
-    static void* dispatch_table[] = {
+    void* dispatch_table[] = {
         [OP_ADD_RC] = 		&&instr_add_rc,
         [OP_ADD_RR] = 		&&instr_add_rr,
         [OP_SUB_RC] = 		&&instr_sub_rc,
@@ -275,6 +276,7 @@ static TValue run_function(TValue func, VMState context) {
     instr_gfor_init:
         context.sp[arg1].num = -1;
         frame.ip += off16_to_int16(arg2, arg3) * 4;
+        NEXT_INSTR;
 
     instr_gfor_loop: {
         uint64_t idx = ++context.sp[arg1].num;

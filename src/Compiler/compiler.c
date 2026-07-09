@@ -54,14 +54,6 @@ int compile_statements(Node* node, Scope* context) {
 }
 
 int compile_return(Node* node, Scope* context) {
-    if (context->parent == NULL) {
-        emit(OP_HALT, context);
-        emit(0x00, context);
-        emit(0x00, context);
-        emit(0x00, context);
-    }
-
-    
     int r0 = free_register(register_top(context), context);
     if (node->node.ReturnNode.len == 1) {
         Node* nd = node->node.ReturnNode.nodes[0];

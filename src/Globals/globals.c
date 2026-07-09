@@ -6,8 +6,8 @@
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
 #include "utils/disassembler.h"
-#include "TypeResolving/type_specifiers.h"
 #include "Parser/nodes.h"
+#include "TypeResolving/type_specifiers.h"
 #include "bytescript.h"
 
 
@@ -24,6 +24,7 @@ void initialize_globals() {
     add_global(new_cfunc(print), make_fstring("print"));
     add_global(new_cfunc(tfree), make_fstring("free"));
     add_global(new_cfunc(disassemble), make_fstring("disassemble"));
+    add_global(new_cfunc(exec), make_fstring("exec"));
 
     initialize_function_class();
     initialize_number_class();

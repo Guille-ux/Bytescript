@@ -12,5 +12,6 @@ void intialize_dependencies();
 Node* easy_parse(char bsname[]);
 Node* easy_map(char bsname[]);
 TValue easy_compile(char bsname[]);
+TValue exec(TValue* argv, size_t argc);
 
 #endif
