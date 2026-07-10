@@ -9,6 +9,11 @@ struct uint8LinkedList {
     struct uint8LinkedList* next;
 };
 
+struct sizeLinkedList {
+    size_t size;
+    struct sizeLinkedList* next;
+};
+
 struct TValueLinkedList {
     TValue value;
     struct TValueLinkedList* next;

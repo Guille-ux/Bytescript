@@ -164,8 +164,9 @@ Node* for_expr(ParseResult* res) {
     TValue v = NIL;
     ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &i, NULL))
     
-    switch (res->tokens++->tt) {
+    switch (res->tokens->tt) {
         case TT_EQ: {
+            res->tokens++;
             Node* baseValue = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
             ERR_CHECK(expect(res, TT_SEPARATOR, "(SEPARATOR:',') EXPECTED", NULL, NULL))
             Node* endValue = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");

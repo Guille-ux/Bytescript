@@ -79,34 +79,30 @@ int compile_return(Node* node, Scope* context) {
 }
 
 int compile_break(Node* node, Scope* context) {
-    struct uint8LinkedList current = context->breaks;
-    while (current.next != NULL) current = *current.next;
-
-    current.ptr = CURRENT_INSTR;
-    current.next = malloc(sizeof(struct uint8LinkedList));
-    if (!current.next) call_error(new_failed_allocation_error, "Failed allocation while compiling");
-
     emit(OP_JUMP, context);
     emit(0x00, context);
     emit(0x00, context);
     emit(0x00, context);
 
+    struct sizeLinkedList* new = malloc(sizeof(struct sizeLinkedList));
+    new->size = CURRENT_INSTR;
+    new->next = context->breaks.next;
+
+    context->breaks.next = new;
     return 0;
 }
 
 int compile_continue(Node* node, Scope* context) {
-    struct uint8LinkedList current = context->breaks;
-    while (current.next != NULL) current = *current.next;
-
-    current.ptr = CURRENT_INSTR;
-    current.next = malloc(sizeof(struct uint8LinkedList));
-    if (!current.next) call_error(new_failed_allocation_error, "Failed allocation while compiling");
-
     emit(OP_JUMP, context);
     emit(0x00, context);
     emit(0x00, context);
     emit(0x00, context);
 
+    struct sizeLinkedList* new = malloc(sizeof(struct sizeLinkedList));
+    new->size = CURRENT_INSTR;
+    new->next = context->continues.next;
+
+    context->continues.next = new;
     return 0;
 }
 
@@ -349,21 +345,17 @@ int compile_allocation(Node* node, Scope* context) {
 int compile_if_statement(Node* node, Scope* context) {
     NodeArray cases = node->node.IfNode.cases;
     NodeArray stments = node->node.IfNode.statements;
-    uint8_t* next = NULL;
+    size_t next = 0;
 
-    struct { uint8_t* ptr[cases.len]; size_t len; } ends;
+    struct { size_t len; size_t ptr[cases.len]; } ends;
     ends.len = 0;
 
-    
     for (int i = 0; i < cases.len; i++) {
         int condition = compile(cases.nodes[i], context);
 
         if (cases.nodes[i]->cc) {
             if (AS_NUM(get_constant(condition, context))) {
-                
-                
                 compile_in_scope(stments.nodes[i], context);
-
                 break;
 
             } else continue;
@@ -383,7 +375,7 @@ int compile_if_statement(Node* node, Scope* context) {
         emit(0x00, context);
         ends.ptr[ends.len++] = CURRENT_INSTR;
 
-        patch_single_jfalse_label(next, get_jump_lenght(next, context));
+        patch_single_jfalse_label(context->bytecode.bytes, next, get_jump_lenght(next, context));
     }
 
 
@@ -391,17 +383,15 @@ int compile_if_statement(Node* node, Scope* context) {
         if (node->node.IfNode.cases.len < node->node.IfNode.statements.len) {
             compile(stments.nodes[stments.len - 1], context);
             
-        } else { context->bytecode.len -= 4; patch_single_jfalse_label(next, get_jump_lenght(next, context)); }
+        } else { context->bytecode.len -= 4; patch_single_jfalse_label(context->bytecode.bytes, next, get_jump_lenght(next, context)); }
 
-        patch_array_jump_label((struct ArrayLabel){ .ptr = ends.ptr, .len = ends.len }, CURRENT_INSTR);
+        patch_array_jump_label(context->bytecode.bytes, (struct ArrayLabel){ .len = ends.len, .ptr = ends.ptr }, CURRENT_INSTR);
     }
 
     return 0;
 }
 
 int compile_nfor_loop(Node* node, Scope* context) {
-    
-
     open_scope(context);
 
     Node* start_value_node = node->node.nForNode.values[0];
@@ -423,25 +413,24 @@ int compile_nfor_loop(Node* node, Scope* context) {
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* init = CURRENT_INSTR;
+    size_t init = CURRENT_INSTR;
 
     compile(node->node.nForNode.statements, context);
-    patch_single_jfalse_label(init, get_jump_lenght(init, context));
+    patch_single_jfalse_label(context->bytecode.bytes, init, get_jump_lenght(init, context));
 
     emit(OP_NFOR_LOOP, context);
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
 
-    uint8_t* loop = CURRENT_INSTR;
-    patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
+    size_t loop = CURRENT_INSTR;
+    patch_single_jfalse_label(context->bytecode.bytes, loop, get_jump_lenght_to(loop, init));
 
+    free_multiple(r1, 2, context);
     close_scope(context);
 }
 
 int compile_gfor_loop(Node* node, Scope* context) {
-    
-
     open_scope(context);
 
     int target = compile(node->node.gForNode.target, context);
@@ -451,39 +440,37 @@ int compile_gfor_loop(Node* node, Scope* context) {
     int r2 = register_register(target, context, register_top(context));
 
     append_symbol(context, node->node.gForNode.identifiers[0], r0);
-    if (!IS_NIL(node->node.gForNode.identifiers[1])) append_symbol(context, node->node.gForNode.identifiers[1], r0);
+    if (!IS_NIL(node->node.gForNode.identifiers[1])) append_symbol(context, node->node.gForNode.identifiers[1], r1);
 
     emit(OP_GFOR_INIT, context);
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* init = CURRENT_INSTR;
+    size_t init = CURRENT_INSTR;
 
     compile(node->node.gForNode.statements, context);
-    patch_single_jfalse_label(init, get_jump_lenght(init, context));
+    patch_single_jfalse_label(context->bytecode.bytes, init, get_jump_lenght(init, context));
 
     emit(OP_GFOR_LOOP, context);
     emit(r0, context);
     emit(0x00, context);
     emit(0x00, context);
 
-    uint8_t* loop = CURRENT_INSTR;
-    patch_single_jfalse_label(loop, get_jump_lenght_to(loop, context, init));
+    size_t loop = CURRENT_INSTR;
+    patch_single_jfalse_label(context->bytecode.bytes, loop, get_jump_lenght_to(loop, init));
 
     close_scope(context);
 }
 
 int compile_while_loop(Node* node, Scope* context) {
-    
-
-    uint8_t* pre_condition = CURRENT_INSTR;
+    size_t pre_condition = CURRENT_INSTR;
     int condition = compile(node->node.whileNode.condition, context);
     
     emit(OP_JFALSE, context);
     emit(0x00, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* condition_label = CURRENT_INSTR;
+    size_t condition_label = CURRENT_INSTR;
 
     compile_in_scope(node->node.whileNode.statements, context);
 
@@ -492,14 +479,12 @@ int compile_while_loop(Node* node, Scope* context) {
     emit(0x00, context);
     emit(0x00, context);
 
-    patch_single_jump_label(CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, context, pre_condition));
-    patch_single_jfalse_label(condition_label, get_jump_lenght(condition_label, context));
+    patch_single_jump_label(context->bytecode.bytes, CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, pre_condition));
+    patch_single_jfalse_label(context->bytecode.bytes, condition_label, get_jump_lenght(condition_label, context));
 }
 
 int compile_repeat_loop(Node* node, Scope* context) {
-    
-
-    uint8_t* pre_statement = CURRENT_INSTR;
+    size_t pre_statement = CURRENT_INSTR;
     compile_in_scope(node->node.whileNode.statements, context);
     int condition = compile(node->node.whileNode.condition, context);
     
@@ -507,15 +492,15 @@ int compile_repeat_loop(Node* node, Scope* context) {
     emit(condition, context);
     emit(0x00, context);
     emit(0x00, context);
-    uint8_t* condition_label = CURRENT_INSTR;
+    size_t condition_label = CURRENT_INSTR;
 
     emit(OP_JUMP, context);
     emit(0x00, context);
     emit(0x00, context);
     emit(0x00, context);
 
-    patch_single_jump_label(CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, context, pre_statement));
-    patch_single_jfalse_label(condition_label, get_jump_lenght(condition_label, context));
+    patch_single_jump_label(context->bytecode.bytes, CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, pre_statement));
+    patch_single_jfalse_label(context->bytecode.bytes, condition_label, get_jump_lenght(condition_label, context));
 }
 
 int compile_import(Node* node, Scope* context) {
@@ -719,9 +704,9 @@ Scope* new_scope() {
 
     scope->free_regs.len = 0;
     scope->reg_ptr = 0;
-    scope->breaks.ptr = NULL;
+    scope->breaks.size = 0;
     scope->breaks.next = NULL;
-    scope->continues.ptr = NULL;
+    scope->continues.size = 0;
     scope->continues.next = NULL;
 
     scope->bytecode.bytes = malloc(64);
@@ -939,6 +924,8 @@ static void open_scope(Scope* context) {
 static void close_scope(Scope* context) {
     TValue last_scope = get_from_table(TBL_TO_TVALUE(context->symbol_stack), NUM_AS_TVALUE(context->symbol_stack->array.len - 1));
     TValue registers = hashed_values_table((TValue[1]){ last_scope }, 1);
+    counting_sort(registers);
+
     TTable* registers_tbl = AS_TABLE(registers);
 
     for (int i = 0; i < registers_tbl->array.len; i++) { free_register((uint8_t)AS_NUM(registers_tbl->array.array[i]), context); }

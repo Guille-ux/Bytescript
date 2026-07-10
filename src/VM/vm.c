@@ -282,8 +282,10 @@ static TValue run_function(TValue func, VMState context) {
         uint64_t idx = ++context.sp[arg1].num;
         TTable* tbl = AS_TABLE(context.sp[arg1 + 2]);
 
-        if (idx < tbl->array.len) context.sp[arg1 + 1] = tbl->array.array[idx];
-        else frame.ip += off16_to_int16(arg2, arg3) * 4;
+        if (idx < tbl->array.len) {
+            context.sp[arg1 + 1] = tbl->array.array[idx];
+            frame.ip += off16_to_int16(arg2, arg3) * 4;
+        }
 
         NEXT_INSTR;
     }

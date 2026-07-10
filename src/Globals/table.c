@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
+#include "lib/Math/tmath.h"
 
 #include "Values/oop.h"
 #include "Globals/table.h"
@@ -125,7 +126,7 @@ TValue shrink_table(TValue* argv, size_t argc) {
     if (!IS_TABLE(argv[0])) call_error(new_type_error, "function <Table.shrink> take type <Table> as first argument");
     TTable* ptr = AS_TABLE(argv[0]);
 
-    ptr->array.capacity = ptr->array.capacity / 2;
+    ptr->array.capacity = MAX(1, ptr->array.capacity / 2);
     TValue* nptr = realloc(ptr->array.array, BSIZE(ptr->array.capacity));
     ptr->array.array = nptr;
 

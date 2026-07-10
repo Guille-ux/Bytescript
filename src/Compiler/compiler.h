@@ -15,8 +15,8 @@ typedef struct ContextScope {
     struct { TValue const_pool[256]; uint8_t len; } const_pool;
     struct { uint8_t free_regs[256]; uint8_t len; } free_regs;
     struct { uint8_t* bytes; size_t len; size_t cap; } bytecode;
-    struct uint8LinkedList breaks;
-    struct uint8LinkedList continues;
+    struct sizeLinkedList breaks;
+    struct sizeLinkedList continues;
     TTable* symbol_stack;
     TTable* symbols;
     uint8_t reg_ptr;

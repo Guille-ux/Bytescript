@@ -51,3 +51,22 @@ TValue is_dunder(TValue tstr) {
     if (str->str[0] == '_' && str->str[1] == '_') return TRUE_TVALUE;
     return FALSE_TVALUE;
 }
+
+void counting_sort(TValue table) {
+    // :0 sorting algorithm
+
+    TTable* ptr = AS_TABLE(table);
+    Array arr = ptr->array;
+    size_t len = ptr->array.len;
+    uint8_t counts[256] = {0};
+
+    for (int i = 0; i < len; i++) counts[(int)ptr->array.array[i].num]++;
+    for (int i = 0; i < 256; i++) {
+        uint8_t count = counts[i];
+        for (int j = 0; j < count; j++) {
+            arr.array[j] = NUM_AS_TVALUE(i);
+        }
+
+        arr.array += count;
+    }
+}

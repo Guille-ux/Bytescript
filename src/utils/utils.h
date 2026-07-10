@@ -11,5 +11,6 @@ int has_modifier(TValue tbl, char modif[]);
 TValue dunder(TValue str);
 TValue undunder(TValue str);
 TValue is_dunder(TValue tstr);
+void counting_sort(TValue table);
 
 #endif
