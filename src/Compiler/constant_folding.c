@@ -223,7 +223,7 @@ TValue fold_from_import(Node* node) { return (node->cc = false, NIL); }
 
 TValue fold_func_def(Node* node) {
     fold(node->node.funcDefNode.statements);
-    return (node->cc = false, NIL);
+    return (node->cc = IS_NIL(node->node.funcDefNode.name), NIL);
 }
 
 TValue fold_class_def(Node* node) {

@@ -1,1 +1,2 @@
-from "speed.bs" import Number yes, String bob end
+require "exemples/test.bs" as test end
+print(test)
