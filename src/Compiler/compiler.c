@@ -526,16 +526,15 @@ int compile_require(Node* node, Scope* context) {
 int compile_import(Node* node, Scope* context) {
     TValue module = easy_compile(AS_STRING(node->node.importNode.module)->str);
     int idx = cache_constant(module, context);
-    idx = free_register(register_constant(idx, context, -1), context);
 
     int r = register_first(context);
     if (IS_NIL(node->node.importNode.identifier)) free_register(r, context);
     else append_symbol(context, node->node.importNode.identifier, r);
 
-    emit(OP_CALL, context);
+    emit(OP_IMPORT, context);
     emit(idx, context);
-    emit(0x00, context);
     emit(r, context);
+    emit(0x00, context);
 
     return r;
 }

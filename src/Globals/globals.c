@@ -5,6 +5,7 @@
 #include "Globals/cdata.h"
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
+#include "Globals/Module/module.h"
 #include "utils/disassembler.h"
 #include "Parser/nodes.h"
 #include "TypeResolving/type_specifiers.h"
@@ -33,6 +34,7 @@ void initialize_globals() {
     initialize_error_class();
     initialize_cdata_class();
     initialize_io_class();
+    initialize_module_class();
 
     make_globals_types_from_file(make_fstring("src/Globals/maps/globals.bs"));
 }

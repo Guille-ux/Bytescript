@@ -75,6 +75,7 @@ static TValue run_function(TValue func, VMState context) {
         [OP_SETTABLE] = 	&&instr_settable,
         [OP_SETFIELD] = 	&&instr_setfield,
         [OP_NEWOBJECT] = 	&&instr_newobject,
+        [OP_IMPORT] =       &&instr_import,
         [OP_HALT] = 		&&instr_halt
     };
 
@@ -384,6 +385,9 @@ static TValue run_function(TValue func, VMState context) {
 
     instr_newobject:
         context.sp[arg3] = new_object(context.sp[arg1], NULL, arg2);
+        NEXT_INSTR;
+
+    instr_import:
         NEXT_INSTR;
 
     instr_halt:
