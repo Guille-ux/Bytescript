@@ -28,6 +28,8 @@ const char* keywords[] = {
     
     "alloc",
 
+    "from",
+    "require",
     "import",
     "as",
     

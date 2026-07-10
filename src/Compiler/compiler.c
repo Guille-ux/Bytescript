@@ -28,7 +28,9 @@ CompileFunction compiler_functions[] = {
     [NT_GFOR]           = compile_gfor_loop,
     [NT_WHILE]          = compile_while_loop,
     [NT_REPEAT]         = compile_repeat_loop,
+    [NT_REQUIRE]        = compile_require,
     [NT_IMPORT]         = compile_import,
+    [NT_FROM_IMPORT]    = compile_from_import,
     [NT_FUNCDEF]        = compile_func_def,
     [NT_METHODDEF]      = compile_method_def,
     [NT_CLASSDEF]       = compile_class_def,
@@ -503,7 +505,15 @@ int compile_repeat_loop(Node* node, Scope* context) {
     patch_single_jfalse_label(context->bytecode.bytes, condition_label, get_jump_lenght(condition_label, context));
 }
 
+int compile_require(Node* node, Scope* context) {
+    
+}
+
 int compile_import(Node* node, Scope* context) {
+    
+}
+
+int compile_from_import(Node* node, Scope* context) {
     
 }
 

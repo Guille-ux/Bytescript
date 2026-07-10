@@ -19,7 +19,7 @@ void get_flags(int argc, char* argv[], char* byte_args[]) {
         if (argv[i][0] == '-') {
             exit(1);
         } else {
-            byte_args[filename] = argv[i];
+            byte_args[FLAG_FILENAME] = argv[i];
         }
     }
 }
@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < argc; i++) byte_args[i] = NULL;
 
     get_flags(argc, argv, byte_args);
-    if (byte_args[filename] == NULL) call_error(new_failed_allocation_error, "must specify filename");
+    if (byte_args[FLAG_FILENAME] == NULL) call_error(new_failed_allocation_error, "must specify filename");
 
-    TValue main = easy_compile(byte_args[filename]);
+    TValue main = easy_compile(byte_args[FLAG_FILENAME]);
     TValue return_value = vm_run(main);
     //disassemble(&main, 1);
 
@@ -53,15 +53,15 @@ void intialize_dependencies() {
     string_cache = AS_TABLE(new_table(NULL, 0));
 }
 
-Node* easy_parse(char bsname[]) {
-    TValue file = open_IO((TValue[2]){ NIL, make_fstring(bsname) }, 2);
+Node* easy_parse(char filename[]) {
+    TValue file = open_IO((TValue[2]){ NIL, make_fstring(filename) }, 2);
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
 
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
 
-    Node* ast = parse(tokens, bsname);
+    Node* ast = parse(tokens, filename);
 
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
@@ -70,15 +70,15 @@ Node* easy_parse(char bsname[]) {
     return ast;
 }
 
-Node* easy_map(char bsname[]) {
-    Node* ast = easy_parse(bsname);
+Node* easy_map(char filename[]) {
+    Node* ast = easy_parse(filename);
     classmap(ast);
 
     return ast;
 }
 
-TValue easy_compile(char bsname[]) {
-    Node* ast = easy_map(bsname);
+TValue easy_compile(char filename[]) {
+    Node* ast = easy_map(filename);
     
     Scope* compile_context = new_scope();
     compile(ast, compile_context);

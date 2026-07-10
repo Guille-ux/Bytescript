@@ -246,18 +246,93 @@ Node* repeat_expr(ParseResult* res) {
     return repeat_node;
 }
 
-Node* import_expr(ParseResult* res) {
+Node* require_expr(ParseResult* res) {
+    res->tokens++;
+
+    TValue module;
+    TValue type = NIL;
+    TValue identifier = NIL;
+    ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
+
+    if (match_keyword(*res->tokens++, "as")) {
+        type = type_specifier(res);
+        if (IS_NIL(type)) type = varType; else res->tokens++;
+        
+        ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL))
+    }
+
+    ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
+
+    Node* require_node = new_node(NT_REQUIRE);
+    require_node->node.importNode.module = module;
+    require_node->node.importNode.type_specifier = type;
+    require_node->node.importNode.identifier = identifier;
+
+    return require_node;
+}
+
+Node* from_import_expr(ParseResult* res) {
     res->tokens++;
 
     TValue module;
     TValue identifier = NIL;
     ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
+    ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'import') EXPECTED", NULL, "import"))
 
-    if (match_keyword(*res->tokens++, "as")) ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL))
+    Node* from_import_node = new_node(NT_FROM_IMPORT);
+    from_import_node->node.fromImportNode.module = module;
+
+    TValue arg_specifier;
+    if (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
+        while (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
+            if (!IS_NIL(arg_specifier)) res->tokens++;
+            else arg_specifier = varType;
+
+            struct TValueLinkedList* new = malloc(sizeof(struct TValueLinkedList));
+            struct TValueLinkedList* new_type = malloc(sizeof(struct TValueLinkedList));
+            struct TValueLinkedList* new_nickname = malloc(sizeof(struct TValueLinkedList));
+
+            ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new->value, NULL))
+            new_nickname->value = NIL;
+            new_type->value = arg_specifier;
+
+            if (match_keyword(*res->tokens, "as")) ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new_nickname->value, NULL));
+            
+            new->next = from_import_node->node.fromImportNode.elements.next;
+            new_type->next = from_import_node->node.fromImportNode.elem_types.next;
+            new_nickname->next = from_import_node->node.fromImportNode.nicknames.next;
+            from_import_node->node.fromImportNode.elements.next = new;
+            from_import_node->node.fromImportNode.elem_types.next = new_type;
+            from_import_node->node.fromImportNode.nicknames.next = new_nickname;
+
+            if (res->tokens->tt != TT_SEPARATOR) break; else res->tokens++;
+        }
+    }
+
+    ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
+    return from_import_node;
+}
+
+Node* import_expr(ParseResult* res) {
+    res->tokens++;
+
+    TValue module;
+    TValue type = NIL;
+    TValue identifier = NIL;
+    ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
+
+    if (match_keyword(*res->tokens++, "as")) {
+        type = type_specifier(res);
+        if (IS_NIL(type)) type = varType; else res->tokens++;
+        
+        ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL))
+    }
+
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     Node* import_node = new_node(NT_IMPORT);
     import_node->node.importNode.module = module;
+    import_node->node.importNode.type_specifier = type;
     import_node->node.importNode.identifier = identifier;
 
     return import_node;
@@ -491,7 +566,7 @@ Node* expr(ParseResult* res) {
         return_node->node.VarDeclareNode.value = nexpr;
 
         return return_node;
-    } else if (match_keyword(*res->tokens, "import")) return import_expr(res);
+    } else if (match_keyword(*res->tokens, "require")) return require_expr(res);
 
     return assignement(res);
 }
@@ -511,6 +586,8 @@ Node* statement(ParseResult* res) {
     else if (match_keyword(*res->tokens, "for")) return for_expr(res);
     else if (match_keyword(*res->tokens, "while")) return while_expr(res);
     else if (match_keyword(*res->tokens, "repeat")) return repeat_expr(res);
+    else if (match_keyword(*res->tokens, "import")) return import_expr(res);
+    else if (match_keyword(*res->tokens, "from")) return from_import_expr(res);
 
     return expr(res);
 }

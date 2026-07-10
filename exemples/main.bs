@@ -1,0 +1,1 @@
+from "speed.bs" import Number yes, String bob end

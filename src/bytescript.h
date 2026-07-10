@@ -5,13 +5,13 @@
 #include "Parser/nodes.h"
 
 typedef enum {
-    filename
+    FLAG_FILENAME
 } FlagsIndex;
 
 void intialize_dependencies();
-Node* easy_parse(char bsname[]);
-Node* easy_map(char bsname[]);
-TValue easy_compile(char bsname[]);
+Node* easy_parse(char filename[]);
+Node* easy_map(char filename[]);
+TValue easy_compile(char filename[]);
 TValue exec(TValue* argv, size_t argc);
 
 #endif

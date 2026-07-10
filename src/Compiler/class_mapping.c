@@ -22,7 +22,9 @@ ClassMapper class_mappers[] = {
     [NT_GFOR]           = classmap_gfor_loop,
     [NT_WHILE]          = classmap_while_loop,
     [NT_REPEAT]         = classmap_repeat_loop,
+    [NT_REQUIRE]        = classmap_require,
     [NT_IMPORT]         = classmap_import,
+    [NT_FROM_IMPORT]    = classmap_from_import,
     [NT_FUNCDEF]        = classmap_func_def,
     [NT_METHODDEF]      = classmap_method_def,
     [NT_CLASSDEF]       = classmap_class_def,
@@ -150,9 +152,11 @@ void classmap_repeat_loop(Node* node) {
     classmap(node->node.repeatNode.statements);
 }
 
-void classmap_import(Node* node) {
+void classmap_require(Node* node) {}
 
-}
+void classmap_import(Node* node) {}
+
+void classmap_from_import(Node* node) {}
 
 void classmap_func_def(Node* node) {
     classmap(node->node.funcDefNode.statements);

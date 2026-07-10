@@ -26,7 +26,9 @@ TypeResolver type_resolvers[] = {
     [NT_GFOR]           = resolve_type_gfor_loop,
     [NT_WHILE]          = resolve_type_while_loop,
     [NT_REPEAT]         = resolve_type_repeat_loop,
+    [NT_REQUIRE]        = resolve_type_require,
     [NT_IMPORT]         = resolve_type_import,
+    [NT_FROM_IMPORT]    = resolve_type_from_import,
     [NT_FUNCDEF]        = resolve_type_func_def,
     [NT_METHODDEF]      = resolve_type_method_def,
     [NT_CLASSDEF]       = resolve_type_class_def,
@@ -307,8 +309,32 @@ TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
     return (node->type = varType);
 }
 
-TValue resolve_type_import(Node* node, TypesContext* context) {
+TValue resolve_type_require(Node* node, TypesContext* context) {
+    TValue type = node->node.importNode.type_specifier;
 
+    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, type);
+    return type;
+}
+
+TValue resolve_type_import(Node* node, TypesContext* context) {
+    TValue type = node->node.importNode.type_specifier;
+
+    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, type);
+    return type;
+}
+
+TValue resolve_type_from_import(Node* node, TypesContext* context) {
+    int argc = get_linked_list_len(node->node.fromImportNode.elements);
+    TValue elements[argc];      linked_list_to_array(node->node.fromImportNode.elements, elements, argc);
+    TValue elem_types[argc];    linked_list_to_array(node->node.fromImportNode.elem_types, elem_types, argc);
+    TValue nicknames[argc];     linked_list_to_array(node->node.fromImportNode.nicknames, nicknames, argc);
+
+    for (int i = 0; i < argc; i++) {
+        TValue name = IS_NIL(nicknames[i]) ? elements[i] : nicknames[i];
+        add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, elem_types[i]);
+    }
+
+    return varType;
 }
 
 TValue resolve_type_func_def(Node* node, TypesContext* context) {

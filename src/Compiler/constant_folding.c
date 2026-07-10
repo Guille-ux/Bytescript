@@ -24,7 +24,9 @@ FoldingFunction fold_functions[] = {
     [NT_GFOR]           = fold_gfor_loop,
     [NT_WHILE]          = fold_while_loop,
     [NT_REPEAT]         = fold_repeat_loop,
+    [NT_REQUIRE]        = fold_require,
     [NT_IMPORT]         = fold_import,
+    [NT_FROM_IMPORT]    = fold_from_import,
     [NT_FUNCDEF]        = fold_func_def,
     [NT_METHODDEF]      = fold_func_def,
     [NT_CLASSDEF]       = fold_class_def,
@@ -213,9 +215,11 @@ TValue fold_repeat_loop(Node* node) {
     return (node->cc = false, NIL);
 }
 
-TValue fold_import(Node* node) {
+TValue fold_require(Node* node) { return (node->cc = false, NIL); }
 
-}
+TValue fold_import(Node* node) { return (node->cc = false, NIL); }
+
+TValue fold_from_import(Node* node) { return (node->cc = false, NIL); }
 
 TValue fold_func_def(Node* node) {
     fold(node->node.funcDefNode.statements);

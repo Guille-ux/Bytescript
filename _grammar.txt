@@ -14,10 +14,12 @@ statement :         KEYWORD:"return" (expr (SEPARATOR expr)*)?
                     gfor-expr
                     while-expr
                     repeat-expr
+                    import-expr
+                    from-import-expr
                     expr
 
 expr :              type-specifiers (KEYWORD:'self' DOT)? IDENTIFIER EQ expr
-                    import-expr
+                    require-expr
                     assignement
 
 assignement :       logical (EQ expr)?
@@ -82,7 +84,13 @@ repeat-expr :       KEYWORD:"repeat"
                     statements
                     KEYWORD:"while" expr
 
-import-expr :       KEYWORD:"import" STR (KEYWORD:"as" IDENTIFIER)? KEYWORD:"end"
+import-expr :       KEYWORD:"import" STR (KEYWORD:"as" type-specifiers? IDENTIFIER)? KEYWORD:"end"
+
+from-import-expr :  KEYWORD:"from" STR KEYWORD:"import"
+                    (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)?
+                    KEYWORD:"end"
+
+require-expr :      KEYWORD:"require" STR (KEYWORD:"as" type-specifiers? IDENTIFIER)? KEYWORD:"end"
 
 func-expr :         KEYWORD:"func" (func_modifier* type-specifiers? IDENTIFIER)?
                     LPAR (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)? RPAR
