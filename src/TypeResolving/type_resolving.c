@@ -3,6 +3,7 @@
 #include "Globals/string.h"
 #include "Globals/table.h"
 #include "Globals/tError.h"
+#include "Globals/Module/module.h"
 
 
 TValue type_namespace;
@@ -310,26 +311,82 @@ TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_require(Node* node, TypesContext* context) {
-    TValue type = node->node.importNode.type_specifier;
+    TValue type = node->node.importNode.module;
+    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
-    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, type);
-    return type;
+    TValue cached = get_value_from_hashtable(type_namespace, type);
+    if (!IS_NIL(cached)) {
+        TypesContext* import_context = new_resolve_context();
+        resolve_type(node->node.importNode.ast, import_context);
+
+        TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
+        TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
+
+        add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
+        close_resolve_context(import_context);
+    }
+
+    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, varType);
+    return node->type = type;
 }
 
 TValue resolve_type_import(Node* node, TypesContext* context) {
-    TValue type = node->node.importNode.type_specifier;
+    TValue type = node->node.importNode.module;
+    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
+
+    TValue cached = get_value_from_hashtable(type_namespace, type);
+    if (!IS_NIL(cached)) {
+        TypesContext* import_context = new_resolve_context();
+        resolve_type(node->node.importNode.ast, import_context);
+
+        TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
+        TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
+
+        add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
+        close_resolve_context(import_context);
+    }
 
     if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, type);
-    return type;
+    return node->type = type;
 }
 
 TValue resolve_type_from_import(Node* node, TypesContext* context) {
+    Node import_node = {
+        .nt = NT_IMPORT,
+        .node.importNode.ast = node->node.fromImportNode.ast,
+        .node.importNode.identifier = NIL,
+        .node.importNode.type_specifier = NIL,
+        .node.importNode.module = node->node.fromImportNode.module
+    };
+
+    resolve_type(&import_node, context);
+
+    TValue path = node->node.importNode.module;
+    TValue module = concat_string((TValue[2]){ make_fstring("Module "), path }, 2);
+    TValue desc = get_value_from_hashtable(type_namespace, module);
+    TValue map = TBL_TO_TVALUE(as_class_descriptor(desc)->id_namespace);
+
     int argc = get_linked_list_len(node->node.fromImportNode.elements);
     TValue elements[argc];      linked_list_to_array(node->node.fromImportNode.elements, elements, argc);
     TValue elem_types[argc];    linked_list_to_array(node->node.fromImportNode.elem_types, elem_types, argc);
     TValue nicknames[argc];     linked_list_to_array(node->node.fromImportNode.nicknames, nicknames, argc);
 
     for (int i = 0; i < argc; i++) {
+        TValue elem_real_type = get_value_from_hashtable(map, elements[i]);
+        if (IS_NIL(elem_real_type)) {
+            TValue error_message = make_fstring("Module <%s> does not have any variable of name <%s>");
+            error_message = format_string((TValue[3]){ error_message, module, elem_real_type }, 3);
+
+            call_error(new_type_error, AS_STRING(error_message)->str);
+        }
+
+        if (!EQUAL(elem_real_type, varType) && !EQUAL(elem_types[i], varType) && !EQUAL(elem_real_type, elem_types[i])) {
+            TValue error_message = make_fstring("cannot assign value of type <%s> to variable of type <%s>. from Module <%s>");
+            error_message = format_string((TValue[4]){ error_message, elem_types[i], elem_real_type, module }, 4);
+
+            call_error(new_type_error, AS_STRING(error_message)->str);
+        }
+
         TValue name = IS_NIL(nicknames[i]) ? elements[i] : nicknames[i];
         add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), name, elem_types[i]);
     }
@@ -692,4 +749,11 @@ static inline void update_types(TypesContext* context) {
     if (!context->id_stack->array.len) return;
     context->id_namespace = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->id_stack), NUM_AS_TVALUE(context->id_stack->array.len - 1)));
     context->func_namespace = AS_TABLE(get_from_table(TBL_TO_TVALUE(context->func_stack), NUM_AS_TVALUE(context->func_stack->array.len - 1)));
+}
+
+void close_resolve_context(TypesContext* context) {
+    close_type_scope(context);
+    free_table((TValue[1]){ TBL_TO_TVALUE(context->id_stack) }, 1);
+    free_table((TValue[1]){ TBL_TO_TVALUE(context->func_stack) }, 1);
+    free(context);
 }

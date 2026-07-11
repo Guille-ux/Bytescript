@@ -4,6 +4,7 @@
 #include "Values/bytev.h"
 #include "Globals/globals.h"
 
+extern TValue loaded_modules;
 extern TValue Module_class;
 void initialize_module_class();
 

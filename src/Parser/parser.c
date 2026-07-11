@@ -5,6 +5,7 @@
 #include "Globals/table.h"
 #include "Parser/parser.h"
 #include "TypeResolving/type_specifiers.h"
+#include "bytescript.h"
 
 TValue user_types;
 
@@ -267,6 +268,7 @@ Node* require_expr(ParseResult* res) {
     require_node->node.importNode.module = module;
     require_node->node.importNode.type_specifier = type;
     require_node->node.importNode.identifier = identifier;
+    require_node->node.importNode.ast = simple_parse(AS_STRING(require_node->node.importNode.module)->str);
 
     return require_node;
 }
@@ -281,6 +283,7 @@ Node* from_import_expr(ParseResult* res) {
 
     Node* from_import_node = new_node(NT_FROM_IMPORT);
     from_import_node->node.fromImportNode.module = module;
+    from_import_node->node.fromImportNode.ast = simple_parse(AS_STRING(module)->str);
 
     TValue arg_specifier;
     if (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
@@ -307,7 +310,8 @@ Node* from_import_expr(ParseResult* res) {
 
             if (res->tokens->tt != TT_SEPARATOR) break; else res->tokens++;
         }
-    }
+
+    } else ERR_CHECK(res->err_details = "Must specify import needs when using syntax 'from import'");
 
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
     return from_import_node;
@@ -317,23 +321,18 @@ Node* import_expr(ParseResult* res) {
     res->tokens++;
 
     TValue module;
-    TValue type = NIL;
     TValue identifier = NIL;
+
     ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
-
-    if (match_keyword(*res->tokens++, "as")) {
-        type = type_specifier(res);
-        if (IS_NIL(type)) type = varType; else res->tokens++;
-        
-        ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL))
-    }
-
+    ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'as') EXPECTED", NULL, "as"))
+    ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL));
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     Node* import_node = new_node(NT_IMPORT);
     import_node->node.importNode.module = module;
-    import_node->node.importNode.type_specifier = type;
+    import_node->node.importNode.type_specifier = NIL;
     import_node->node.importNode.identifier = identifier;
+    import_node->node.importNode.ast = simple_parse(AS_STRING(import_node->node.importNode.module)->str);
 
     return import_node;
 }

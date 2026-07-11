@@ -58,5 +58,6 @@ static inline TValue resolve_in_scope(Node* node, TypesContext* context);
 static void open_type_scope(TypesContext* context);
 static void close_type_scope(TypesContext* context);
 static inline void update_types(TypesContext* context);
+void close_resolve_context(TypesContext* context);
 
 #endif

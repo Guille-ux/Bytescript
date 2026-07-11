@@ -53,7 +53,7 @@ void intialize_dependencies() {
     string_cache = AS_TABLE(new_table(NULL, 0));
 }
 
-Node* easy_parse(char filename[]) {
+Node* simple_parse(char filename[]) {
     TValue file = open_IO((TValue[2]){ NIL, make_fstring(filename) }, 2);
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
@@ -61,10 +61,15 @@ Node* easy_parse(char filename[]) {
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
 
-    Node* ast = parse(tokens, filename);
+    return parse(tokens, filename);
+}
+
+Node* easy_parse(char filename[]) {
+    Node* ast = simple_parse(filename);
 
     TypesContext* type_context = new_resolve_context();
     resolve_type(ast, type_context);
+    close_resolve_context(type_context);
 
     fold(ast);
     return ast;

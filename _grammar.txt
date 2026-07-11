@@ -84,10 +84,10 @@ repeat-expr :       KEYWORD:"repeat"
                     statements
                     KEYWORD:"while" expr
 
-import-expr :       KEYWORD:"import" STR (KEYWORD:"as" type-specifiers? IDENTIFIER)? KEYWORD:"end"
+import-expr :       KEYWORD:"import" STR KEYWORD:"as" IDENTIFIER KEYWORD:"end"
 
 from-import-expr :  KEYWORD:"from" STR KEYWORD:"import"
-                    (type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*)?
+                    type-specifiers? IDENTIFIER (SEPARATOR type-specifiers? IDENTIFIER)*
                     KEYWORD:"end"
 
 require-expr :      KEYWORD:"require" STR (KEYWORD:"as" type-specifiers? IDENTIFIER)? KEYWORD:"end"
