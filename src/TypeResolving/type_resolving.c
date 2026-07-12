@@ -326,8 +326,8 @@ TValue resolve_type_require(Node* node, TypesContext* context) {
         close_resolve_context(import_context);
     }
 
-    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, varType);
-    return node->type = type;
+    if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, node->node.importNode.type_specifier);
+    return node->type = node->node.importNode.type_specifier;
 }
 
 TValue resolve_type_import(Node* node, TypesContext* context) {
@@ -335,12 +335,14 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
     TValue cached = get_value_from_hashtable(type_namespace, type);
-    if (!IS_NIL(cached)) {
+    if (IS_NIL(cached)) {
         TypesContext* import_context = new_resolve_context();
         resolve_type(node->node.importNode.ast, import_context);
 
         TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
         TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
+        func_namespace = copy_table(&func_namespace, 1);
+        id_namespace = copy_table(&id_namespace, 1);
 
         add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
         close_resolve_context(import_context);
@@ -609,6 +611,13 @@ TValue resolve_type_fieldaccess(Node* node, TypesContext* context) {
     node->node.FieldAccessNode.name = name;
 
     TValue class_desc = get_value_from_hashtable(type_namespace, target);
+    if (IS_NIL(class_desc)) {
+        TValue error_message = make_fstring("Type <%s> does not exist");
+        error_message = format_string((TValue[2]){ error_message, target }, 2);
+
+        call_error(new_type_error, AS_STRING(error_message)->str);
+    }
+
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
 
     if (IS_NIL(class_map)) {

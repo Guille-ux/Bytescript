@@ -1,4 +1,5 @@
 #include "Compiler/instructions.h"
+#include "Globals/Module/module.h"
 #include "Values/tutils.h"
 #include "VM/vm.h"
 #include <math.h>
@@ -387,8 +388,38 @@ static TValue run_function(TValue func, VMState context) {
         context.sp[arg3] = new_object(context.sp[arg1], NULL, arg2);
         NEXT_INSTR;
 
-    instr_import:
+    instr_import: {
+        int mod_idx = off16_to_int16(arg2, arg3);
+        TValue func = get_from_table(loaded_modules, NUM_AS_TVALUE(mod_idx));
+
+        TFunc* tfunc = AS_FUNC(func);
+        if (tfunc->isCfunc) {
+            AS_TABLE(loaded_modules)->array.array[mod_idx] = tfunc->cfunc(NULL, 0);
+
+        } else {
+            StackFrame caller_frame = {
+                .func = tfunc,
+                .ip = tfunc->bytescriptFunction.bytecode,
+                .prev = &context.frame
+            };
+
+            TValue* pre_sp = context.sp;
+            context.frame = caller_frame;
+            context.frame.ip -= 4;
+
+            run_function(func, context);
+
+            context.frame = *caller_frame.prev;
+
+            TValue module = new_object(Module_class, NULL, 256);
+            memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
+
+            context.sp[arg1] = module;
+            AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
+        }
+
         NEXT_INSTR;
+    }
 
     instr_halt:
 

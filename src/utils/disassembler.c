@@ -61,7 +61,8 @@ const char* opcodes_names[] = {
     [OP_SETTABLE] = "SETTABLE",
     [OP_SETFIELD] = "SETFIELD",
     [OP_NEWOBJECT] = "NEWOBJECT",
-    [OP_HALT] = "HALT",
+    [OP_IMPORT] = "IMPORT",
+    [OP_HALT] = "HALT"
 };
 
 int get_instr_jump_lenght(const uint8_t* instr) {

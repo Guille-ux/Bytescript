@@ -1,2 +1,7 @@
-require "exemples/test.bs" as test end
-print(test)
+
+func main()
+    import "exemples/test.bs" as test end
+    print(test.secretCode)
+end
+
+main()

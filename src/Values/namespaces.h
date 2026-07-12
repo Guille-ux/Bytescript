@@ -16,5 +16,6 @@ TValue set_namespace_value(TValue namespace, TValue value);
 TValue get_namespace_value(TValue namespace);
 TValue get_namespace_map(TValue namespace);
 NamespaceEntry* as_namespace_entry(TValue value);
+TValue table_as_namespace(TValue tbl);
 
 #endif

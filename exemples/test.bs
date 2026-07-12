@@ -1,1 +1,3 @@
+Number secretCode = 2
+
 return 5

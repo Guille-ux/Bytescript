@@ -1,6 +1,7 @@
 #include "Globals/Module/module.h"
 #include "Globals/string.h"
 #include "Globals/globals.h"
+#include "bytescript.h"
 
 TValue loaded_modules;
 TValue Module_class;
@@ -17,3 +18,15 @@ void initialize_module_class() {
     add_global(Module_class, make_fstring("Module"));
 }
 
+
+int module_load(TValue value, TValue name) {
+    append_to_table(loaded_modules, value);
+    int idx = len_table(&loaded_modules, 1).num - 1;
+
+    add_value_to_hashtable(loaded_modules, name, NUM_AS_TVALUE(idx));
+    return idx;
+}
+
+int module_get(TValue name) {
+    return get_from_table(loaded_modules, get_value_from_hashtable(loaded_modules, name)).num;
+}

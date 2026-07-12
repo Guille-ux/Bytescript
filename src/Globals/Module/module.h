@@ -8,4 +8,7 @@ extern TValue loaded_modules;
 extern TValue Module_class;
 void initialize_module_class();
 
+int module_load(TValue value, TValue name);
+int module_get(TValue name);
+
 #endif

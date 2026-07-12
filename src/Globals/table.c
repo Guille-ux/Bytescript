@@ -226,6 +226,20 @@ TValue copy_table(TValue* argv, size_t argc) {
 
     TTable* ptr = AS_TABLE(value);
     TValue new = new_table(ptr->array.array, ptr->array.len);
+    TTable* new_table = AS_TABLE(new);
+
+    new_table->hash_table.capacity = ptr->hash_table.capacity;
+    new_table->hash_table.array = realloc(new_table->hash_table.array, sizeof(Bucket) * ptr->hash_table.capacity);
+    if (!new_table->hash_table.array) call_error(new_failed_allocation_error, "Fatal Error : Failed allocation while copying table");
+    memcpy(new_table->hash_table.array, ptr->hash_table.array, sizeof(Bucket) * ptr->hash_table.capacity);
+
+    for (int i = 0; i < ptr->hash_table.capacity; i++) {
+        PairArray* new_sub = &new_table->hash_table.array[i].sub;
+        PairArray sub = ptr->hash_table.array[i].sub;
+
+        new_sub->arr = malloc(sizeof(new_sub->capacity));
+        memcpy(new_sub->arr, sub.arr, sizeof(Pair) * sub.capacity);
+    }
 
     return to_return_value(&new, 1);
 }

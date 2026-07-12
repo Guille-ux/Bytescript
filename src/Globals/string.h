@@ -39,4 +39,6 @@ TValue make_fstring(char* str);
 TValue format_s(FormatInfos infos, TValue value);
 TValue format_n(FormatInfos infos, TValue value);
 
+static TStr* _as_string(TValue value) { return AS_STRING(value); }
+
 #endif

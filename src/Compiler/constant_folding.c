@@ -215,11 +215,20 @@ TValue fold_repeat_loop(Node* node) {
     return (node->cc = false, NIL);
 }
 
-TValue fold_require(Node* node) { return (node->cc = false, NIL); }
+TValue fold_require(Node* node) {
+    fold(node->node.importNode.ast);
+    return (node->cc = false, NIL);
+}
 
-TValue fold_import(Node* node) { return (node->cc = false, NIL); }
+TValue fold_import(Node* node) {
+    fold(node->node.importNode.ast);
+    return (node->cc = false, NIL);
+}
 
-TValue fold_from_import(Node* node) { return (node->cc = false, NIL); }
+TValue fold_from_import(Node* node) {
+    fold(node->node.fromImportNode.ast);
+    return (node->cc = false, NIL);
+}
 
 TValue fold_func_def(Node* node) {
     fold(node->node.funcDefNode.statements);

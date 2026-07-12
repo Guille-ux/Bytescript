@@ -152,11 +152,17 @@ void classmap_repeat_loop(Node* node) {
     classmap(node->node.repeatNode.statements);
 }
 
-void classmap_require(Node* node) {}
+void classmap_require(Node* node) {
+    classmap(node->node.importNode.ast);
+}
 
-void classmap_import(Node* node) {}
+void classmap_import(Node* node) {
+    classmap(node->node.importNode.ast);
+}
 
-void classmap_from_import(Node* node) {}
+void classmap_from_import(Node* node) {
+    classmap(node->node.fromImportNode.ast);
+}
 
 void classmap_func_def(Node* node) {
     classmap(node->node.funcDefNode.statements);

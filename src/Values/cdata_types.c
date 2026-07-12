@@ -43,3 +43,18 @@ NamespaceEntry* as_namespace_entry(TValue value) {
     
     return (NamespaceEntry*)data;
 }
+
+TValue table_as_namespace(TValue tbl) {
+    TValue keys = hashed_keys_table(&tbl, 1);
+    TValue entry = new_namespace_entry(NIL, NULL);
+    TValue map = get_namespace_map(entry);
+
+    for (int i = 0; i < len_table(&keys, 1).num; i++) {
+        TValue key = get_from_table(keys, NUM_AS_TVALUE(i));
+        TValue value = get_value_from_hashtable(tbl, key);
+
+        add_value_to_hashtable(map, key, value);
+    }
+
+    return entry;
+}
