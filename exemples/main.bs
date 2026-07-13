@@ -1,7 +1,12 @@
 
 func main()
+    require "exemples/test.bs" as v end
     import "exemples/test.bs" as test end
+
     print(test.secretCode)
+    print(test.secretString)
+    print(test.myFunc)
+    print(v)
 end
 
 main()

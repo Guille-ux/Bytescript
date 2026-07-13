@@ -315,12 +315,14 @@ TValue resolve_type_require(Node* node, TypesContext* context) {
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
     TValue cached = get_value_from_hashtable(type_namespace, type);
-    if (!IS_NIL(cached)) {
+    if (IS_NIL(cached)) {
         TypesContext* import_context = new_resolve_context();
         resolve_type(node->node.importNode.ast, import_context);
 
         TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
         TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
+        func_namespace = copy_table(&func_namespace, 1);
+        id_namespace = copy_table(&id_namespace, 1);
 
         add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
         close_resolve_context(import_context);

@@ -24,5 +24,6 @@ typedef struct {
 
 TValue vm_run(TValue func);
 static TValue run_function(TValue func, VMState context);
+static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3, TValue* return_ptr);
 
 #endif

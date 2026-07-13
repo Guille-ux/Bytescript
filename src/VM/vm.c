@@ -77,6 +77,7 @@ static TValue run_function(TValue func, VMState context) {
         [OP_SETFIELD] = 	&&instr_setfield,
         [OP_NEWOBJECT] = 	&&instr_newobject,
         [OP_IMPORT] =       &&instr_import,
+        [OP_REQUIRE] =      &&instr_require,
         [OP_HALT] = 		&&instr_halt
     };
 
@@ -362,7 +363,6 @@ static TValue run_function(TValue func, VMState context) {
         value = IS_NIL(value) ? get_value_from_hashtable(ttarget, idx) : value;
 
         context.sp[arg3] = value;
-
         NEXT_INSTR;
     }
 
@@ -388,40 +388,52 @@ static TValue run_function(TValue func, VMState context) {
         context.sp[arg3] = new_object(context.sp[arg1], NULL, arg2);
         NEXT_INSTR;
 
-    instr_import: {
-        int mod_idx = off16_to_int16(arg2, arg3);
-        TValue func = get_from_table(loaded_modules, NUM_AS_TVALUE(mod_idx));
-
-        TFunc* tfunc = AS_FUNC(func);
-        if (tfunc->isCfunc) {
-            AS_TABLE(loaded_modules)->array.array[mod_idx] = tfunc->cfunc(NULL, 0);
-
-        } else {
-            StackFrame caller_frame = {
-                .func = tfunc,
-                .ip = tfunc->bytescriptFunction.bytecode,
-                .prev = &context.frame
-            };
-
-            TValue* pre_sp = context.sp;
-            context.frame = caller_frame;
-            context.frame.ip -= 4;
-
-            run_function(func, context);
-
-            context.frame = *caller_frame.prev;
-
-            TValue module = new_object(Module_class, NULL, 256);
-            memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
-
-            context.sp[arg1] = module;
-            AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
-        }
-
+    instr_import:
+        context.sp[arg1] = vm_module_load(context, arg2, arg3, NULL);
         NEXT_INSTR;
-    }
+
+    instr_require:
+        vm_module_load(context, arg2, arg3, context.sp + arg1);
+        NEXT_INSTR;
 
     instr_halt:
 
     return NIL;
+}
+
+static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3, TValue* return_ptr) {
+    int mod_idx = off16_to_int16(arg2, arg3);
+    TValue func = get_from_table(loaded_modules, NUM_AS_TVALUE(mod_idx));
+
+    TFunc* tfunc = AS_FUNC(func);
+    if (tfunc->isCfunc) {
+        TValue res = tfunc->cfunc(NULL, 0);
+        if (return_ptr) *return_ptr = res;
+
+        AS_TABLE(loaded_modules)->array.array[mod_idx] = res;
+        return res;
+
+    } else {
+        StackFrame caller_frame = {
+            .func = tfunc,
+            .ip = tfunc->bytescriptFunction.bytecode,
+            .prev = &context.frame
+        };
+
+        TValue* pre_sp = context.sp;
+        context.frame = caller_frame;
+        context.frame.ip -= 4;
+
+        TValue res = run_function(func, context);
+        context.frame = *caller_frame.prev;
+
+        TValue module = new_object(Module_class, NULL, 256);
+        memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
+
+        AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
+        AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
+
+        if (return_ptr) *return_ptr = res;
+        return module;
+    }
 }

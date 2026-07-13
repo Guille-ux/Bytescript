@@ -62,6 +62,7 @@ const char* opcodes_names[] = {
     [OP_SETFIELD] = "SETFIELD",
     [OP_NEWOBJECT] = "NEWOBJECT",
     [OP_IMPORT] = "IMPORT",
+    [OP_REQUIRE] = "REQUIRE",
     [OP_HALT] = "HALT"
 };
 

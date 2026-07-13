@@ -511,66 +511,20 @@ int compile_require(Node* node, Scope* context) {
     TValue type = node->node.importNode.module;
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
-    Scope* import_context = new_scope();
-    compile(node->node.importNode.ast, import_context);
+    TValue cached = get_value_from_hashtable(loaded_modules, type);
 
-    TValue module = close_context(import_context);
-    int idx = cache_constant(module, context);
-    idx = free_register(register_constant(idx, context, -1), context);
-
-    int r = register_first(context);
-    if (IS_NIL(node->node.importNode.identifier)) free_register(r, context);
-    else append_symbol(context, node->node.importNode.identifier, r);
-
-    emit(OP_CALL, context);
-    emit(idx, context);
-    emit(0x00, context);
-    emit(r, context);
-
-    return r;
+    if (!IS_NIL(cached)) compile_get_module(node, context, make_fstring("loadedReturns"), loaded_returns, type);
+    else {
+        module_load_returns(NUM_AS_TVALUE(0), type);
+        return compile_load_module(node, context, OP_REQUIRE, type);
+    }
 }
 
 int compile_import(Node* node, Scope* context) {
     TValue cached = get_value_from_hashtable(loaded_modules, node->type);
 
-    if (!IS_NIL(cached)) {
-        Node var_access = { .nt = NT_VAR_ACESS, .node.VarAcess.name = make_fstring("Module"), .type = make_fstring("__Module") };
-        Node field = { .nt = NT_FIELDACCESS, .node.FieldAccessNode.name = make_fstring("loaded"), .node.FieldAccessNode.target = &var_access };
-        int loaded = compile(&field, context); register_specific(loaded, context);
-        int loaded_idx = cache_constant(get_value_from_hashtable(loaded_modules, node->type), context);
-        loaded_idx = free_register(register_constant(loaded_idx, context, -1), context);
-
-        int r = register_first(context);
-        append_symbol(context, node->node.importNode.identifier, r);
-
-        emit(OP_GETTABLE, context);
-        emit(loaded, context);
-        emit(loaded_idx, context);
-        return emit(r, context);
-
-    } else {
-        Scope* import_context = new_scope();
-        compile(node->node.importNode.ast, import_context);
-
-        TValue map = TBL_TO_TVALUE(import_context->symbols);
-        map = copy_table(&map, 1);
-
-        TValue namespace = table_as_namespace(map);
-
-        TValue module = close_context(import_context);
-        int mod_idx = module_load(module, node->type);
-
-        int r = register_first(context);
-        append_symbol(context, node->node.importNode.identifier, r);
-
-        emit(OP_IMPORT, context);
-        emit(r, context);
-        emit(INT32_TO_HI(mod_idx), context);
-        emit(INT32_TO_LO(mod_idx), context);
-
-        add_value_to_hashtable(globals_map, node->type, namespace);
-        return r;
-    }
+    if (!IS_NIL(cached)) compile_get_module(node, context, make_fstring("loaded"), loaded_modules, node->type);
+    else return compile_load_module(node, context, OP_IMPORT, node->type);
 }
 
 int compile_from_import(Node* node, Scope* context) {
@@ -1050,6 +1004,51 @@ static int get_target_field(Node* target_node, TValue name, int free_target, Sco
 
 int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context) {
 
+}
+
+int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, TValue type) {
+    Scope* import_context = new_scope();
+    compile(node->node.importNode.ast, import_context);
+
+    TValue map = TBL_TO_TVALUE(import_context->symbols);
+    map = copy_table(&map, 1);
+
+    TValue namespace = table_as_namespace(map);
+
+    TValue module = close_context(import_context);
+    int mod_idx = module_load(module, type);
+
+    int r = register_first(context);
+    if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);
+    else free_register(r, context);
+
+    emit(instr, context);
+    emit(r, context);
+    emit(INT32_TO_HI(mod_idx), context);
+    emit(INT32_TO_LO(mod_idx), context);
+
+    add_value_to_hashtable(globals_map, type, namespace);
+    return r;
+}
+
+int compile_get_module(Node* node, Scope* context, TValue field, TValue cache, TValue type) {
+    Node var_access = { .nt = NT_VAR_ACESS, .node.VarAcess.name = make_fstring("Module"), .type = make_fstring("__Module") };
+    Node field_access = { .nt = NT_FIELDACCESS, .node.FieldAccessNode.name = field, .node.FieldAccessNode.target = &var_access };
+
+    int loaded = compile(&field_access, context); register_specific(loaded, context);
+    int loaded_idx = cache_constant(get_value_from_hashtable(cache, type), context);
+
+    loaded_idx = free_register(register_constant(loaded_idx, context, -1), context);
+    free_register(loaded, context);
+
+    int r = register_first(context);
+    if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);
+    else free_register(r, context);
+
+    emit(OP_GETTABLE, context);
+    emit(loaded, context);
+    emit(loaded_idx, context);
+    return emit(r, context);
 }
 
 

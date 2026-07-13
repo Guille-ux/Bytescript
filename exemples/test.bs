@@ -1,3 +1,8 @@
 Number secretCode = 2
+String secretString = "3"
+
+func myFunc(idk)
+    return 1
+end
 
 return 5

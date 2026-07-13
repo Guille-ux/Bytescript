@@ -237,7 +237,7 @@ TValue copy_table(TValue* argv, size_t argc) {
         PairArray* new_sub = &new_table->hash_table.array[i].sub;
         PairArray sub = ptr->hash_table.array[i].sub;
 
-        new_sub->arr = malloc(sizeof(new_sub->capacity));
+        new_sub->arr = malloc(sizeof(Pair) * sizeof(new_sub->capacity));
         memcpy(new_sub->arr, sub.arr, sizeof(Pair) * sub.capacity);
     }
 
