@@ -202,7 +202,7 @@ void classmap_selfdeclare(Node* node) {
     add_value_to_hashtable(class_map, node->node.SelfDeclarenode.var_name, class_entry->value);
     class_entry->value.num++;
 
-    classmap(node->node.SelfDeclarenode.value);
+    if (node->node.SelfDeclarenode.value) classmap(node->node.SelfDeclarenode.value);
 }
 
 void classmap_fieldaccess(Node* node) {

@@ -241,7 +241,7 @@ TValue fold_class_def(Node* node) {
 }
 
 TValue fold_selfdeclare(Node* node) {
-    TValue value = fold(node->node.SelfDeclarenode.value);
+    TValue value = node->node.SelfDeclarenode.value ? fold(node->node.SelfDeclarenode.value) : NIL;
     return (node->cc = false, NIL);
 }
 

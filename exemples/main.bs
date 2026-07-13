@@ -1,8 +1,11 @@
 
 func main()
-    from "exemples/test.bs" import String secretString, Number secretCode, Function myFunc as bob end
-    print(secretString)
-    print(secretCode)
+    import "exemples/test.bs" as test end
+    require "exemples/test.bs" as res end
+    from "exemples/test.bs" import String secretString as bob end
+
+    print(res)
+    print(test.secretString)
     print(bob)
 end
 

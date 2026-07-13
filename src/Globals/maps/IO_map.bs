@@ -3,6 +3,6 @@ class File
 end
 
 class IO
-    File stdout
+    File self.stdout
     func static File open(String filename) end
 end

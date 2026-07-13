@@ -1,7 +1,7 @@
 #include "Globals/string.h"
 #include "Globals/table.h"
 #include "Values/oop.h"
-#include "lib/Math/tmath.h"
+#include "srclib/Math/tmath.h"
 
 #include "bytescript.h"
 #include <stdbool.h>

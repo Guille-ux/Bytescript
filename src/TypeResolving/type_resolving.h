@@ -55,6 +55,7 @@ TValue check_call_types(Node* call_node, TTable* expecteds, TypesContext* contex
 static TValue get_symbol_type(TValue name, TypesContext* context);
 static TValue get_func_descriptor(TValue name, TypesContext* context);
 static inline TValue resolve_in_scope(Node* node, TypesContext* context);
+static void resolve_import_loading(Node* node, TypesContext* context, TValue type);
 static void open_type_scope(TypesContext* context);
 static void close_type_scope(TypesContext* context);
 static inline void update_types(TypesContext* context);

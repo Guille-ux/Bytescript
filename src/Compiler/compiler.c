@@ -514,10 +514,7 @@ int compile_require(Node* node, Scope* context) {
     TValue cached = get_value_from_hashtable(loaded_modules, type);
 
     if (!IS_NIL(cached)) compile_get_module(node, context, make_fstring("loadedReturns"), loaded_returns, type);
-    else {
-        module_load_returns(NUM_AS_TVALUE(0), type);
-        return compile_load_module(node, context, OP_REQUIRE, type);
-    }
+    else return compile_load_module(node, context, OP_REQUIRE, type);
 }
 
 int compile_import(Node* node, Scope* context) {
@@ -702,7 +699,7 @@ int compile_selfdeclare(Node* node, Scope* context) {
         TValue tclass = class_entry->value;
         TClass* class = AS_CLASS(tclass);
 
-        if (node->node.SelfDeclarenode.value->cc) {
+        if (node->node.SelfDeclarenode.value && node->node.SelfDeclarenode.value->cc) {
             class->fields[class->inherited_count + (int)idx.num] = get_constant(value, context);
             return value;
 
@@ -1048,6 +1045,7 @@ int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, T
 
     TValue module = close_context(import_context);
     int mod_idx = module_load(module, type);
+    module_load_returns(NUM_AS_TVALUE(0), type);
 
     int r = register_first(context);
     if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);

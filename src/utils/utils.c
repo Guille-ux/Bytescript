@@ -70,3 +70,11 @@ void counting_sort(TValue table) {
         arr.array += count;
     }
 }
+
+int has_ext(TValue path, char ext[]) {
+    TStr* str = AS_STRING(path);
+    size_t ext_len = strlen(ext);
+
+    if (ext_len > str->len) return 0;
+    return !strcmp(str->str + str->len - ext_len, ext);
+}

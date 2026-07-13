@@ -314,19 +314,7 @@ TValue resolve_type_require(Node* node, TypesContext* context) {
     TValue type = node->node.importNode.module;
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
-    TValue cached = get_value_from_hashtable(type_namespace, type);
-    if (IS_NIL(cached)) {
-        TypesContext* import_context = new_resolve_context();
-        resolve_type(node->node.importNode.ast, import_context);
-
-        TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
-        TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
-        func_namespace = copy_table(&func_namespace, 1);
-        id_namespace = copy_table(&id_namespace, 1);
-
-        add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
-        close_resolve_context(import_context);
-    }
+    resolve_import_loading(node, context, type);
 
     if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, node->node.importNode.type_specifier);
     return node->type = node->node.importNode.type_specifier;
@@ -336,19 +324,7 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
     TValue type = node->node.importNode.module;
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
 
-    TValue cached = get_value_from_hashtable(type_namespace, type);
-    if (IS_NIL(cached)) {
-        TypesContext* import_context = new_resolve_context();
-        resolve_type(node->node.importNode.ast, import_context);
-
-        TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
-        TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
-        func_namespace = copy_table(&func_namespace, 1);
-        id_namespace = copy_table(&id_namespace, 1);
-
-        add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
-        close_resolve_context(import_context);
-    }
+    resolve_import_loading(node, context, type);
 
     if (!IS_NIL(node->node.importNode.identifier)) add_value_to_hashtable(TBL_TO_TVALUE(context->id_namespace), node->node.importNode.identifier, type);
     return node->type = type;
@@ -576,7 +552,7 @@ TValue resolve_type_selfcall(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
-    TValue return_type = resolve_type(node->node.VarDeclareNode.value, context);
+    TValue return_type = node->node.VarDeclareNode.value ? resolve_type(node->node.VarDeclareNode.value, context) : varType;
     TValue var_type = node->node.VarDeclareNode.type_specifier;
 
     if (!EQUAL(var_type, varType) && !EQUAL(return_type, varType) && !EQUAL(var_type, return_type)) {
@@ -736,6 +712,22 @@ static inline TValue resolve_in_scope(Node* node, TypesContext* context) {
     close_type_scope(context);
 
     return res;
+}
+
+static void resolve_import_loading(Node* node, TypesContext* context, TValue type) {
+    TValue cached = get_value_from_hashtable(type_namespace, type);
+    if (IS_NIL(cached)) {
+        TypesContext* import_context = new_resolve_context();
+        resolve_type(node->node.importNode.ast, import_context);
+
+        TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
+        TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
+        func_namespace = copy_table(&func_namespace, 1);
+        id_namespace = copy_table(&id_namespace, 1);
+
+        add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
+        close_resolve_context(import_context);
+    }
 }
 
 static void open_type_scope(TypesContext* context) {

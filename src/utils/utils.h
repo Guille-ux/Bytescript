@@ -12,5 +12,6 @@ TValue dunder(TValue str);
 TValue undunder(TValue str);
 TValue is_dunder(TValue tstr);
 void counting_sort(TValue table);
+int has_ext(TValue path, char ext[]);
 
 #endif

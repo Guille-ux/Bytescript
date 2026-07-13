@@ -1,4 +1,4 @@
 class Module
-    Table loaded
-    Table loadedReturns
+    Table self.loaded
+    Table self.loadedReturns
 end
