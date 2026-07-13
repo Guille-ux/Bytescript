@@ -410,8 +410,8 @@ static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3,
         TValue res = tfunc->cfunc(NULL, 0);
         if (return_ptr) *return_ptr = res;
 
-        AS_TABLE(loaded_modules)->array.array[mod_idx] = res;
-        return res;
+        //AS_TABLE(loaded_modules)->array.array[mod_idx] = res;
+        return AS_TABLE(loaded_modules)->array.array[mod_idx];
 
     } else {
         StackFrame caller_frame = {
