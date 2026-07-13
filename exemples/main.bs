@@ -1,12 +1,9 @@
 
 func main()
-    require "exemples/test.bs" as v end
-    import "exemples/test.bs" as test end
-
-    print(test.secretCode)
-    print(test.secretString)
-    print(test.myFunc)
-    print(v)
+    from "exemples/test.bs" import String secretString, Number secretCode, Function myFunc as bob end
+    print(secretString)
+    print(secretCode)
+    print(bob)
 end
 
 main()

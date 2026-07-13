@@ -386,7 +386,7 @@ TValue resolve_type_from_import(Node* node, TypesContext* context) {
 
         if (!EQUAL(elem_real_type, varType) && !EQUAL(elem_types[i], varType) && !EQUAL(elem_real_type, elem_types[i])) {
             TValue error_message = make_fstring("cannot assign value of type <%s> to variable of type <%s>. from Module <%s>");
-            error_message = format_string((TValue[4]){ error_message, elem_types[i], elem_real_type, module }, 4);
+            error_message = format_string((TValue[4]){ error_message, elem_real_type, elem_types[i], module }, 4);
 
             call_error(new_type_error, AS_STRING(error_message)->str);
         }

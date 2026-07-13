@@ -528,7 +528,38 @@ int compile_import(Node* node, Scope* context) {
 }
 
 int compile_from_import(Node* node, Scope* context) {
+    TValue type = node->node.importNode.module;
+    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
     
+    Node import_node = { .type = type, .nt = NT_IMPORT };
+    import_node.node.importNode.ast = node->node.fromImportNode.ast;
+    import_node.node.importNode.module = node->node.fromImportNode.module;
+    import_node.node.importNode.type_specifier = NIL;
+    import_node.node.importNode.identifier = NIL;
+
+    int module = compile(&import_node, context);
+    register_specific(module, context);
+
+    int argc = get_linked_list_len(node->node.fromImportNode.elements);
+    TValue elements[argc];      linked_list_to_array(node->node.fromImportNode.elements, elements, argc);
+    TValue nicknames[argc];     linked_list_to_array(node->node.fromImportNode.nicknames, nicknames, argc);
+
+    for (int i = 0; i < argc; i++) {
+        TValue class_namespace = get_value_from_hashtable(globals_map, type);
+        TValue class_map = get_namespace_map(class_namespace);
+        TValue idx = get_value_from_hashtable(class_map, elements[i]);
+
+        int r = register_first(context);
+        if (IS_NIL(nicknames[i])) append_symbol(context, elements[i], r);
+        else append_symbol(context, nicknames[i], r);
+
+        emit(OP_LOAD_FIELD, context);
+        emit(module, context);
+        emit(idx.num, context);
+        emit(r, context);
+    }
+
+    return free_register(module, context);
 }
 
 int compile_func_def(Node* node, Scope* context) {

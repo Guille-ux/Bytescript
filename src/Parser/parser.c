@@ -285,6 +285,13 @@ Node* from_import_expr(ParseResult* res) {
     from_import_node->node.fromImportNode.module = module;
     from_import_node->node.fromImportNode.ast = simple_parse(AS_STRING(module)->str);
 
+    from_import_node->node.fromImportNode.elements.next = NULL;
+    from_import_node->node.fromImportNode.elements.value = NIL;
+    from_import_node->node.fromImportNode.elem_types.next = NULL;
+    from_import_node->node.fromImportNode.elem_types.value = NIL;
+    from_import_node->node.fromImportNode.nicknames.next = NULL;
+    from_import_node->node.fromImportNode.nicknames.value = NIL;
+
     TValue arg_specifier;
     if (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
         while (!IS_NIL(arg_specifier = type_specifier(res)) || res->tokens->tt == TT_IDENTIFIER) {
@@ -299,7 +306,7 @@ Node* from_import_expr(ParseResult* res) {
             new_nickname->value = NIL;
             new_type->value = arg_specifier;
 
-            if (match_keyword(*res->tokens, "as")) ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new_nickname->value, NULL));
+            if (match_keyword(*res->tokens, "as")) { res->tokens++; ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &new_nickname->value, NULL)); }
             
             new->next = from_import_node->node.fromImportNode.elements.next;
             new_type->next = from_import_node->node.fromImportNode.elem_types.next;
