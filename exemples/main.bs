@@ -1,7 +1,7 @@
 
 func main()
-    import "exemples/test.bs" as test end
     require "exemples/test.bs" as res end
+    import "exemples/test.bs" as test end
     from "exemples/test.bs" import String secretString as bob end
 
     print(res)
