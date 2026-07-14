@@ -23,7 +23,7 @@ typedef LJ_ALIGN(8) union BValue {
 // MAIN TYPES
 
 typedef TValue (*CFunc)(TValue* argv, size_t argc);
-typedef TValue (*CLoadFunc)();
+//typedef TValue (*CLoadFunc)();
 
 typedef struct Func {
     uint8_t isCfunc;

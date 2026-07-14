@@ -3,13 +3,17 @@ CFLAGS = -I./src -I./
 SRC := $(shell find src -name '*.c')
 MAIN_SRC := $(wildcard src/*.c)
 LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))
+STDLIB_SRC := $(wildcard srclib/*/*.c)
+
 MAIN_OBJ := $(patsubst %.c, build/%.o, $(notdir $(MAIN_SRC)))
 LIB_OBJ  := $(patsubst %.c, build/%.o, $(notdir $(LIB_SRC)))
+STDLIB_OBJ := $(patsubst %.c, build/%.o, $(notdir $(STDLIB_SRC)))
+
 OBJ      := $(MAIN_OBJ) $(LIB_OBJ)
 TARGET := $(patsubst src/%.c, dist/%.exe, $(MAIN_SRC))
+STDLIB := $(patsubst %.c, lib/%.dll, $(notdir $(STDLIB_SRC)))
 
-
-main : $(TARGET)
+main : $(TARGET) $(STDLIB)
 
 o_o : CFLAGS += -O0 -march=native
 o_o : post_build
@@ -36,14 +40,20 @@ debug : post_build
 dist/%.exe: build/%.o $(LIB_OBJ) | dist
 	$(CC) $(CFLAGS) $^ -o $@
 
+lib/%.dll: build/%.o $(STDLIB_OBJ) | lib
+	$(CC) $(CFLAGS) -shared $^ -o $@
+
 build/%.o: build
-	$(CC) $(CFLAGS) -c $(shell find src -name $*.c) -o $@
+	$(CC) $(CFLAGS) -c $(shell find src srclib -name $*.c) -o $@
 
 build :
 	mkdir -p build
 
 dist :
 	mkdir -p dist
+
+lib :
+	mkdir -p lib
 
 clean : 
 	rm -rf build
