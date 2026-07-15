@@ -31,7 +31,9 @@ CompileFunction compiler_functions[] = {
     [NT_WHILE]          = compile_while_loop,
     [NT_REPEAT]         = compile_repeat_loop,
     [NT_REQUIRE]        = compile_require,
+    [NT_CREQUIRE]       = compile_crequire,
     [NT_IMPORT]         = compile_import,
+    [NT_CIMPORT]        = compile_cimport,
     [NT_FROM_IMPORT]    = compile_from_import,
     [NT_FUNCDEF]        = compile_func_def,
     [NT_METHODDEF]      = compile_method_def,
@@ -517,6 +519,16 @@ int compile_require(Node* node, Scope* context) {
     else return compile_load_module(node, context, OP_REQUIRE, type);
 }
 
+int compile_crequire(Node* node, Scope* context) {
+    TValue type = node->node.importNode.module;
+    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
+
+    TValue cached = get_value_from_hashtable(loaded_modules, type);
+
+    if (!IS_NIL(cached)) return compile_get_module(node, context, make_fstring("loadedReturns"), loaded_returns, type);
+    else return compile_load_module(node, context, OP_REQUIRE, type);
+}
+
 int compile_import(Node* node, Scope* context) {
     TValue cached = get_value_from_hashtable(loaded_modules, node->type);
 
@@ -524,8 +536,15 @@ int compile_import(Node* node, Scope* context) {
     else return compile_load_module(node, context, OP_IMPORT, node->type);
 }
 
+int compile_cimport(Node* node, Scope* context) {
+    TValue cached = get_value_from_hashtable(loaded_modules, node->type);
+
+    if (!IS_NIL(cached)) return compile_get_module(node, context, make_fstring("loaded"), loaded_modules, node->type);
+    else return compile_load_module(node, context, OP_IMPORT, node->type);
+}
+
 int compile_from_import(Node* node, Scope* context) {
-    TValue type = node->node.importNode.module;
+    TValue type = node->node.fromImportNode.import_node->node.importNode.module;
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
     
     int module = compile(node->node.fromImportNode.import_node, context);
@@ -1024,7 +1043,7 @@ static int get_target_field(Node* target_node, TValue name, int free_target, Sco
 }
 
 
-int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context) {
+int compile_boolean_op(int left, int right, int leftCC, int rightCC, BTokenType op, Scope* context) {
 
 }
 

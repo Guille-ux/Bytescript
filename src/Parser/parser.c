@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <windows.h>
 
 #include "Globals/tError.h"
 #include "Globals/string.h"
@@ -13,7 +14,7 @@ TValue user_types;
 static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, ParseFunc func2, char expected[]) {
     if (func2 == NULL) func2 = func1;
 
-    Node* left = OPTIONAL(func1(res));
+    Node* left = BOPTIONAL(func1(res));
     while (is_correct_operator(*res->tokens, ops, opc)) {
         Token op = *res->tokens; res->tokens++;
         Node* right = EXPECTED(func2(res), expected);
@@ -272,6 +273,26 @@ Node* require_expr(ParseResult* res) {
     require_node->node.importNode.type_specifier = type;
     require_node->node.importNode.identifier = identifier;
     if (nt == NT_REQUIRE) require_node->node.importNode.ast = simple_parse(AS_STRING(require_node->node.importNode.module)->str);
+    else {
+        HMODULE dll = LoadLibrary(AS_STRING(module)->str);
+        if (!dll) {
+            TValue error_message = make_fstring("Could not open shared library '%s'");
+            error_message = format_string((TValue[2]){ error_message, module }, 2);
+
+            call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
+        }
+
+        char** filename = (char**)GetProcAddress(dll, "bytescript_module_map");
+        if (!filename) {
+            TValue error_message = make_fstring("Could not find a map for module '%s'. Make sure to store the path to your module's map in a variable of named : 'bytescript_module_map'");
+            error_message = format_string((TValue[2]){ error_message, module }, 2);
+
+            call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
+        }
+
+        require_node->node.importNode.ast = simple_parse(*filename);
+        require_node->node.cimportNode.dll = dll;
+    }
 
     return require_node;
 }
@@ -284,7 +305,7 @@ Node* from_import_expr(ParseResult* res) {
     ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'import') EXPECTED", NULL, "import"))
 
-    Node* import_node = has_ext(module, "dll") ? new_node(NT_IMPORT) : new_node(NT_CIMPORT);
+    Node* import_node = has_ext(module, "dll") ? new_node(NT_CIMPORT) : new_node(NT_IMPORT);
     import_node->node.importNode.identifier = NIL;
     import_node->node.importNode.module = module;
     if (import_node->nt == NT_IMPORT) import_node->node.importNode.ast = simple_parse(AS_STRING(module)->str);
@@ -350,6 +371,26 @@ Node* import_expr(ParseResult* res) {
     import_node->node.importNode.type_specifier = NIL;
     import_node->node.importNode.identifier = identifier;
     if (nt == NT_IMPORT) import_node->node.importNode.ast = simple_parse(AS_STRING(import_node->node.importNode.module)->str);
+    else {
+        HMODULE dll = LoadLibrary(AS_STRING(module)->str);
+        if (!dll) {
+            TValue error_message = make_fstring("Could not open shared library '%s'");
+            error_message = format_string((TValue[2]){ error_message, module }, 2);
+
+            call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
+        }
+
+        char** filename = (char**)GetProcAddress(dll, "bytescript_module_map");
+        if (!filename) {
+            TValue error_message = make_fstring("Could not find a map for module '%s'. Make sure to store the path to your module's map in a variable of named : 'bytescript_module_map'");
+            error_message = format_string((TValue[2]){ error_message, module }, 2);
+
+            call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
+        }
+
+        import_node->node.importNode.ast = simple_parse(*filename);
+        import_node->node.cimportNode.dll = dll;
+    }
 
     return import_node;
 }
@@ -490,7 +531,7 @@ Node* numerics(ParseResult* res) {
 }
 
 Node* postfix(ParseResult* res) {
-    Node* postfix_node = OPTIONAL(numerics(res));
+    Node* postfix_node = BOPTIONAL(numerics(res));
 
     for (;;) {
         ERR_CHECK(Node* op_node = postfix_op(res, postfix_node));
@@ -539,7 +580,7 @@ Node* comparaison(ParseResult* res) {
 Node* logical(ParseResult* res) { return bin_op(res, comparaison, LOGICAL_OPERATORS, LOGICAL_OPERATORS_SIZE, NULL, "(POSTFIX | INT | STR | FUNC | TABLE | IDENTIFIER) EXPECTED"); }
 
 Node* assignement(ParseResult* res) {
-    Node* log = OPTIONAL(logical(res));
+    Node* log = BOPTIONAL(logical(res));
     if (res->tokens->tt == TT_EQ) {
         res->tokens++;
         Node* exp = expr(res);
@@ -673,7 +714,7 @@ static inline bool is_correct_operator(Token op, Token ops[], int opc) {
     return false;
 }
 
-static void expect(ParseResult* res, TokenType tt, char* expected, TValue* value, char* kword) {
+static void expect(ParseResult* res, BTokenType tt, char* expected, TValue* value, char* kword) {
     if (tt == TT_IDENTIFIER && res->tokens->tt == TT_KWORD) res->tokens->tt = TT_IDENTIFIER;
     if (res->tokens->tt != tt || (kword && !match_keyword(*res->tokens, kword))) res->err_details = expected;
     if (value != NULL) *value = res->tokens->value;

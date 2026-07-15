@@ -28,7 +28,9 @@ TypeResolver type_resolvers[] = {
     [NT_WHILE]          = resolve_type_while_loop,
     [NT_REPEAT]         = resolve_type_repeat_loop,
     [NT_REQUIRE]        = resolve_type_require,
+    [NT_CREQUIRE]       = resolve_type_require,
     [NT_IMPORT]         = resolve_type_import,
+    [NT_CIMPORT]        = resolve_type_import,
     [NT_FROM_IMPORT]    = resolve_type_from_import,
     [NT_FUNCDEF]        = resolve_type_func_def,
     [NT_METHODDEF]      = resolve_type_method_def,
@@ -333,7 +335,7 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 TValue resolve_type_from_import(Node* node, TypesContext* context) {
     resolve_type(node->node.fromImportNode.import_node, context);
 
-    TValue path = node->node.importNode.module;
+    TValue path = node->node.fromImportNode.import_node->node.importNode.module;
     TValue module = concat_string((TValue[2]){ make_fstring("Module "), path }, 2);
     TValue desc = get_value_from_hashtable(type_namespace, module);
     TValue map = TBL_TO_TVALUE(as_class_descriptor(desc)->id_namespace);

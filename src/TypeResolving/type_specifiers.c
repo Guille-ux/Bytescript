@@ -114,7 +114,7 @@ ClassDescriptor* as_class_descriptor(TValue value) {
 }
 
 
-TValue right_operation_method(TokenType op) {
+TValue right_operation_method(BTokenType op) {
     TValue op_method = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(op));
     TStr* ptr = AS_STRING(op_method);
 

@@ -47,8 +47,6 @@ all: o_three
 
 post_build: main
 	mv ../dist/bytescript.exe ../bytescript.exe
-	rm -rf ../build
-	rm -rf ../dist
 	
 dis : CFLAGS += -O2
 dis : clean all

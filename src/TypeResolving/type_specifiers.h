@@ -40,6 +40,6 @@ TValue make_method_descriptor(TValue arg_types[], TValue return_type, size_t arg
 TValue make_class_descriptor(TValue func_map, TValue id_map);
 MethodDescriptor* as_method_descriptor(TValue value);
 ClassDescriptor* as_class_descriptor(TValue value);
-TValue right_operation_method(TokenType op);
+TValue right_operation_method(BTokenType op);
 
 #endif

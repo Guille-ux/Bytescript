@@ -46,7 +46,9 @@ int compile_gfor_loop(Node* node, Scope* context);
 int compile_while_loop(Node* node, Scope* context);
 int compile_repeat_loop(Node* node, Scope* context);
 int compile_require(Node* node, Scope* context);
+int compile_crequire(Node* node, Scope* context);
 int compile_import(Node* node, Scope* context);
+int compile_cimport(Node* node, Scope* context);
 int compile_from_import(Node* node, Scope* context);
 int compile_func_def(Node* node, Scope* context);
 int compile_method_def(Node* node, Scope* context);
@@ -88,7 +90,7 @@ static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
 static int get_target_field(Node* target_node, TValue name, int free_target, Scope* context);
 
-int compile_boolean_op(int left, int right, int leftCC, int rightCC, TokenType op, Scope* context);
+int compile_boolean_op(int left, int right, int leftCC, int rightCC, BTokenType op, Scope* context);
 int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, TValue type);
 int compile_get_module(Node* node, Scope* context, TValue field, TValue cache, TValue type);
 

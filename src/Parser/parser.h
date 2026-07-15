@@ -16,7 +16,7 @@
 #define SELF_TOKEN      ((Token){ .tt = TT_IDENTIFIER, .value = make_fstring("self") })
 
 #define ERR_CHECK(exc)      exc; if (res->err_details) return NULL;
-#define OPTIONAL(exc)       ({ Node* _exp = (exc); if (!_exp) return NULL; _exp; })
+#define BOPTIONAL(exc)       ({ Node* _exp = (exc); if (!_exp) return NULL; _exp; })
 #define EXPECTED(exc, mes)  ({ Node* _exp = (exc); if (!_exp) { if (res->err_details) return NULL; else return (res->err_details = mes, NULL); } _exp; })
 
 typedef struct {
@@ -65,7 +65,7 @@ static inline void clean_newlines(Token** tokens, size_t* adv_count);
 static inline ParseResult new_res(Token* tokens);
 
 static inline bool is_correct_operator(Token op, Token ops[], int opc);
-static void expect(ParseResult* res, TokenType tt, char* expect, TValue* value, char* kword);
+static void expect(ParseResult* res, BTokenType tt, char* expect, TValue* value, char* kword);
 TValue type_specifier(ParseResult* res);
 TValue get_modifiers(ParseResult* res);
 
