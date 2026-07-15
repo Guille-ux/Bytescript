@@ -526,7 +526,7 @@ int compile_crequire(Node* node, Scope* context) {
     TValue cached = get_value_from_hashtable(loaded_modules, type);
 
     if (!IS_NIL(cached)) return compile_get_module(node, context, make_fstring("loadedReturns"), loaded_returns, type);
-    else return compile_load_module(node, context, OP_REQUIRE, type);
+    else return compile_load_cmodule(node, context, OP_REQUIRE, type);
 }
 
 int compile_import(Node* node, Scope* context) {
@@ -540,7 +540,7 @@ int compile_cimport(Node* node, Scope* context) {
     TValue cached = get_value_from_hashtable(loaded_modules, node->type);
 
     if (!IS_NIL(cached)) return compile_get_module(node, context, make_fstring("loaded"), loaded_modules, node->type);
-    else return compile_load_module(node, context, OP_IMPORT, node->type);
+    else return compile_load_cmodule(node, context, OP_IMPORT, node->type);
 }
 
 int compile_from_import(Node* node, Scope* context) {
@@ -1058,6 +1058,48 @@ int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, T
 
     TValue module = close_context(import_context);
     int mod_idx = module_load(module, type);
+    module_load_returns(NUM_AS_TVALUE(0), type);
+
+    int r = register_first(context);
+    if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);
+    else free_register(r, context);
+
+    emit(instr, context);
+    emit(r, context);
+    emit(INT32_TO_HI(mod_idx), context);
+    emit(INT32_TO_LO(mod_idx), context);
+
+    add_value_to_hashtable(globals_map, type, namespace);
+    return r;
+}
+
+int compile_load_cmodule(Node* node, Scope* context, BytecodeInstruction instr, TValue type) {
+    // setting up map
+
+    Scope* import_map = new_scope();
+    compile(node->node.importNode.ast, import_map);
+
+    TValue symbols = TBL_TO_TVALUE(import_map->symbols);
+    symbols = copy_table(&symbols, 1);
+
+    TValue namespace = table_as_namespace(symbols);
+    TValue map = close_context(import_map);
+    tfree(&map, 1);
+
+    // loading the module
+
+    HMODULE dll = node->node.cimportNode.dll;
+
+    void* loader_ptr = GetProcAddress(dll, "bytescript_module_loader");
+    if (!loader_ptr) {
+        TValue error_message = make_fstring("Could not find loader for module <%s>. Make sure to store your module's loader in a function 'TValue bytescript_module_loader(TValue* argv, size_t argc)'");
+        error_message = format_string((TValue[2]){ error_message, type }, 2);
+
+        call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
+    }
+
+    CFunc loader = (CFunc)loader_ptr;
+    int mod_idx = module_load(new_cfunc(loader), type);
     module_load_returns(NUM_AS_TVALUE(0), type);
 
     int r = register_first(context);

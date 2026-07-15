@@ -407,11 +407,15 @@ static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3,
 
     TFunc* tfunc = AS_FUNC(func);
     if (tfunc->isCfunc) {
-        TValue res = tfunc->cfunc(NULL, 0);
-        if (return_ptr) *return_ptr = res;
+        TValue res = tfunc->cfunc(context.sp, 256);
+        TValue module = new_object(Module_class, NULL, 256);
+        memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
 
-        //AS_TABLE(loaded_modules)->array.array[mod_idx] = res;
-        return AS_TABLE(loaded_modules)->array.array[mod_idx];
+        AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
+        AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
+
+        if (return_ptr) *return_ptr = res;
+        return module;
 
     } else {
         StackFrame caller_frame = {

@@ -111,7 +111,7 @@ TValue tfree(TValue* argv, size_t argc) {
                     free((void*)ptr->bytescriptFunction.bytecode);
                     free((void*)ptr->bytescriptFunction.upvalues);
 
-                } else free(ptr->cfunc);
+                }
 
                 free(ptr);
                 break;

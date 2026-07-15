@@ -1,12 +1,6 @@
 
 func main()
-    require "exemples/test.bs" as res end
-    import "exemples/test.bs" as test end
-    from "exemples/test.bs" import String secretString as bob end
-
-    print(res)
-    print(test.secretString)
-    print(bob)
+    require "dist/tmath.dll" as math end
 end
 
 main()
