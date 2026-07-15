@@ -226,7 +226,7 @@ TValue fold_import(Node* node) {
 }
 
 TValue fold_from_import(Node* node) {
-    fold(node->node.fromImportNode.ast);
+    fold(node->node.fromImportNode.import_node);
     return (node->cc = false, NIL);
 }
 

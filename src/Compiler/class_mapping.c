@@ -161,7 +161,7 @@ void classmap_import(Node* node) {
 }
 
 void classmap_from_import(Node* node) {
-    classmap(node->node.fromImportNode.ast);
+    classmap(node->node.fromImportNode.import_node);
 }
 
 void classmap_func_def(Node* node) {

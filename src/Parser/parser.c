@@ -250,6 +250,7 @@ Node* repeat_expr(ParseResult* res) {
 Node* require_expr(ParseResult* res) {
     res->tokens++;
 
+    NodeType nt;
     TValue module;
     TValue type = NIL;
     TValue identifier = NIL;
@@ -264,11 +265,13 @@ Node* require_expr(ParseResult* res) {
 
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
-    Node* require_node = new_node(NT_REQUIRE);
+    nt = has_ext(module, ".dll") ? NT_CREQUIRE : NT_REQUIRE;
+
+    Node* require_node = new_node(nt);
     require_node->node.importNode.module = module;
     require_node->node.importNode.type_specifier = type;
     require_node->node.importNode.identifier = identifier;
-    require_node->node.importNode.ast = simple_parse(AS_STRING(require_node->node.importNode.module)->str);
+    if (nt == NT_REQUIRE) require_node->node.importNode.ast = simple_parse(AS_STRING(require_node->node.importNode.module)->str);
 
     return require_node;
 }
@@ -281,9 +284,13 @@ Node* from_import_expr(ParseResult* res) {
     ERR_CHECK(expect(res, TT_STR, "(STR) EXPECTED", &module, NULL))
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'import') EXPECTED", NULL, "import"))
 
+    Node* import_node = has_ext(module, "dll") ? new_node(NT_IMPORT) : new_node(NT_CIMPORT);
+    import_node->node.importNode.identifier = NIL;
+    import_node->node.importNode.module = module;
+    if (import_node->nt == NT_IMPORT) import_node->node.importNode.ast = simple_parse(AS_STRING(module)->str);
+
     Node* from_import_node = new_node(NT_FROM_IMPORT);
-    from_import_node->node.fromImportNode.module = module;
-    from_import_node->node.fromImportNode.ast = simple_parse(AS_STRING(module)->str);
+    from_import_node->node.fromImportNode.import_node = import_node;
 
     from_import_node->node.fromImportNode.elements.next = NULL;
     from_import_node->node.fromImportNode.elements.value = NIL;
@@ -327,6 +334,7 @@ Node* from_import_expr(ParseResult* res) {
 Node* import_expr(ParseResult* res) {
     res->tokens++;
 
+    NodeType nt;
     TValue module;
     TValue identifier = NIL;
 
@@ -335,11 +343,13 @@ Node* import_expr(ParseResult* res) {
     ERR_CHECK(expect(res, TT_IDENTIFIER, "(IDENTIFIER) EXPECTED", &identifier, NULL));
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
-    Node* import_node = new_node(NT_IMPORT);
+    nt = has_ext(module, ".dll") ? NT_CIMPORT : NT_IMPORT;
+
+    Node* import_node = new_node(nt);
     import_node->node.importNode.module = module;
     import_node->node.importNode.type_specifier = NIL;
     import_node->node.importNode.identifier = identifier;
-    import_node->node.importNode.ast = simple_parse(AS_STRING(import_node->node.importNode.module)->str);
+    if (nt == NT_IMPORT) import_node->node.importNode.ast = simple_parse(AS_STRING(import_node->node.importNode.module)->str);
 
     return import_node;
 }

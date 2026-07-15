@@ -27,7 +27,9 @@ typedef enum {
     NT_WHILE,
     NT_REPEAT,
     NT_REQUIRE,
+    NT_CREQUIRE,
     NT_IMPORT,
+    NT_CIMPORT,
     NT_FROM_IMPORT,
     NT_FUNCDEF,
     NT_METHODDEF,
@@ -72,7 +74,7 @@ typedef struct BNode {
         struct { Node* condition; Node* statements; } whileNode;
         struct { Node* condition; Node* statements; } repeatNode;
         struct { TValue module; TValue type_specifier; TValue identifier; Node* ast; } importNode;
-        struct { TValue module; struct TValueLinkedList elements; struct TValueLinkedList elem_types; struct TValueLinkedList nicknames; Node* ast; } fromImportNode;
+        struct { Node* import_node; struct TValueLinkedList elements; struct TValueLinkedList elem_types; struct TValueLinkedList nicknames; } fromImportNode;
         struct { TValue name; TValue type_specifier; TValue modifiers; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; } funcDefNode;
         struct { TValue name; TValue type_specifier; TValue modifiers; struct TValueLinkedList args; struct TValueLinkedList arg_types; Node* statements; TValue class; } methodDefNode;
         struct { TValue name; struct TValueLinkedList inherited; Node* statements; } classDefNode;

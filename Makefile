@@ -1,73 +1,31 @@
-CC = gcc
-CFLAGS = -I./src -I./
-SRC := $(shell find src -name '*.c')
-MAIN_SRC := $(wildcard src/*.c)
-LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))
-STDLIB_SRC := $(wildcard srclib/*/*.c)
+all:
+	$(MAKE) -C stdlib
+	$(MAKE) -C src
 
-MAIN_OBJ := $(patsubst %.c, build/%.o, $(notdir $(MAIN_SRC)))
-LIB_OBJ  := $(patsubst %.c, build/%.o, $(notdir $(LIB_SRC)))
-STDLIB_OBJ := $(patsubst %.c, build/%.o, $(notdir $(STDLIB_SRC)))
+o_o:
+	$(MAKE) -C stdlib o_o
+	$(MAKE) -C src o_o
 
-OBJ      := $(MAIN_OBJ) $(LIB_OBJ)
-TARGET := $(patsubst src/%.c, dist/%.exe, $(MAIN_SRC))
-STDLIB := $(patsubst %.c, lib/%.dll, $(notdir $(STDLIB_SRC)))
+o_one:
+	$(MAKE) -C stdlib o_one
+	$(MAKE) -C src o_one
 
-main : $(TARGET) $(STDLIB)
+o_two:
+	$(MAKE) -C stdlib o_two
+	$(MAKE) -C src o_two
 
-o_o : CFLAGS += -O0 -march=native
-o_o : post_build
+o_three:
+	$(MAKE) -C stdlib o_three
+	$(MAKE) -C src o_three
 
-o_one : CFLAGS += -O1 -march=native
-o_one : main
+byte:
+	$(MAKE) -C stdlib byte
+	$(MAKE) -C src byte
 
-o_two : CFLAGS += -O2 -march=native
-o_two : main
+debug:
+	$(MAKE) -C stdlib debug
+	$(MAKE) -C src debug
 
-byte : CFLAGS += -O2 -march=native
-byte : post_build
-
-all: CFLAGS += -O3 -march=native
-all: main
-
-release : CFLAGS += -O3
-release : main
-
-debug : CFLAGS += -O0 -g
-debug : post_build
-
-
-dist/%.exe: build/%.o $(LIB_OBJ) | dist
-	$(CC) $(CFLAGS) $^ -o $@
-
-lib/%.dll: build/%.o $(STDLIB_OBJ) | lib
-	$(CC) $(CFLAGS) -shared $^ -o $@
-
-build/%.o: build
-	$(CC) $(CFLAGS) -c $(shell find src srclib -name $*.c) -o $@
-
-build :
-	mkdir -p build
-
-dist :
-	mkdir -p dist
-
-lib :
-	mkdir -p lib
-
-clean : 
+clean:
 	rm -rf build
 	rm -rf dist
-	clear
-
-clean_trash : clean
-	rm bytescript.exe
-
-post_build : clean main
-	mv dist/bytescript.exe ./bytescript.exe
-	rm -rf build
-	rm -rf dist
-	
-dis : CFLAGS += -O2
-dis : clean all
-	objdump -d build/dised.o > dist/dised.txt

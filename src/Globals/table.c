@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
-#include "srclib/Math/tmath.h"
+#include "stdlib/Math/math_utils.h"
 
 #include "Values/oop.h"
 #include "Globals/table.h"

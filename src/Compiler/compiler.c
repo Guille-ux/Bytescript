@@ -528,13 +528,7 @@ int compile_from_import(Node* node, Scope* context) {
     TValue type = node->node.importNode.module;
     type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
     
-    Node import_node = { .type = type, .nt = NT_IMPORT };
-    import_node.node.importNode.ast = node->node.fromImportNode.ast;
-    import_node.node.importNode.module = node->node.fromImportNode.module;
-    import_node.node.importNode.type_specifier = NIL;
-    import_node.node.importNode.identifier = NIL;
-
-    int module = compile(&import_node, context);
+    int module = compile(node->node.fromImportNode.import_node, context);
     register_specific(module, context);
 
     int argc = get_linked_list_len(node->node.fromImportNode.elements);

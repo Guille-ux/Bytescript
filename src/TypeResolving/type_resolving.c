@@ -331,15 +331,7 @@ TValue resolve_type_import(Node* node, TypesContext* context) {
 }
 
 TValue resolve_type_from_import(Node* node, TypesContext* context) {
-    Node import_node = {
-        .nt = NT_IMPORT,
-        .node.importNode.ast = node->node.fromImportNode.ast,
-        .node.importNode.identifier = NIL,
-        .node.importNode.type_specifier = NIL,
-        .node.importNode.module = node->node.fromImportNode.module
-    };
-
-    resolve_type(&import_node, context);
+    resolve_type(node->node.fromImportNode.import_node, context);
 
     TValue path = node->node.importNode.module;
     TValue module = concat_string((TValue[2]){ make_fstring("Module "), path }, 2);
