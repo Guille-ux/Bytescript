@@ -3,7 +3,7 @@ CFLAGS = -I./ -I../ -I../src
 
 MATH_SRC := $(wildcard Math/*.c)
 MATH_OBJ := $(MATH_SRC:.c=.o)
-MATH := $(MATH_SRC:%.c=../dist/%.dll)
+MATH := $(MATH_SRC:%.c=../dist/stdlib/%.dll)
 
 OBJ := $(MATH_OBJ:%.o=../build/%.o)
 TARGET := $(MATH)
@@ -32,8 +32,11 @@ debug : main
 
 all: o_three
 
-../dist/%.dll: ../build/%.o | ../dist
-	$(CC) $(CFLAGS) -shared ../build/$(notdir $<) -o ../dist/$(notdir $@)
+../dist/stdlib/%.dll: ../build/%.o ../dist/stdlib/%_map.bs | ../dist/stdlib
+	$(CC) $(CFLAGS) -shared ../build/$(notdir $<) -o ../dist/stdlib/$(notdir $@)
+
+../dist/stdlib/%.bs: ../dist/stdlib
+	cp $*.bs ../dist/stdlib
 
 ../build/%.o: %.c | ../build
 	$(CC) $(CFLAGS) -c $< -o ../build/$(notdir $@)
@@ -41,5 +44,5 @@ all: o_three
 ../build:
 	mkdir -p ../build
 
-../dist:
-	mkdir -p ../dist
+../dist/stdlib:
+	mkdir -p ../dist/stdlib

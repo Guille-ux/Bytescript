@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I../stdlib
+CFLAGS = -I./ -I../ -I../stdlib_src
 
 SRC := $(shell find . -name '*.c')
 MAIN_SRC := $(wildcard *.c)
@@ -26,10 +26,10 @@ o_three : CFLAGS += -O3 -march=native
 o_three : main
 
 byte : CFLAGS += -O2 -march=native
-byte : post_build
+byte : main
 
 debug : CFLAGS += -O0 -g
-debug : post_build
+debug : main
 
 all: o_three
 
@@ -45,9 +45,6 @@ all: o_three
 ../dist :
 	mkdir -p ../dist
 
-post_build: main
-	mv ../dist/bytescript.exe ../bytescript.exe
-	
 dis : CFLAGS += -O2
 dis : clean all
 	objdump -d ../build/dised.o > ../dist/dised.txt

@@ -1,9 +1,9 @@
 #include <math.h>
 
-#include "Math/tmath.h"
+#include "Math/math.h"
 #include "src/Globals/globals.h"
 
-__declspec(dllexport) char* bytescript_module_map = "tmath_map.bs";
+__declspec(dllexport) char* bytescript_module_map = "math_map.bs";
 __declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc) {
     TValue fields[] = {
         pi_math,

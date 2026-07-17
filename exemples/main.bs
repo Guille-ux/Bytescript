@@ -1,3 +1,3 @@
 
-import "dist/tmath.dll" as math end
+import "dist/stdlib/math.dll" as math end
 print(math.cos(5))
