@@ -381,14 +381,15 @@ Node* import_expr(ParseResult* res) {
             call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
         }
 
-        char** filename = (char**)GetProcAddress(dll, "bytescript_module_map");
-        if (!filename) {
+        void* filename_ptr = GetProcAddress(dll, "bytescript_module_map");
+        if (!filename_ptr) {
             TValue error_message = make_fstring("Could not find a map for module '%s'. Make sure to store the path to your module's map in a variable of named : 'bytescript_module_map'");
             error_message = format_string((TValue[2]){ error_message, module }, 2);
 
             call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
         }
 
+        char** filename = (char**)filename_ptr;
         import_node->node.importNode.ast = simple_parse(*filename);
         import_node->node.cimportNode.dll = dll;
     }

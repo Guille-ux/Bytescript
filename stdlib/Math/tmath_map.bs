@@ -1,0 +1,27 @@
+Number pi
+Number e
+Number inf
+
+func Number max(Number a, Number b) end
+func Number min(Number a, Number b) end
+func Number clamp(Number a, Number b, Number c) end
+func Number abs(Number a) end
+func Number floor(Number a) end
+func Number ceil(Number a) end
+func Number round(Number a) end
+func Number trunc(Number a) end
+func Number sqrt(Number a) end
+func Number sin(Number a) end
+func Number cos(Number a) end
+func Number tan(Number a) end
+func Number asin(Number a) end
+func Number acos(Number a) end
+func Number atan(Number a) end
+func Number atan2(Number a, Number b) end
+func Number exp(Number a) end
+func Number log(Number a) end
+func Number logTen(Number a) end
+func Number sign(Number a) end
+func Number is_inf(Number a) end
+func Number deg(Number a) end
+func Number rad(Number a) end

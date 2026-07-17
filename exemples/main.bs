@@ -1,6 +1,3 @@
 
-func main()
-    require "dist/tmath.dll" as math end
-end
-
-main()
+import "dist/tmath.dll" as math end
+print(math.cos(5))

@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <math.h>
 
 #include "Math/tmath.h"
@@ -6,12 +5,41 @@
 
 __declspec(dllexport) char* bytescript_module_map = "tmath_map.bs";
 __declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc) {
-    
+    TValue fields[] = {
+        pi_math,
+        e_math,
+        inf_math,
+        new_cfunc(max_math),
+        new_cfunc(min_math),
+        new_cfunc(clamp_math),
+        new_cfunc(abs_math),
+        new_cfunc(floor_math),
+        new_cfunc(ceil_math),
+        new_cfunc(round_math),
+        new_cfunc(trunc_math),
+        new_cfunc(sqrt_math),
+        new_cfunc(sin_math),
+        new_cfunc(cos_math),
+        new_cfunc(tan_math),
+        new_cfunc(asin_math),
+        new_cfunc(acos_math),
+        new_cfunc(atan_math),
+        new_cfunc(atan2_math),
+        new_cfunc(log_math),
+        new_cfunc(log10_math),
+        new_cfunc(sign_math),
+        new_cfunc(is_inf_math),
+        new_cfunc(deg_math),
+        new_cfunc(rad_math),
+    };
+
+    size_t field_count = sizeof(fields) / sizeof(fields[0]);
+    memcpy(argv, fields, BSIZE(field_count));
 }
 
 
-TValue pi_math = NUM_AS_TVALUE(M_PI);
-TValue e_math = NUM_AS_TVALUE(M_E);
+TValue pi_math = NUM_AS_TVALUE(3.141592653589793238462643383279502884);
+TValue e_math = NUM_AS_TVALUE(2.71828182845904523536);
 TValue inf_math = NUM_AS_TVALUE(INFINITY);
 
 TValue max_math(TValue* argv, size_t argc) {

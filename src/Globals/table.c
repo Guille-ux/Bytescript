@@ -237,8 +237,8 @@ TValue copy_table(TValue* argv, size_t argc) {
         PairArray* new_sub = &new_table->hash_table.array[i].sub;
         PairArray sub = ptr->hash_table.array[i].sub;
 
-        new_sub->arr = malloc(sizeof(Pair) * sizeof(new_sub->capacity));
-        memcpy(new_sub->arr, sub.arr, sizeof(Pair) * sub.capacity);
+        if (new_sub->capacity) new_sub->arr = malloc(sizeof(Pair) * new_sub->capacity);
+        if (!new_sub->arr) memcpy(new_sub->arr, sub.arr, sizeof(Pair) * sub.capacity);
     }
 
     return to_return_value(&new, 1);
@@ -298,7 +298,7 @@ TValue get_table(TValue* argv, size_t argc) {
     if (compare_tvalues(buck->pair.key, key)) {
         return buck->pair.value;
     } else {
-        if (buck->sub.arr == NULL) make_bucket_sub(buck);
+        if (buck->sub.arr == NULL) return NIL;
 
         Pair* out[2];
         linear_probe(&buck->sub, hashed, key, out);
