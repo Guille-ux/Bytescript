@@ -54,14 +54,16 @@ void intialize_dependencies() {
 }
 
 Node* simple_parse(char filename[]) {
-    TValue file = open_IO((TValue[2]){ NIL, make_fstring(filename) }, 2);
+    TValue file_path = import_path_finder(make_fstring(filename));
+
+    TValue file = open_IO((TValue[2]){ NIL, file_path }, 2);
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
 
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
 
-    return parse(tokens, filename);
+    return parse(tokens, AS_STRING(file_path)->str);
 }
 
 Node* easy_parse(char filename[]) {

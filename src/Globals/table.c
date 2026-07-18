@@ -37,7 +37,7 @@ void initialize_table_class() {
         NIL
     };
 
-    easy_map("src/Globals/maps/table_map.bs");
+    easy_map("table_map.bs");
     Table_class = new_class(NULL, Table_fields, 0, sizeof(Table_fields) / sizeof(Table_fields[0]));
     
     add_global(Table_class, make_fstring("Table"));

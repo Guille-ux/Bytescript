@@ -6,7 +6,7 @@
 #include "Values/tutils.h"
 #include "Globals/table.h"
 #include "Globals/string.h"
-#include "Globals/tError.h"
+#include "Globals/error.h"
 
 #define MIN_ARGC(n)                     { if (argc < n) return NIL; }
 #define STRICT_MIN_ARGC(n, fname)       { if (argc < n) call_error(new_invalid_args_error, "function <" fname "> take " #n " arguments"); }

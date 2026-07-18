@@ -36,7 +36,7 @@ void initialize_globals() {
     initialize_io_class();
     initialize_module_class();
 
-    make_globals_types_from_file(make_fstring("src/Globals/maps/globals.bs"));
+    make_globals_types_from_file(make_fstring("globals.bs"));
 }
 
 

@@ -15,7 +15,7 @@ void initialize_module_class() {
         loaded_returns
     };
 
-    easy_map("src/Globals/maps/module_map.bs");
+    easy_map("module_map.bs");
     Module_class = new_class(NULL, Module_fields, 0, sizeof(Module_fields) / sizeof(Module_fields[0]));
     
     add_global(Module_class, make_fstring("Module"));

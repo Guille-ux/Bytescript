@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <windows.h>
 
-#include "Globals/tError.h"
+#include "Globals/error.h"
 #include "Globals/string.h"
 #include "Globals/table.h"
 #include "Parser/parser.h"
@@ -366,6 +366,7 @@ Node* import_expr(ParseResult* res) {
     ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'end') EXPECTED", NULL, "end"))
 
     nt = has_ext(module, ".dll") ? NT_CIMPORT : NT_IMPORT;
+    module = import_path_finder(module);
 
     Node* import_node = new_node(nt);
     import_node->node.importNode.module = module;
@@ -374,14 +375,8 @@ Node* import_expr(ParseResult* res) {
     if (nt == NT_IMPORT) import_node->node.importNode.ast = simple_parse(AS_STRING(import_node->node.importNode.module)->str);
     else {
         HMODULE dll = LoadLibrary(AS_STRING(module)->str);
-        if (!dll) {
-            TValue error_message = make_fstring("Could not open shared library '%s'");
-            error_message = format_string((TValue[2]){ error_message, module }, 2);
-
-            call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
-        }
-
         void* filename_ptr = GetProcAddress(dll, "bytescript_module_map");
+        
         if (!filename_ptr) {
             TValue error_message = make_fstring("Could not find a map for module '%s'. Make sure to store the path to your module's map in a variable of named : 'bytescript_module_map'");
             error_message = format_string((TValue[2]){ error_message, module }, 2);

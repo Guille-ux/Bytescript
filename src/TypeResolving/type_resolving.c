@@ -2,7 +2,7 @@
 #include "Values/namespaces.h"
 #include "Globals/string.h"
 #include "Globals/table.h"
-#include "Globals/tError.h"
+#include "Globals/error.h"
 #include "Globals/Module/module.h"
 
 

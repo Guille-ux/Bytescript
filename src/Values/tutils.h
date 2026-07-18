@@ -24,6 +24,7 @@ static inline int16_t off16_to_int16(uint8_t hi, uint8_t lo) { return (hi << 8) 
 
 
 TValue to_return_value(TValue returnv[], size_t returnc);
+TValue import_path_finder(TValue path);
 char* read_string();
 void print_tokens(Token* tokens);
 int get_linked_list_len(struct TValueLinkedList list);

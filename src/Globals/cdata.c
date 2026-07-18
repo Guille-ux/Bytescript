@@ -8,7 +8,7 @@ void initialize_cdata_class() {
 
     };
 
-    easy_map("src/Globals/maps/cdata_map.bs");
+    easy_map("cdata_map.bs");
     CData_class = new_class(NULL, NULL, 0, sizeof(CData_fields) / sizeof(TValue));
 
     add_global(CData_class, make_fstring("CData"));

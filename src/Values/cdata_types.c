@@ -1,5 +1,5 @@
 #include "namespaces.h"
-#include "Globals/tError.h"
+#include "Globals/error.h"
 
 TCDataType NamespaceEntry_Type = { .name = "NamespaceEntry" }, *NamespaceEntryType = &NamespaceEntry_Type;
 

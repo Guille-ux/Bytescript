@@ -1,12 +1,35 @@
 #include "Values/tutils.h"
-#include "Globals/tError.h"
+#include "Globals/error.h"
 #include "Lexer/lexer.h"
+
+#include <sys/stat.h>
+#include <windows.h>
 
 
 TValue to_return_value(TValue returnv[], size_t returnc) {
     if (returnc == 1) return *returnv;
     if (returnc == 0) return NIL;
     return new_table(returnv, returnc);
+}
+
+TValue import_path_finder(TValue path) {
+    struct stat st;
+
+    char buff[32767]; GetModuleFileName(NULL, buff, 32767);
+    char* last = strrchr(buff, '\\'); if (last) *(last + 1) = '\0';
+
+    TValue exec_path = make_fstring(buff);
+    TValue stdlib_path = concat_string((TValue[2]){ exec_path, make_fstring("stdlib/") }, 2);
+
+    TValue stdlib_try = concat_string((TValue[2]){ stdlib_path, path }, 2);
+
+    if (!stat(AS_STRING(path)->str, &st)) return path;
+    if (!stat(AS_STRING(stdlib_try)->str, &st)) return stdlib_try;
+
+    TValue error_message = make_fstring("Could not find file <%s>");
+    error_message = format_string((TValue[2]){ error_message, path }, 2);
+
+    call_error(new_failed_allocation_error, AS_STRING(error_message)->str);
 }
 
 char* read_string() {

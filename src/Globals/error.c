@@ -1,4 +1,4 @@
-#include "Globals/tError.h"
+#include "Globals/error.h"
 #include "Globals/string.h"
 #include "bytescript.h"
 
@@ -20,7 +20,7 @@ void initialize_error_class() {
         new_cfunc(new_error)
     };
 
-    easy_map("src/Globals/maps/error_map.bs");
+    easy_map("error_map.bs");
     Error_class = new_class(NULL, Error_fields, 0, sizeof(Error_fields) / sizeof(Error_fields[0]));
 
     TypeError = new_class(&Error_class, (TValue[1]){ new_cfunc(new_type_error) }, 1, 1);

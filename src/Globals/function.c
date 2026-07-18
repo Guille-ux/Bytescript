@@ -8,7 +8,7 @@ void initialize_function_class() {
 
     };
 
-    easy_map("src/Globals/maps/function_map.bs");
+    easy_map("function_map.bs");
     Function_class = new_class(NULL, NULL, 0, sizeof(Function_fields) / sizeof(TValue));
 
     add_global(Function_class, make_fstring("Function"));

@@ -1,5 +1,5 @@
 #include "lexer.h"
-#include "Globals/tError.h"
+#include "Globals/error.h"
 #include "Globals/string.h"
 
 #include <stdlib.h>
