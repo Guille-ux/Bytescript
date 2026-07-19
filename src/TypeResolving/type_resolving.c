@@ -716,11 +716,9 @@ static void resolve_import_loading(Node* node, TypesContext* context, TValue typ
 
         TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
         TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
-        TValue idk = get_value_from_hashtable(id_namespace, make_fstring("max"));
         func_namespace = copy_table(&func_namespace, 1);
         id_namespace = copy_table(&id_namespace, 1);
 
-        idk = get_value_from_hashtable(id_namespace, make_fstring("max"));
         add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
         close_resolve_context(import_context);
     }

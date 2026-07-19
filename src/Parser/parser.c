@@ -376,7 +376,7 @@ Node* import_expr(ParseResult* res) {
     else {
         HMODULE dll = LoadLibrary(AS_STRING(module)->str);
         void* filename_ptr = GetProcAddress(dll, "bytescript_module_map");
-        
+
         if (!filename_ptr) {
             TValue error_message = make_fstring("Could not find a map for module '%s'. Make sure to store the path to your module's map in a variable of named : 'bytescript_module_map'");
             error_message = format_string((TValue[2]){ error_message, module }, 2);

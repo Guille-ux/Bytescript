@@ -1076,14 +1076,14 @@ int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, T
 int compile_load_cmodule(Node* node, Scope* context, BytecodeInstruction instr, TValue type) {
     // setting up map
 
-    Scope* import_map = new_scope();
-    compile(node->node.importNode.ast, import_map);
+    Scope* import_scope = new_scope();
+    compile(node->node.importNode.ast, import_scope);
 
-    TValue symbols = TBL_TO_TVALUE(import_map->symbols);
+    TValue symbols = TBL_TO_TVALUE(import_scope->symbols);
     symbols = copy_table(&symbols, 1);
 
     TValue namespace = table_as_namespace(symbols);
-    TValue map = close_context(import_map);
+    TValue map = close_context(import_scope);
     tfree(&map, 1);
 
     // loading the module
