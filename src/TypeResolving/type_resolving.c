@@ -182,7 +182,8 @@ TValue resolve_type_call(Node* node, TypesContext* context) {
             check_call_types(node, args, context, node->node.CallNode.target->node.VarAcess.name);
             return (node->type = desc->return_type);
         }
-    }
+        
+    } else for (int i = 0; i < node->node.CallNode.args.len; i++) resolve_type(node->node.CallNode.args.nodes[i], context);
 
     return (node->type = varType);
 }

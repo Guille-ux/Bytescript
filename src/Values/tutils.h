@@ -27,6 +27,7 @@ TValue to_return_value(TValue returnv[], size_t returnc);
 TValue import_path_finder(TValue path);
 char* read_string();
 void print_tokens(Token* tokens);
+void print_hash_table(TTable* tab);
 int get_linked_list_len(struct TValueLinkedList list);
 void linked_list_to_array(struct TValueLinkedList list, TValue array[], size_t len);
 

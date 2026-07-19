@@ -1,12 +1,12 @@
 CC = gcc
 CFLAGS = -I./ -I../ -I../src
 
-MATH_SRC := $(wildcard Math/*.c)
-MATH_OBJ := $(MATH_SRC:.c=.o)
-MATH := $(MATH_SRC:%.c=../dist/stdlib/%.dll)
+SRC := $(wildcard */*.c)
+OBJS := $(SRC:.c=.o)
+DLL := $(SRC:%.c=../dist/stdlib/%.dll)
 
 OBJ := $(MATH_OBJ:%.o=../build/%.o)
-TARGET := $(MATH)
+TARGET := $(DLL)
 
 .PRECIOUS: $(OBJ)
 

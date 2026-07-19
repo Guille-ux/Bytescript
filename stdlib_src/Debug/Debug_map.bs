@@ -1,0 +1,6 @@
+func var assert(Number condition, String message) end
+
+func var panic(String message) end
+
+func var trace() end
+func String stack() end

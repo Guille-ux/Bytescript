@@ -25,6 +25,7 @@ __declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc)
         new_cfunc(acos_math),
         new_cfunc(atan_math),
         new_cfunc(atan2_math),
+        new_cfunc(exp_math),
         new_cfunc(log_math),
         new_cfunc(log10_math),
         new_cfunc(sign_math),
@@ -138,7 +139,8 @@ TValue log10_math(TValue* argv, size_t argc) {
 }
 
 TValue sign_math(TValue* argv, size_t argc) {
-
+    MIN_ARGC(1);
+    return NUM_AS_TVALUE((argv[0].num > 0) - (argv[0].num < 0));
 }
 
 TValue is_inf_math(TValue* argv, size_t argc) {
@@ -147,9 +149,11 @@ TValue is_inf_math(TValue* argv, size_t argc) {
 }
 
 TValue deg_math(TValue* argv, size_t argc) {
-
+    MIN_ARGC(1);
+    return NUM_AS_TVALUE(argv[0].num * (180 / pi_math.num));
 }
 
 TValue rad_math(TValue* argv, size_t argc) {
-
+    MIN_ARGC(1);
+    return NUM_AS_TVALUE(argv[0].num * (pi_math.num / 180));
 }

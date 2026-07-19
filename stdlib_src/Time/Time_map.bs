@@ -1,0 +1,4 @@
+func Number time() end
+func Number clock() end
+
+func var sleep(Number milliseconds) end

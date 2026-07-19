@@ -1,0 +1,4 @@
+func Table parse(String json) end
+func String stringify(var value) end
+
+func Number valid(String json) end

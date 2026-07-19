@@ -1,0 +1,2 @@
+func String encode(String text) end
+func String decode(String text) end

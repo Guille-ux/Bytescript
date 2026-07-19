@@ -67,7 +67,26 @@ void print_tokens(Token* tokens) {
 }
 
 void print_hash_table(TTable* tab) {
-    
+    printf("{\n");
+
+    for (int i = 0; i < tab->hash_table.capacity; i++) {
+        Bucket* buck = tab->hash_table.array + i;
+        TValue key = buck->pair.key;
+        TValue value = buck->pair.value;
+
+        if (!IS_NIL(key) && !IS_NIL(value)) { printf("\t"); print((TValue[2]){ key, value }, 2); }
+        if (buck->sub.arr) {
+            for (int j = 0; j < buck->sub.capacity; j++) {
+                Pair* pair = buck->sub.arr + j;
+                TValue sub_key = pair->key;
+                TValue sub_value = pair->value;
+
+                if (!IS_NIL(sub_key) && !IS_NIL(sub_value)) { printf("\t\t"); print((TValue[2]){ sub_key, sub_value }, 2); }
+            }
+        }
+    }
+
+    printf("}\n");
 }
 
 int get_linked_list_len(struct TValueLinkedList list) {

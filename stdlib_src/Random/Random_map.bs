@@ -1,0 +1,5 @@
+func var seed(Number seed) end
+
+func Number random() end
+func Number range(Number min, Number max) end
+func Number integer(Number min, Number max) end

@@ -1,0 +1,10 @@
+func Table get(String url) end
+
+func Table post(String url, var body) end
+func Table put(String url, var body) end
+func Table patch(String url, var body) end
+
+func Table delete(String url) end
+
+func Table head(String url) end
+func Table options(String url) end
