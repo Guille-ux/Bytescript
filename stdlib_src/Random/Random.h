@@ -1,7 +1,7 @@
 #ifndef TRANDOM_H
 #define TRANDOM_H
 
-#include "Values/bytev.h"
+#include "bytescript.h"
 
 extern char* bytescript_module_map;
 TValue bytescript_module_loader(TValue* argv, size_t argc);

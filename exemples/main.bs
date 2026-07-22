@@ -1,2 +1,2 @@
-import "OS.dll" as OS end
-print(OS.run("dist/bytescript exemples/test.bs"))
+import "Base64.dll" as Base64 end
+print(Base64.encode("Ma"))

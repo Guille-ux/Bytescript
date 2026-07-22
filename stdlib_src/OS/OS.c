@@ -42,14 +42,14 @@ TValue cwd_os(TValue* argv, size_t argc) {
 }
 
 TValue chdir_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.chdir");
     _chdir(AS_STRING(argv[0])->str);
 
     return NIL;
 }
 
 TValue absolute_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.absolute");
 
     TStr* str = AS_STRING(*argv);
     size_t len = GetFullPathNameA(str->str, 0, NULL, NULL);
@@ -59,7 +59,7 @@ TValue absolute_os(TValue* argv, size_t argc) {
 }
 
 TValue normalize_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.normalize");
 
     struct StrLinkedList stack = { .str = NULL, .len = 0, .next = NULL };
 
@@ -112,14 +112,14 @@ TValue normalize_os(TValue* argv, size_t argc) {
 }
 
 TValue filename_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.filename");
     char* filename = strrchr(AS_STRING(argv[0])->str, '/');
 
     return !filename ? *argv : make_fstring(filename);
 }
 
 TValue stem_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.stem");
     TStr* str = AS_STRING(argv[0]);
 
     char* filename = strrchr(str->str, '/');
@@ -132,14 +132,14 @@ TValue stem_os(TValue* argv, size_t argc) {
 }
 
 TValue ext_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.ext");
     char* start = strrchr(AS_STRING(argv[0])->str, '.');
 
     return start ? make_fstring(start) : make_fstring("");
 }
 
 TValue parent_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.parent");
     TStr* str = AS_STRING(absolute_os(argv, 1));
 
     char* filename = strrchr(str->str, '\\');
@@ -150,22 +150,22 @@ TValue parent_os(TValue* argv, size_t argc) {
 
 TValue join_os(TValue* argv, size_t argc) {
     MIN_ARGC(2);
-    TYPE_CHECK(0, STRING, "String", "OS.env");
-    TYPE_CHECK(1, STRING, "String", "OS.env");
+    TYPE_CHECK(0, STRING, "String", "OS.join");
+    TYPE_CHECK(1, STRING, "String", "OS.join");
 
     TValue str = concat_string((TValue[2]){ *argv, make_fstring("/") }, 2);
     return concat_string((TValue[2]){ str, argv[1] }, 2);
 }
 
 TValue run_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.env");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "OS.run");
     TStr* str = AS_STRING(absolute_os(argv, 1));
 
     return NUM_AS_TVALUE(system(str->str));
 }
 
 TValue exit_os(TValue* argv, size_t argc) {
-    MIN_ARGC(1); NUM_CHECK(0, "OS.env");
+    MIN_ARGC(1); NUM_CHECK(0, "OS.exit");
     exit(argv[0].num);
 }
 

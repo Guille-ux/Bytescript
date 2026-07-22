@@ -1,7 +1,6 @@
 #include <sys/time.h>
 
 #include "Random/Random.h"
-#include "src/Globals/globals.h"
 
 __declspec(dllexport) char* bytescript_module_map = "Random_map.bs";
 __declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc) {
