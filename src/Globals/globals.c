@@ -9,7 +9,7 @@
 #include "utils/disassembler.h"
 #include "Parser/nodes.h"
 #include "TypeResolving/type_specifiers.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 
 
 TValue globals;

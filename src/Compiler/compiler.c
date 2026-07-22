@@ -4,7 +4,7 @@
 #include "Compiler/compiler.h"
 #include "TypeResolving/type_specifiers.h"
 #include "Globals/Module/module.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include "labeler.h"
 
 #define false 0

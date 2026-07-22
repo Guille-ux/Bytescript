@@ -1,5 +1,3 @@
-func Table arguments() end
-
 func String env(String name) end
 
 func String cwd() end
@@ -10,7 +8,7 @@ func String normalize(String path) end
 
 func String filename(String path) end
 func String stem(String path) end
-func String extension(String path) end
+func String ext(String path) end
 func String parent(String path) end
 
 func String join(String a, String b) end

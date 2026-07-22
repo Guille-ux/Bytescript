@@ -1,7 +1,7 @@
 #include "Globals/Module/module.h"
 #include "Globals/string.h"
 #include "Globals/globals.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 
 TValue loaded_modules;
 TValue loaded_returns;

@@ -5,7 +5,7 @@
 #include "Values/oop.h"
 #include "Globals/table.h"
 #include "Globals/string.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 
 
 TValue Table_class;

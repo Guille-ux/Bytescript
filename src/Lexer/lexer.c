@@ -43,7 +43,7 @@ static inline void make_word(Token* tp, char** text) {
     char c = **text;
     size_t len = 1;
 
-    while (isalpha((c = *++*text)) || c == '_') len++;
+    while (isalpha((c = *++*text)) || isdigit(**text) || c == '_') len++;
     if (is_keyword(pst_text, len)) {
         TValue keyword = make_string(pst_text, len);
         TStr* keyword_str = AS_STRING(keyword);
@@ -113,6 +113,8 @@ TValue make_string_token(char** text, char initializer) {
 
     TValue str =  make_string(buff, len);
     free(buff);
+
+    if (!(*text)) --*text;
     return str;
 }
 

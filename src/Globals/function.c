@@ -1,5 +1,5 @@
 #include "Values/oop.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include "Globals/globals.h"
 
 TValue Function_class;

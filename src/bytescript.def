@@ -1,0 +1,84 @@
+LIBRARY bytescript.dll
+EXPORTS
+    ; -------- BYTESCRIPT -------- 
+
+    intialize_dependencies
+    initialize_type_specifiers
+    initialize_oop
+    initialize_globals
+
+    simple_parse
+    easy_parse
+    easy_map
+    easy_compile
+    exec
+
+    ; -------- VM -------- 
+
+    vm_run
+
+    ; -------- VALUES -------- 
+
+    new_class
+    new_object
+    import_path_finder
+
+    ; -------- GLOBALS -------- 
+
+    globals
+    print
+    tfree
+    ttypeof
+    disassemble
+    add_global
+    make_global
+    make_global_function
+    get_global
+
+        ; -------- TABLE -------- 
+
+        new_table
+        free_table
+        pop_table
+        shrink_table
+        expand_table
+        len_table
+        reserve_table
+        print_table
+        slice_table
+        fill_table
+        copy_table
+        insert_table
+        append_hash_table
+        get_table
+        clean_table
+        reset_table
+        hashed_keys_table
+        hashed_values_table
+        buckets_table
+        in_array_table
+        hash_value_table
+
+        ; -------- STRING -------- 
+
+        compare_string
+        concat_string
+        format_string
+        to_string_string
+        make_string
+        make_fstring
+
+        ; -------- ERROR -------- 
+
+        new_error
+        new_type_error
+        new_index_error
+        new_syntax_error
+        new_invalid_args_error
+        new_stack_overflow_error
+        new_incorrect_lvalue_error
+        new_failed_allocation_error
+        new_invalid_identifier_error
+        new_unknown_identifier_error
+        new_unidentified_character_error
+        call_error

@@ -1,3 +1,2 @@
-
-import "math.dll" as math end
-print(math.deg(math.pi))
+import "OS.dll" as OS end
+print(OS.normalize("hello/.././a/"))

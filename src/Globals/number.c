@@ -1,6 +1,6 @@
 #include "Globals/number.h"
 #include "Values/oop.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include "Globals/globals.h"
 
 TValue Number_class;

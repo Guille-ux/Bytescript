@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "Math/math.h"
+#include "Math/Math.h"
 #include "src/Globals/globals.h"
 
 __declspec(dllexport) char* bytescript_module_map = "math_map.bs";

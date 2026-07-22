@@ -3,7 +3,7 @@
 #include "Values/oop.h"
 #include "stdlib_src/Math/math_utils.h"
 
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include <stdbool.h>
 
 

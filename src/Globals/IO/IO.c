@@ -1,7 +1,7 @@
 #include "Globals/IO/IO.h"
 #include "Globals/IO/File.h"
 #include "Globals/string.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include "Globals/globals.h"
 
 

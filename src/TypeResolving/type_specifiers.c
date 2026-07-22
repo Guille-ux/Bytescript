@@ -1,5 +1,5 @@
 #include "TypeResolving/type_specifiers.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 #include "Globals/table.h"
 
 TValue varType;

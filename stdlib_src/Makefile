@@ -6,6 +6,7 @@ OBJS := $(SRC:.c=.o)
 DLL := $(SRC:%.c=../dist/stdlib/%.dll)
 
 OBJ := $(MATH_OBJ:%.o=../build/%.o)
+C_API := ../dist/bytescript.a
 TARGET := $(DLL)
 
 .PRECIOUS: $(OBJ)
@@ -33,7 +34,7 @@ debug : main
 all: o_three
 
 ../dist/stdlib/%.dll: ../build/%.o ../dist/stdlib/%_map.bs | ../dist/stdlib
-	$(CC) $(CFLAGS) -shared ../build/$(notdir $<) -o ../dist/stdlib/$(notdir $@)
+	$(CC) $(CFLAGS) -shared ../build/$(notdir $<) $(C_API) -o ../dist/stdlib/$(notdir $@)
 
 ../dist/stdlib/%.bs: ../dist/stdlib
 	cp $*.bs ../dist/stdlib

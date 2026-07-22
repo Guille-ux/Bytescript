@@ -1,6 +1,6 @@
 #include "Globals/error.h"
 #include "Globals/string.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 
 TValue Error_class;
 TValue TypeError;

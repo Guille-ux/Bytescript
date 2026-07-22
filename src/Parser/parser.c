@@ -6,7 +6,7 @@
 #include "Globals/table.h"
 #include "Parser/parser.h"
 #include "TypeResolving/type_specifiers.h"
-#include "bytescript.h"
+#include "Values/bytescript_funcs.h"
 
 TValue user_types;
 

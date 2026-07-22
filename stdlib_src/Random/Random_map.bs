@@ -1,4 +1,4 @@
-func var seed(Number seed) end
+func var seed() end
 
 func Number random() end
 func Number range(Number min, Number max) end
