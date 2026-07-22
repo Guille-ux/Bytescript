@@ -6,6 +6,7 @@
 
 #define MIN_ARGC(n)                     { if (argc < n) return NIL; }
 #define STRICT_MIN_ARGC(n, fname)       { if (argc < n) call_error(new_invalid_args_error, "function <" fname "> take " #n " arguments"); }
+#define NUM_CHECK(n, fname)             { if (!IS_NUM(argv[n])) call_error(new_type_error, "function <" fname "> take type <Number> as " #n "th argument"); }
 #define TYPE_CHECK(n, type, tnm, fname) { if (TYPE(argv[n]) != type) call_error(new_type_error, "function <" fname "> take type <" tnm "> as " #n "th argument"); }
 
 void intialize_dependencies();

@@ -1,2 +1,2 @@
 import "OS.dll" as OS end
-print(OS.normalize("hello/.././a/"))
+print(OS.run("dist/bytescript exemples/test.bs"))

@@ -13,5 +13,5 @@ func String parent(String path) end
 
 func String join(String a, String b) end
 
-func Table run(String command) end
+func Number run(String command) end
 func var exit(Number code) end
