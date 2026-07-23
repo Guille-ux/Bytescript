@@ -1,5 +1,2 @@
-import "Base64.dll" as Base64 end
-
-String encoded = Base64.encode("Hello World!M")
-print(encoded)
-print(Base64.decode(encoded))
+import "Debug.dll" as Debug end
+Debug.assert("bob", "1 + 1 isn't equal 3?!")

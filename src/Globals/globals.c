@@ -179,6 +179,13 @@ int make_global_function(TValue value, TValue name, TValue desc) {
     return make_global(value, name, FunctionType);
 }
 
+int overwrite_global(TValue value, TValue name) {
+    int idx = get_value_from_hashtable(globals, name).num;
+    AS_TABLE(globals)->array.array[idx] = value;
+
+    return idx;
+}
+
 TValue get_global(TValue name) {
     return get_from_table(globals, get_value_from_hashtable(globals, name));
 }

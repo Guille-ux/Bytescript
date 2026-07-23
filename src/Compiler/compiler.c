@@ -607,7 +607,7 @@ int compile_method_def(Node* node, Scope* context) {
     append_symbol(func_context, make_fstring("self"), self_r);
 
     if (node->nt == NT_CONSTRUCTOR) {
-        int class_r = register_global(class_idx, context, -1);
+        int class_r = free_register(register_global(class_idx, func_context, -1), func_context);
         int field_count = get_namespace_value(get_value_from_hashtable(globals_map, undunder(class_name))).num;
 
         emit(OP_NEWOBJECT, func_context);

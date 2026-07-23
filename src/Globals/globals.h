@@ -28,6 +28,7 @@ TValue disassemble(TValue* argv, size_t argc);
 int add_global(TValue value, TValue name);
 int make_global(TValue value, TValue name, TValue type);
 int make_global_function(TValue value, TValue name, TValue desc);
+int overwrite_global(TValue value, TValue name);
 TValue make_globals_types_from_file(TValue filename);
 TValue get_global(TValue name);
 

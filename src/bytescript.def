@@ -32,6 +32,7 @@ EXPORTS
     disassemble
     add_global
     make_global
+    overwrite_global
     make_global_function
     get_global
 
@@ -70,6 +71,7 @@ EXPORTS
 
         ; -------- ERROR -------- 
 
+        Error_class
         new_error
         new_type_error
         new_index_error

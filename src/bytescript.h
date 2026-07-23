@@ -33,6 +33,7 @@ TValue ttypeof(TValue* argv, size_t argc);
 TValue disassemble(TValue* argv, size_t argc);
 int add_global(TValue value, TValue name);
 int make_global(TValue value, TValue name, TValue type);
+int overwrite_global(TValue value, TValue name);
 int make_global_function(TValue value, TValue name, TValue desc);
 TValue get_global(TValue name);
 
@@ -65,6 +66,7 @@ TValue to_string_string(TValue* argv, size_t argc);
 TValue make_string(char* string, size_t len);
 TValue make_fstring(char* str);
 
+extern TValue Error_class;
 TValue new_error(TValue* argv, size_t argc);
 TValue new_type_error(TValue* argv, size_t argc);
 TValue new_index_error(TValue* argv, size_t argc);
