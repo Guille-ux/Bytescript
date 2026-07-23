@@ -1,2 +1,5 @@
 import "Base64.dll" as Base64 end
-print(Base64.encode("Ma"))
+
+String encoded = Base64.encode("Hello World!M")
+print(encoded)
+print(Base64.decode(encoded))

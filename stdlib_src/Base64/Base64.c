@@ -41,8 +41,8 @@ TValue encode_base64(TValue* argv, size_t argc) {
         char pad2 = i + 2 < str->len ? str->str[i + 2] : 0;
         size_t idx = i / 3 * 4;
 
-        buffer[idx + 0] = (str->str[i + 0] & 0xfc) >> 2;
-        buffer[idx + 1] = ((str->str[i + 0] & 0x03) << 4) | ((pad1 & 0xf0) >> 4);
+        buffer[idx + 0] = (str->str[i] & 0xfc) >> 2;
+        buffer[idx + 1] = ((str->str[i] & 0x03) << 4) | ((pad1 & 0xf0) >> 4);
         buffer[idx + 2] = ((pad1 & 0x0f) << 2) | ((pad2 & 0xc0) >> 6);
         buffer[idx + 3] = pad2 & 0x3f;
     }
@@ -53,5 +53,27 @@ TValue encode_base64(TValue* argv, size_t argc) {
 }
 
 TValue decode_base64(TValue* argv, size_t argc) {
-    
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "Base64.encode");
+
+    TStr* str = AS_STRING(*argv);
+
+    size_t padding = 0; for (int i = str->len - 1; str->str[i] == '='; i--) padding++;
+    size_t cuts = str->len / 4;
+    size_t buff_len = cuts * 3 - padding;
+    char buffer[buff_len + 1];
+
+    for (int i = 0; i < str->len; i += 4) {
+        size_t idx = i / 4 * 3;
+        size_t decode1 = base64_decode_table[str->str[i + 0]];
+        size_t decode2 = base64_decode_table[str->str[i + 1]];
+        size_t decode3 = str->str[i + 2] == '=' ? '\0' : base64_decode_table[str->str[i + 2]];
+        size_t decode4 = str->str[i + 3] == '=' ? '\0' : base64_decode_table[str->str[i + 3]];
+
+        buffer[idx + 0] = (decode1 << 2) | (decode2 >> 4);
+        buffer[idx + 1] = (decode2 << 4) | (decode3 >> 2);
+        buffer[idx + 2] = (decode3 << 6) | decode4;
+    }
+
+    buffer[buff_len] = '\0';
+    return make_fstring(buffer);
 }
