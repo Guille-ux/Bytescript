@@ -285,7 +285,6 @@ int compile_call(Node* node, Scope* context) {
 
 int compile_var_access(Node* node, Scope* context) {
     TValue tidx = get_symbol_register(context, node->node.VarAcess.name);
-
     if (IS_NIL(tidx)) {
         TValue global_idx = get_value_from_hashtable(globals, node->node.VarAcess.name);
 
@@ -1058,7 +1057,6 @@ int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, T
 
     TValue module = close_context(import_context);
     int mod_idx = module_load(module, type);
-    module_load_returns(NUM_AS_TVALUE(0), type);
 
     int r = register_first(context);
     if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);
@@ -1100,7 +1098,6 @@ int compile_load_cmodule(Node* node, Scope* context, BytecodeInstruction instr, 
 
     CFunc loader = (CFunc)loader_ptr;
     int mod_idx = module_load(new_cfunc(loader), type);
-    module_load_returns(NUM_AS_TVALUE(0), type);
 
     int r = register_first(context);
     if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);

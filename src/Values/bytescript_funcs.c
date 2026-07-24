@@ -22,7 +22,7 @@ void intialize_dependencies() {
 Node* simple_parse(char filename[]) {
     TValue file_path = import_path_finder(make_fstring(filename));
 
-    TValue file = open_IO((TValue[2]){ NIL, file_path }, 2);
+    TValue file = open_IO((TValue[1]){ file_path }, 1);
     TValue srccode = read_file(&file, 1);
     TStr* srcode_str = AS_STRING(srccode);
 

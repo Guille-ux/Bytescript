@@ -1,2 +1,9 @@
-import "Debug.dll" as Debug end
-Debug.assert("bob", "1 + 1 isn't equal 3?!")
+
+func main()
+    import "Json.dll" as Json end
+
+    File main = IO:open("exemples/main.json", "r")
+    Json:parse(main:read()):print()
+end
+
+main()

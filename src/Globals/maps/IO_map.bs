@@ -4,5 +4,5 @@ end
 
 class IO
     File self.stdout
-    func static File open(String filename) end
+    func static File open(String filename, String openType) end
 end

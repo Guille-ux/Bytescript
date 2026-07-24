@@ -315,7 +315,7 @@ TValue resolve_type_repeat_loop(Node* node, TypesContext* context) {
 
 TValue resolve_type_require(Node* node, TypesContext* context) {
     TValue type = node->node.importNode.module;
-    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
+    type = concat_string((TValue[2]){ make_fstring("__Module "), type }, 2);
 
     resolve_import_loading(node, context, type);
 
@@ -325,7 +325,7 @@ TValue resolve_type_require(Node* node, TypesContext* context) {
 
 TValue resolve_type_import(Node* node, TypesContext* context) {
     TValue type = node->node.importNode.module;
-    type = concat_string((TValue[2]){ make_fstring("Module "), type }, 2);
+    type = concat_string((TValue[2]){ make_fstring("__Module "), type }, 2);
 
     resolve_import_loading(node, context, type);
 

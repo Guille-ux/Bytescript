@@ -8,7 +8,7 @@ void initialize_file_class() {
         new_cfunc(read_file)
     };
 
-    File_class = new_class(NULL, NULL, 0, sizeof(File_fields) / sizeof(TValue));
+    File_class = new_class(NULL, File_fields, 0, sizeof(File_fields) / sizeof(TValue));
     add_global(File_class, make_fstring("File"));
 }
 

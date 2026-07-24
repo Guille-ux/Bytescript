@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I../src
+CFLAGS = -I./ -I../ -I../src -I../dist
 
 SRC := $(wildcard */*.c)
 OBJS := $(SRC:.c=.o)

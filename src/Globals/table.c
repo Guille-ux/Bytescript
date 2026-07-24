@@ -187,6 +187,32 @@ TValue print_table(TValue* argv, size_t argc) {
         printf("\t");
         print(ptr->array.array + i, 1);
     }
+
+    TValue pair_format = make_fstring("[%s] : %s");
+    for (int i = 0; i < ptr->hash_table.capacity; i++) {
+        Bucket* buck = ptr->hash_table.array + i;
+        TValue key = buck->pair.key;
+        TValue value = buck->pair.value;
+
+        if (!IS_NIL(key) && !IS_NIL(value)) {
+            TValue to_print = format_string((TValue[3]){ pair_format, to_string_string(&key, 1), to_string_string(&value, 1) }, 3);
+            printf("\t"); print(&to_print, 1);
+        }
+
+        if (buck->sub.arr) {
+            for (int j = 0; j < buck->sub.capacity; j++) {
+                Pair* pair = buck->sub.arr + j;
+                TValue sub_key = pair->key;
+                TValue sub_value = pair->value;
+
+                if (!IS_NIL(sub_key) && !IS_NIL(sub_value)) {
+                    TValue to_print = format_string((TValue[3]){ pair_format, to_string_string(&sub_key, 1), to_string_string(&sub_value, 1) }, 3);
+                    printf("\t"); print(&to_print, 1);
+                }
+            }
+        }
+    }
+
     printf("}\n");
 
     return argv[0];

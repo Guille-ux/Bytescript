@@ -1,8 +1,7 @@
 #ifndef BYTESCRIPT_API
 #define BYTESCRIPT_API
 
-#include "Values/bytev.h"
-#include "Parser/nodes.h"
+#include "bytev.h"
 
 #define MIN_ARGC(n)                     { if (argc < n) return NIL; }
 #define STRICT_MIN_ARGC(n, fname)       { if (argc < n) call_error(new_invalid_args_error, "function <" fname "> take " #n " arguments"); }
@@ -14,9 +13,6 @@ void initialize_type_specifiers();
 void initialize_oop();
 void initialize_globals();
 
-Node* simple_parse(char filename[]);
-Node* easy_parse(char filename[]);
-Node* easy_map(char filename[]);
 TValue easy_compile(char filename[]);
 TValue exec(TValue* argv, size_t argc);
 
@@ -79,5 +75,10 @@ TValue new_invalid_identifier_error(TValue* argv, size_t argc);
 TValue new_unknown_identifier_error(TValue* argv, size_t argc);
 TValue new_unidentified_character_error(TValue* argv, size_t argc);
 void call_error(CFunc err_func, char details[]);
+
+extern TValue IO_stdout;
+TValue open_IO(TValue* argv, size_t argc);
+TValue read_file(TValue* argv, size_t argc);
+TValue write_file(TValue* argv, size_t argc);
 
 #endif

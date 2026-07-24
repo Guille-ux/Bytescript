@@ -84,3 +84,11 @@ EXPORTS
         new_unknown_identifier_error
         new_unidentified_character_error
         call_error
+
+        ; -------- IO -------- 
+
+        IO_stdout
+        open_IO
+        
+        read_file
+        write_file

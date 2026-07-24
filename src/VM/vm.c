@@ -404,18 +404,18 @@ static TValue run_function(TValue func, VMState context) {
 static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3, TValue* return_ptr) {
     int mod_idx = off16_to_int16(arg2, arg3);
     TValue func = get_from_table(loaded_modules, NUM_AS_TVALUE(mod_idx));
+    TValue module;
 
     TFunc* tfunc = AS_FUNC(func);
     if (tfunc->isCfunc) {
         TValue res = tfunc->cfunc(context.sp, 256);
-        TValue module = new_object(Module_class, NULL, 256);
+        module = new_object(Module_class, NULL, 256);
         memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
 
         AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
         AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
 
         if (return_ptr) *return_ptr = res;
-        return module;
 
     } else {
         StackFrame caller_frame = {
@@ -431,13 +431,15 @@ static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3,
         TValue res = run_function(func, context);
         context.frame = *caller_frame.prev;
 
-        TValue module = new_object(Module_class, NULL, 256);
+        module = new_object(Module_class, NULL, 256);
         memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
 
         AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
         AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
 
         if (return_ptr) *return_ptr = res;
-        return module;
     }
+
+    AS_TABLE(globals)->array.array[(int)get_from_table(global_idxs_module, NUM_AS_TVALUE(mod_idx)).num] = module;
+    return module;
 }

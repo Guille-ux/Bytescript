@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I../stdlib_src
+CFLAGS = -I./ -I../ -I./Values
 
 SRC := $(shell find . -name '*.c')
 MAIN_SRC := $(wildcard *.c)
@@ -12,7 +12,7 @@ LIB_OBJ  := $(patsubst %.c, ../build/%.o, $(notdir $(LIB_SRC)))
 OBJ    		:= $(MAIN_OBJ) $(LIB_OBJ)
 MAPS   		:= $(MAPS_SRC:%.bs=../dist/stdlib/%.bs)
 TARGET 		:= $(patsubst %.c, ../dist/%.exe, $(MAIN_SRC))
-C_API		:= ../dist/bytescript.h
+C_API		:= ../dist/bytescript.h ../dist/Values/bytev.h
 
 main : $(TARGET) $(MAPS) $(C_API)
 
