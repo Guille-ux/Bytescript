@@ -72,10 +72,13 @@ void classmap_bin_op(Node* node) {
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
-    TValue lmap = get_namespace_map(get_value_from_hashtable(globals_map, dunder(left->type)));
-    TValue rmap = get_namespace_map(get_value_from_hashtable(globals_map, dunder(right->type)));
-    TValue ldesc = get_value_from_hashtable(lmap, op);
-    TValue rdesc = get_value_from_hashtable(rmap, rop);
+    TValue lmap = get_value_from_hashtable(globals_map, dunder(left->type));
+    TValue rmap = get_value_from_hashtable(globals_map, dunder(right->type));
+
+    TValue lnm = IS_NIL(lmap) ? NIL : get_namespace_map(lmap);
+    TValue rnm = IS_NIL(rmap) ? NIL : get_namespace_map(rmap);
+    TValue ldesc = IS_NIL(lnm) ? NIL : get_value_from_hashtable(lnm, op);
+    TValue rdesc = IS_NIL(rnm) ? NIL : get_value_from_hashtable(rnm, rop);
 
     TValue finalOp = IS_NIL(ldesc) ? rop : op;
     Node* finalArg = IS_NIL(ldesc) ? left : right;

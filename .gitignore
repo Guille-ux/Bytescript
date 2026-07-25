@@ -2,4 +2,4 @@ _grammar.txt
 bytescript.exe
 build
 dist
-lib
+tests

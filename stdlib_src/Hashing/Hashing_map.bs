@@ -1,4 +1,0 @@
-func String md5(String text) end
-func String sha1(String text) end
-func String sha256(String text) end
-func String sha512(String text) end

@@ -1,10 +1,11 @@
+import "Time.dll" as Time end
 
-var pre = debug.benchmarkClock()
+Number pre = Time:clock()
 
-var a = 0
-for i = 1, 100000000 repeat
+Number a = 0
+for i = 0, 100000000 repeat
     a = a + i
 end
 
-var post = debug.benchmarkClock()
-print(tostring(post - pre).." s")
+Number post = Time:clock()
+print(post - pre)

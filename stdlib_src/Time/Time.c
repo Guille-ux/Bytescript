@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <windows.h>
+#include <time.h>
+
+#include "Time/Time.h"
+
+__declspec(dllexport) char* bytescript_module_map = "Time_map.bs";
+__declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc) {
+    TValue fields[] = {
+        new_cfunc(time_time),
+        new_cfunc(clock_time),
+        new_cfunc(sleep_time)
+    };
+
+    size_t field_count = sizeof(fields) / sizeof(fields[0]);
+    memcpy(argv, fields, BSIZE(field_count));
+}
+
+
+TValue time_time(TValue* argv, size_t argc) {
+    return NUM_AS_TVALUE(time(NULL));
+}
+
+TValue clock_time(TValue* argv, size_t argc) {
+    LARGE_INTEGER tick;
+    LARGE_INTEGER freq;
+    QueryPerformanceCounter(&tick);
+    QueryPerformanceFrequency(&freq);
+
+    return NUM_AS_TVALUE((double)tick.QuadPart / freq.QuadPart);
+}
+
+TValue sleep_time(TValue* argv, size_t argc) {
+    if (argc > 0) NUM_CHECK(0, "Time.sleep");
+    Sleep(argc > 0 ? argv[0].num : 1000);
+
+    return NIL;
+}
