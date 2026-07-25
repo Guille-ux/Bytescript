@@ -26,11 +26,21 @@ TValue parse_json(TValue* argv, size_t argc) {
 }
 
 TValue stringify_json(TValue* argv, size_t argc) {
+    MIN_ARGC(1);
 
+    size_t tabs = argc > 1 ? argv[1].num : 0;
+    return stringify_json_value(argv[0], tabs);
 }
 
 TValue valid_json(TValue* argv, size_t argc) {
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "Json.parse");
+    TStr* str = AS_STRING(*argv);
+    char* ptr = str->str;
 
+    TValue parsed = parse_json_value(&ptr);
+    tfree(&parsed, 1);
+
+    return IS_NIL(parsed) ? FALSE_TVALUE : TRUE_TVALUE;
 }
 
 TValue load_json(TValue* argv, size_t argc) {
@@ -50,14 +60,14 @@ TValue parse_json_value(char** str) {
             TValue word = get_next_word(str);
             *str += AS_STRING(word)->len + 1;
 
-            return !strcmp(AS_STRING(word)->str, "true") ? word : NIL;
+            return !strcmp(AS_STRING(word)->str, "true") ? FALSE_TVALUE : NIL;
         }
 
         case 'f': {
             TValue word = get_next_word(str);
             *str += AS_STRING(word)->len + 1;
 
-            return !strcmp(AS_STRING(word)->str, "false") ? word : NIL;
+            return !strcmp(AS_STRING(word)->str, "false") ? TRUE_TVALUE : NIL;
         }
 
         case 'n': {
@@ -152,6 +162,92 @@ TValue get_next_word(char** str) {
     while (*++*str != ' ') len++;
 
     return make_string(*str, len);
+}
+
+TValue add_tab(TValue str) {
+    return concat_string((TValue[2]){ make_fstring("\t"), str }, 2);
+}
+
+TValue add_to_res(TValue* res, TValue value) {
+    *res = concat_string((TValue[2]){ *res, value }, 2);
+}
+
+TValue stringify_json_pair(TValue key, TValue value, size_t tabs) {
+    if (IS_NIL(key) || IS_NIL(value)) return make_fstring("");
+    if (TYPE(key) != STRING) call_error(new_type_error, "Expected a string as object key. in Json");
+
+    char buffer[tabs + 1]; memset(buffer, '\t', tabs); buffer[tabs] = '\0';
+    TValue res = make_fstring(buffer);
+
+    add_to_res(&res, stringify_json_value(key, tabs));
+    add_to_res(&res, make_fstring(" : "));
+    add_to_res(&res, stringify_json_value(value, tabs));
+    add_to_res(&res, make_fstring(",\n"));
+
+    return res;
+}
+
+TValue stringify_json_value(TValue value, size_t tabs) {
+    char buffer[tabs + 1]; memset(buffer, '\t', tabs); buffer[tabs] = '\0';
+    TValue tabs_buffer = make_fstring(buffer);
+    TValue res = make_fstring("");
+
+    switch (TYPE(value)) {
+        case STRING: {
+            TValue str = make_fstring("\"%s\"");
+            str = format_string((TValue[2]){ str, value }, 2);
+
+            add_to_res(&res, str);
+            break;
+        }
+
+        case TABLE: {
+            TTable* target = AS_TABLE(value);
+            TValue table_tabs = add_tab(tabs_buffer);
+            TValue comma = make_fstring(",\n");
+
+            add_to_res(&res, make_fstring("{\n"));
+            add_to_res(&res, table_tabs);
+            add_to_res(&res, make_fstring("[\n"));
+
+            for (int i = 0; i < target->array.len; i++) {
+                add_to_res(&res, add_tab(table_tabs));
+                add_to_res(&res, stringify_json_value(target->array.array[i], tabs + 2));
+                if (i + 1 < target->array.len) add_to_res(&res, comma);
+            }
+
+            add_to_res(&res, make_fstring("\n"));
+            add_to_res(&res, table_tabs);
+            add_to_res(&res, make_fstring("],\n"));
+            add_to_res(&res, table_tabs);
+            add_to_res(&res, make_fstring("{\n"));
+
+            for (int i = 0; i < target->hash_table.capacity; i++) {
+                Bucket* buck = target->hash_table.array + i;
+                add_to_res(&res, stringify_json_pair(buck->pair.key, buck->pair.value, tabs + 2));
+
+                if (buck->sub.arr) {
+                    for (int j = 0; j < buck->sub.capacity; j++) {
+                        Pair* pair = buck->sub.arr + j;
+                        add_to_res(&res, stringify_json_pair(pair->key, pair->value, tabs + 2));
+                    }
+                }
+            }
+
+            add_to_res(&res, table_tabs);
+            add_to_res(&res, make_fstring("}\n"));
+            add_to_res(&res, tabs_buffer);
+            add_to_res(&res, make_fstring("}"));
+            break;
+        }
+
+        default: {
+            if (IS_NUM(value)) add_to_res(&res, to_string_string(&value, 1));
+            break;
+        }
+    }
+
+    return res;
 }
 
 void next_value(char** str) {

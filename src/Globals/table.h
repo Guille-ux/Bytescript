@@ -74,6 +74,8 @@ void collect_key(TValue res, Pair* pair);
 void collect_value(TValue res, Pair* pair);
 TValue collect_bucket(TTable* ptr, BucketCollector bc);
 
+void print_pair(TValue key, TValue value, size_t tabs);
+
 
 static inline TValue get_from_table(TValue table, TValue index) {
     TTable* tb = AS_TABLE(table);

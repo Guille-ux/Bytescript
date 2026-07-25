@@ -18,6 +18,10 @@ TValue parse_json_array(char** str);
 
 TValue make_string_json(char** text, char initializer);
 TValue get_next_word(char** str);
+TValue add_tab(TValue str);
+TValue add_to_res(TValue* res, TValue value);
+TValue stringify_json_pair(TValue key, TValue value, size_t tabs);
+TValue stringify_json_value(TValue value, size_t tabs);
 void next_value(char** str);
 
 #endif

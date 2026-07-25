@@ -122,11 +122,11 @@ TValue format_string(TValue* argv, size_t argc) {
             case 'f': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
             case 'e': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
             case 'g': args[i] = format_n(format_speicifers[i], argv[i + 1]); args_size += AS_STRING(args[i])->len; break;
-            default: call_error(new_invalid_args_error, "Invalid format specifier in function <String.format>");
+            default: call_error(new_invalid_args_error, "Invalid format specifier in function <String.format>");   break;
         }
     }
 
-    TStr* new = malloc(sizeof(TStr) + ptr->len - base_size + args_size);
+    TStr* new = malloc(sizeof(TStr) + ptr->len - base_size + args_size + 1);
     new->len = ptr->len - base_size + args_size;
 
     current_format = 0;

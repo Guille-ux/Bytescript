@@ -30,6 +30,7 @@ void initialize_table_class() {
         new_cfunc(hashed_keys_table),
         new_cfunc(hashed_values_table),
         new_cfunc(buckets_table),
+        new_cfunc(in_array_table),
 
         new_cfunc(hash_value_table),
 
@@ -180,41 +181,31 @@ TValue reserve_table(TValue* argv, size_t argc) {
 
 TValue print_table(TValue* argv, size_t argc) {
     MIN_ARGC(1)
+
     TTable* ptr = AS_TABLE(argv[0]);
+    size_t tabs = argc > 1 ? argv[1].num : 0;
+
+    char buffer[tabs + 1]; memset(buffer, '\t', tabs); buffer[tabs] = '\0';
 
     printf("{\n");
     for (int i = 0; i < ptr->array.len; i++) {
-        printf("\t");
+        printf("%s\t", buffer);
         print(ptr->array.array + i, 1);
     }
 
-    TValue pair_format = make_fstring("[%s] : %s");
     for (int i = 0; i < ptr->hash_table.capacity; i++) {
         Bucket* buck = ptr->hash_table.array + i;
-        TValue key = buck->pair.key;
-        TValue value = buck->pair.value;
-
-        if (!IS_NIL(key) && !IS_NIL(value)) {
-            TValue to_print = format_string((TValue[3]){ pair_format, to_string_string(&key, 1), to_string_string(&value, 1) }, 3);
-            printf("\t"); print(&to_print, 1);
-        }
+        print_pair(buck->pair.key, buck->pair.value, tabs + 1);
 
         if (buck->sub.arr) {
             for (int j = 0; j < buck->sub.capacity; j++) {
                 Pair* pair = buck->sub.arr + j;
-                TValue sub_key = pair->key;
-                TValue sub_value = pair->value;
-
-                if (!IS_NIL(sub_key) && !IS_NIL(sub_value)) {
-                    TValue to_print = format_string((TValue[3]){ pair_format, to_string_string(&sub_key, 1), to_string_string(&sub_value, 1) }, 3);
-                    printf("\t"); print(&to_print, 1);
-                }
+                print_pair(pair->key, pair->value, tabs + 1);
             }
         }
     }
 
-    printf("}\n");
-
+    printf("%s}\n", buffer);
     return argv[0];
 }
 
@@ -707,4 +698,45 @@ TValue collect_bucket(TTable* ptr, BucketCollector bc) {
     }
 
     return res;
+}
+
+void print_pair(TValue key, TValue value, size_t tabs) {
+    if (IS_NIL(key) || IS_NIL(value)) return;
+
+    char buffer[tabs + 1]; memset(buffer, '\t', tabs); buffer[tabs] = '\0';
+    printf("%s", buffer);
+
+    switch (TYPE(key)) {
+        case STRING:
+            printf("[\"%s\"", AS_STRING(key)->str);
+            break;
+
+        case TABLE:
+            printf("[\n%s", buffer);
+            print_table((TValue[2]){ key, NUM_AS_TVALUE(tabs) }, 2);
+            printf("%s", buffer);
+            break;
+
+        default:
+            printf("[");
+            print(&key, 1);
+            break;
+    }
+
+    printf("] : ");
+
+    switch (TYPE(value)) {
+        case STRING:
+            printf("\"%s\"", AS_STRING(value)->str);
+            break;
+
+        case TABLE:
+            print_table((TValue[2]){ value, NUM_AS_TVALUE(tabs) }, 2);
+            break;
+
+        default:
+            print(&value, 1);
+            break;
+    }
+
 }

@@ -509,7 +509,7 @@ Node* numerics(ParseResult* res) {
             return_node->node.TableNode.values = separated(res, logical, SEPARATOR);
 
             ERR_CHECK(expect(res, TT_RCBRAC, "(RCBRAC : '}') EXPECTED", NULL, NULL))
-            break;
+            res->tokens--; break;
         }
 
         case TT_KWORD : {
