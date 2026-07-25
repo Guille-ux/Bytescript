@@ -80,5 +80,6 @@ extern TValue IO_stdout;
 TValue open_IO(TValue* argv, size_t argc);
 TValue read_file(TValue* argv, size_t argc);
 TValue write_file(TValue* argv, size_t argc);
+TValue close_file(TValue* argv, size_t argc);
 
 #endif

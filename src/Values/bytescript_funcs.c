@@ -28,6 +28,7 @@ Node* simple_parse(char filename[]) {
 
     Token* tokens = make_tokens(srcode_str->str);
     tfree(&srccode, 1);
+    close_file(&file, 1);
 
     return parse(tokens, AS_STRING(file_path)->str);
 }

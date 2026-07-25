@@ -19,10 +19,7 @@ TValue read_file(TValue* argv, size_t argc) {
     TObject* obj = AS_OBJECT(argv[0]);
     TValue tfile = obj->fields[0];
 
-    TCData* filedata = AS_CDATA(tfile);
-    if (!(*filedata == FileDataType)) call_error(new_type_error, "Invalid FileData in <File> object. in function <File.read>");
-
-    FileData* file = (FileData*)filedata;
+    FileData* file = as_filedata(tfile);
 
     fseek(file->handle, 0, SEEK_END);
 
@@ -49,13 +46,24 @@ TValue write_file(TValue* argv, size_t argc) {
     TStr* content = AS_STRING(argv[1]);
     TValue tfile = obj->fields[0];
 
-    TCData* filedata = AS_CDATA(tfile);
-    if (!(*filedata == FileDataType)) call_error(new_type_error, "Invalid FileData in <File> object. in function <File.write>");
-
-    FileData* file = (FileData*)filedata;
+    FileData* file = as_filedata(tfile);
     fwrite(content->str, 1, content->len, file->handle);
     
     return argv[1];
+}
+
+TValue close_file(TValue* argv, size_t argc) {
+    MIN_ARGC(1);
+    if (TYPE(argv[0]) != OBJECT) call_error(new_type_error, "function <File.close> take type <File> as argument");
+
+    TObject* obj = AS_OBJECT(argv[0]);
+    TStr* content = AS_STRING(argv[1]);
+    TValue tfile = obj->fields[0];
+
+    FileData* file = as_filedata(tfile);
+    fclose(file->handle);
+
+    return NIL;
 }
 
 
@@ -65,4 +73,11 @@ TValue new_filedata(FILE* pfile) {
     file_data->handle = pfile;
 
     return CDT_TO_TVALUE((TCData*)file_data);
+}
+
+FileData* as_filedata(TValue value) {
+    TCData* filedata = AS_CDATA(value);
+    if (!(*filedata == FileDataType)) call_error(new_type_error, "Invalid FileData in <File> object. in function <File.write>");
+
+    return (FileData*)filedata;
 }

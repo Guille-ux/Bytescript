@@ -3,4 +3,4 @@ func String stringify(var value) end
 func Number valid(String json) end
 
 func Table load(String path) end
-func Number write(String path, String json) end
+func Number write(String path, Table json) end

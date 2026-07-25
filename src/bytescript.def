@@ -92,3 +92,4 @@ EXPORTS
         
         read_file
         write_file
+        close_file

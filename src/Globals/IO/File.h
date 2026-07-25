@@ -16,7 +16,9 @@ void initialize_file_class();
 
 TValue read_file(TValue* argv, size_t argc);
 TValue write_file(TValue* argv, size_t argc);
+TValue close_file(TValue* argv, size_t argc);
 
 TValue new_filedata(FILE* pfile);
+FileData* as_filedata(TValue value);
 
 #endif

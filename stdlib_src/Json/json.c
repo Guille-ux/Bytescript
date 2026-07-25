@@ -33,7 +33,7 @@ TValue stringify_json(TValue* argv, size_t argc) {
 }
 
 TValue valid_json(TValue* argv, size_t argc) {
-    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "Json.parse");
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "Json.valid");
     TStr* str = AS_STRING(*argv);
     char* ptr = str->str;
 
@@ -44,11 +44,25 @@ TValue valid_json(TValue* argv, size_t argc) {
 }
 
 TValue load_json(TValue* argv, size_t argc) {
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "Json.load");
+    TValue file = open_IO(argv, 1);
+    TValue content = read_file(&file, 1);
 
+    close_file(&file, 1);
+    return parse_json(&content, 1);
 }
 
 TValue write_json(TValue* argv, size_t argc) {
+    MIN_ARGC(2);
+    TYPE_CHECK(0, STRING, "String", "Json.write");
+    TYPE_CHECK(1, TABLE, "Table", "Json.write");
 
+    TValue file = open_IO((TValue[2]){ *argv, make_fstring("w") }, 2);
+    TValue stringified = stringify_json(argv + 1, 1);
+
+    write_file((TValue[2]){ file, stringified }, 2);
+    close_file(&file, 1);
+    return NUM_AS_TVALUE(1);
 }
 
 
@@ -172,18 +186,20 @@ TValue add_to_res(TValue* res, TValue value) {
     *res = concat_string((TValue[2]){ *res, value }, 2);
 }
 
-TValue stringify_json_pair(TValue key, TValue value, size_t tabs) {
+TValue stringify_json_pair(TValue key, TValue value, size_t tabs, size_t* hashed_dones) {
     if (IS_NIL(key) || IS_NIL(value)) return make_fstring("");
     if (TYPE(key) != STRING) call_error(new_type_error, "Expected a string as object key. in Json");
 
     char buffer[tabs + 1]; memset(buffer, '\t', tabs); buffer[tabs] = '\0';
     TValue res = make_fstring(buffer);
+    (*hashed_dones)--;
 
     add_to_res(&res, stringify_json_value(key, tabs));
     add_to_res(&res, make_fstring(" : "));
     add_to_res(&res, stringify_json_value(value, tabs));
-    add_to_res(&res, make_fstring(",\n"));
+    if (*hashed_dones) add_to_res(&res, make_fstring(","));
 
+    add_to_res(&res, make_fstring("\n"));
     return res;
 }
 
@@ -206,7 +222,7 @@ TValue stringify_json_value(TValue value, size_t tabs) {
             TValue table_tabs = add_tab(tabs_buffer);
             TValue comma = make_fstring(",\n");
 
-            add_to_res(&res, make_fstring("{\n"));
+            add_to_res(&res, make_fstring("[\n"));
             add_to_res(&res, table_tabs);
             add_to_res(&res, make_fstring("[\n"));
 
@@ -222,14 +238,15 @@ TValue stringify_json_value(TValue value, size_t tabs) {
             add_to_res(&res, table_tabs);
             add_to_res(&res, make_fstring("{\n"));
 
+            size_t hashed_dones = target->hash_table.len;
             for (int i = 0; i < target->hash_table.capacity; i++) {
                 Bucket* buck = target->hash_table.array + i;
-                add_to_res(&res, stringify_json_pair(buck->pair.key, buck->pair.value, tabs + 2));
+                add_to_res(&res, stringify_json_pair(buck->pair.key, buck->pair.value, tabs + 2, &hashed_dones));
 
                 if (buck->sub.arr) {
                     for (int j = 0; j < buck->sub.capacity; j++) {
                         Pair* pair = buck->sub.arr + j;
-                        add_to_res(&res, stringify_json_pair(pair->key, pair->value, tabs + 2));
+                        add_to_res(&res, stringify_json_pair(pair->key, pair->value, tabs + 2, &hashed_dones));
                     }
                 }
             }
@@ -237,7 +254,7 @@ TValue stringify_json_value(TValue value, size_t tabs) {
             add_to_res(&res, table_tabs);
             add_to_res(&res, make_fstring("}\n"));
             add_to_res(&res, tabs_buffer);
-            add_to_res(&res, make_fstring("}"));
+            add_to_res(&res, make_fstring("]"));
             break;
         }
 
