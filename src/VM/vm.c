@@ -255,7 +255,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
         
     instr_jfalse:
-        if (TRUTHY(context.sp[arg1])) frame.ip += off16_to_int16(arg2, arg3) * 4;
+        if (FALSY(context.sp[arg1])) frame.ip += off16_to_int16(arg2, arg3) * 4;
         NEXT_INSTR;
         
     instr_nfor_init:

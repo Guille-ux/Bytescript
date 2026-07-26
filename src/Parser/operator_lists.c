@@ -3,13 +3,13 @@
 
 
 Token LOGICAL_OPERATORS[] = {
-    (Token){ .tt = TT_AND, .value = NIL },          // 0
-    (Token){ .tt = TT_OR, .value = NIL },           // 1
-    (Token){ .tt = TT_BAND, .value = NIL },         // 2
-    (Token){ .tt = TT_BOR, .value = NIL },          // 3
-    (Token){ .tt = TT_BXOR, .value = NIL },         // 4
-    (Token){ .tt = TT_KWORD, .value = NIL },        // 5
-    (Token){ .tt = TT_KWORD, .value = NIL }         // 6
+    (Token){ .tt = TT_RAND, .value = NIL },
+    (Token){ .tt = TT_ROR, .value = NIL },
+    (Token){ .tt = TT_AND, .value = NIL },
+    (Token){ .tt = TT_OR, .value = NIL },
+    (Token){ .tt = TT_BAND, .value = NIL },
+    (Token){ .tt = TT_BOR, .value = NIL },
+    (Token){ .tt = TT_BXOR, .value = NIL },
 };
 
 Token COMP_OPERATORS[] = {

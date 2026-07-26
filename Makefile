@@ -1,6 +1,6 @@
 all:
-	$(MAKE) -C src
-	$(MAKE) -C stdlib_src
+	$(MAKE) -C src all
+	$(MAKE) -C stdlib_src all
 
 o_o:
 	$(MAKE) -C src o_o
@@ -25,6 +25,10 @@ byte:
 debug:
 	$(MAKE) -C src debug
 	$(MAKE) -C stdlib_src debug
+
+release:
+	$(MAKE) -C src release
+	$(MAKE) -C stdlib_src release
 
 clean:
 	rm -rf build

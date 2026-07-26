@@ -16,6 +16,9 @@ C_API		:= ../dist/bytescript.h ../dist/Values/bytev.h
 
 main : $(TARGET) $(MAPS) $(C_API)
 
+all: CFLAGS += -O3 -march=native
+all: main
+
 o_o : CFLAGS += -O0 -march=native
 o_o : main
 
@@ -31,15 +34,16 @@ o_three : main
 byte : CFLAGS += -O2 -march=native
 byte : main
 
+release : CFLAGS += -O3
+release : main
+
 debug : CFLAGS += -O0 -g
 debug : main
 
-all: o_three
-
-../dist/%.exe: ../build/%.o ../dist/bytescript.a | ../dist
+../dist/%.exe: ../build/%.o ../dist/bytescript.lib | ../dist
 	$(CC) $(CFLAGS) $^ -o $@
 
-../dist/bytescript.a: ../dist/bytescript.dll | ../dist
+../dist/bytescript.lib: ../dist/bytescript.dll | ../dist
 	dlltool -d bytescript.def -l $@
 
 ../dist/bytescript.dll: $(LIB_OBJ) | ../dist

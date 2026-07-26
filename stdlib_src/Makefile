@@ -6,12 +6,15 @@ OBJS := $(SRC:.c=.o)
 DLL := $(SRC:%.c=../dist/stdlib/%.dll)
 
 OBJ := $(MATH_OBJ:%.o=../build/%.o)
-C_API := ../dist/bytescript.a
+C_API := ../dist/bytescript.lib
 TARGET := $(DLL)
 
 .PRECIOUS: $(OBJ)
 
 main : $(TARGET)
+
+all: CFLAGS += -O3 -march=native
+all: main
 
 o_o : CFLAGS += -O0 -march=native
 o_o : main
@@ -31,7 +34,8 @@ byte : main
 debug : CFLAGS += -O0 -g
 debug : main
 
-all: o_three
+release : CFLAGS += -O3
+release : main
 
 ../dist/stdlib/%.dll: ../build/%.o ../dist/stdlib/%_map.bs | ../dist/stdlib
 	$(CC) $(CFLAGS) -shared ../build/$(notdir $<) $(C_API) -o ../dist/stdlib/$(notdir $@)

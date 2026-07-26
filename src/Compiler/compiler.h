@@ -90,7 +90,8 @@ static TValue append_symbol(Scope* context, TValue name, int r);
 static TValue get_symbol_register(Scope* context, TValue name);
 static int get_target_field(Node* target_node, TValue name, int free_target, Scope* context);
 
-int compile_boolean_op(int left, int right, int leftCC, int rightCC, BTokenType op, Scope* context);
+int compile_rboolean_op(Node* left_node, Node* right_node, BTokenType op, Scope* context);
+int compile_boolean_op(Node* left_node, Node* right_node, BTokenType op, Scope* context);
 int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, TValue type);
 int compile_load_cmodule(Node* node, Scope* context, BytecodeInstruction instr, TValue type);
 int compile_get_module(Node* node, Scope* context, TValue field, TValue cache, TValue type);

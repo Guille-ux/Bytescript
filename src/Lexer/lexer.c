@@ -49,8 +49,8 @@ static inline void make_word(Token* tp, char** text) {
         TStr* keyword_str = AS_STRING(keyword);
 
         if (!strcmp("not", keyword_str->str)) emit_token(tp, TT_NOT, NIL);
-        if (!strcmp("and", keyword_str->str)) emit_token(tp, TT_RAND, NIL);
-        if (!strcmp("or", keyword_str->str)) emit_token(tp, TT_ROR, NIL);
+        else if (!strcmp("and", keyword_str->str)) emit_token(tp, TT_RAND, NIL);
+        else if (!strcmp("or", keyword_str->str)) emit_token(tp, TT_ROR, NIL);
         else emit_token(tp, TT_KWORD, keyword);
 
     } else emit_token(tp, TT_IDENTIFIER, make_string(pst_text, len));
@@ -243,7 +243,7 @@ Token* make_tokens(char* text) {
             }
 
             case '|': {
-                double_case(&text, tp, '=', TT_BOR, TT_OR);
+                double_case(&text, tp, '|', TT_BOR, TT_OR);
                 break;
             }
 

@@ -178,6 +178,14 @@ int compile_assignement(Node* node, Scope* context) {
 }
 
 int compile_bin_op(Node* node, Scope* context) {
+    switch (node->node.BinOpNode.op.tt) {
+        case TT_RAND:
+        case TT_ROR: return compile_rboolean_op(node->node.BinOpNode.left, node->node.BinOpNode.right, node->node.BinOpNode.op.tt, context);
+        case TT_AND:
+        case TT_OR:  return compile_boolean_op(node->node.BinOpNode.left, node->node.BinOpNode.right, node->node.BinOpNode.op.tt, context);
+        default:
+    }
+
     int left = compile(node->node.BinOpNode.left, context);
     bool leftCC = node->node.BinOpNode.left->cc;
 
@@ -196,10 +204,6 @@ int compile_bin_op(Node* node, Scope* context) {
         case TT_IDIV:   emit(leftCC ? OP_IDIV_CR   : rightCC ? OP_IDIV_RC    : OP_IDIV_RR, context); break;
         case TT_MOD:    emit(leftCC ? OP_MOD_CR    : rightCC ? OP_MOD_RC     : OP_MOD_RR, context); break;
         case TT_POW:    emit(leftCC ? OP_POW_CR    : rightCC ? OP_POW_RC     : OP_POW_RR, context); break;
-        case TT_RAND:
-        case TT_ROR:
-        case TT_AND:
-        case TT_OR:     compile_boolean_op(left, right, leftCC, rightCC, op, context);
 
         default :
             if (leftCC) { int temp = left; left = right; right = temp; }
@@ -1042,8 +1046,135 @@ static int get_target_field(Node* target_node, TValue name, int free_target, Sco
 }
 
 
-int compile_boolean_op(int left, int right, int leftCC, int rightCC, BTokenType op, Scope* context) {
+int compile_rboolean_op(Node* left_node, Node* right_node, BTokenType op, Scope* context) {
+    int left = compile(left_node, context); int right;
+    if (left_node->cc) left = free_register(register_constant(left, context, -1), context);
 
+    Node* pre_compile;
+    Node* post_compile;
+    int* pre_fill;
+    int* post_fill;
+    int res = register_first(context);
+
+    switch (op) {
+        case TT_RAND:
+            pre_fill = &right;
+            post_fill = &left;
+            pre_compile = right_node;
+            post_compile = NULL;
+            break;
+
+        case TT_ROR:
+            pre_fill = &left;
+            post_fill = &right;
+            pre_compile = NULL;
+            post_compile = right_node;
+            break;
+    }
+
+    emit(OP_JFALSE, context);
+    emit(left, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    size_t pre_or = CURRENT_INSTR;
+
+    if (pre_compile) {
+        *pre_fill = compile(pre_compile, context);
+        if (pre_compile->cc) *pre_fill = free_register(register_constant(*pre_fill, context, -1), context);
+    }
+
+    register_register(*pre_fill, context, res);
+    emit(OP_JUMP, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    
+    size_t post_or = CURRENT_INSTR;
+    patch_single_jfalse_label(context->bytecode.bytes, pre_or, get_jump_lenght(pre_or, context));
+
+    if (post_compile) {
+        *post_fill = compile(post_compile, context);
+        if (post_compile->cc) *post_fill = free_register(register_constant(*post_fill, context, -1), context);
+    }
+
+    register_register(*post_fill, context, res);
+    patch_single_jump_label(context->bytecode.bytes, post_or, get_jump_lenght(post_or, context));
+    
+    return res;
+}
+
+int compile_boolean_op(Node* left_node, Node* right_node, BTokenType op, Scope* context) {
+    int left = compile(left_node, context);
+    if (left_node->cc) left = free_register(register_constant(left, context, -1), context);
+
+    int res = register_first(context);
+    emit(OP_JFALSE, context);
+    emit(left, context);
+    emit(0x00, context);
+    emit(0x00, context);
+    size_t pre = CURRENT_INSTR;
+
+    switch (op) {
+        case TT_AND: {
+            int right = compile(right_node, context);
+            if (right_node->cc) right = free_register(register_constant(right, context, -1), context);
+
+            emit(OP_JFALSE, context);
+            emit(right, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            size_t pre2 = CURRENT_INSTR;
+
+            register_constant(cache_constant(NUM_AS_TVALUE(1), context), context, res);
+            emit(OP_JUMP, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            size_t post = CURRENT_INSTR;
+
+            patch_single_jfalse_label(context->bytecode.bytes, pre, get_jump_lenght(pre, context));
+            patch_single_jfalse_label(context->bytecode.bytes, pre2, get_jump_lenght(pre2, context));
+            register_constant(cache_constant(NUM_AS_TVALUE(0), context), context, res);
+
+            patch_single_jump_label(context->bytecode.bytes, post, get_jump_lenght(post, context));
+            break;
+        }
+
+        case TT_OR: {
+            emit(OP_JUMP, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            emit(0x00, context);
+
+            size_t post = CURRENT_INSTR;
+            patch_single_jfalse_label(context->bytecode.bytes, pre, get_jump_lenght(pre, context));
+
+            int right = compile(right_node, context);
+            if (right_node->cc) right = free_register(register_constant(right, context, -1), context);
+
+            emit(OP_JFALSE, context);
+            emit(right, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            size_t post2 = CURRENT_INSTR;
+    
+            patch_single_jump_label(context->bytecode.bytes, post, get_jump_lenght(post, context));
+            register_constant(cache_constant(NUM_AS_TVALUE(1), context), context, res);
+
+            emit(OP_JUMP, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            emit(0x00, context);
+            size_t true_cond = CURRENT_INSTR;
+
+            patch_single_jfalse_label(context->bytecode.bytes, post2, get_jump_lenght(post2, context));
+            register_constant(cache_constant(NUM_AS_TVALUE(0), context), context, res);
+            patch_single_jump_label(context->bytecode.bytes, true_cond, get_jump_lenght(true_cond, context));
+            break;
+        }
+    }
+    
+    return res;
 }
 
 int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, TValue type) {
