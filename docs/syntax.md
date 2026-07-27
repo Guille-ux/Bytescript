@@ -62,29 +62,29 @@ Bytescript has two type of syntaxes for **for loops**
 
 #### numeric for loops
 
-A numeric for loop can be made using the syntax : `for [identifier] = [start], [end], [step]? repeat [body] end`
-A numeric for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
-The *[start]* value is used to initialize the variable *[identifier]*, it must be a [Number](#number)
+A numeric for loop can be made using the syntax : `for [identifier] = [start], [end], [step]? repeat [body] end`  
+A numeric for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)  
+The *[start]* value is used to initialize the variable *[identifier]*, it must be a [Number](#number)  
 The *[step]* is optional and defaults to 1
 
 #### generic for loops
 
-A generic for loop can be made using the syntax : `for [identifier], [identifier]? in [target] repeat [body] end`
-A generic for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
-A generic for loop's target must have a specified [data type](#data-types) with an *__iter* method, if no data type is specified, bytescript will default to treating your value as a table
-The first identifier will correspond to the current **state** of iteration
+A generic for loop can be made using the syntax : `for [identifier], [identifier]? in [target] repeat [body] end`  
+A generic for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)  
+A generic for loop's target must have a specified [data type](#data-types) with an *__iter* method, if no data type is specified, bytescript will default to treating your value as a table  
+The first identifier will correspond to the current **state** of iteration  
 The second (optional) identifier will correspond to the value returned by the target's iterator
 
 # While loop
 
-A while loop can be made using the syntax : `while [condition] repeat [body] end`
-A while loop's condition must be an [operation](#operations) or a [numeric value](#numeric-values)
-A While loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
+A while loop can be made using the syntax : `while [condition] repeat [body] end`  
+A while loop's condition must be an [operation](#operations) or a [numeric value](#numeric-values)  
+A While loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)  
 
 # Repeat loop
 
-A repeat loop can be made using the syntax : `repeat [body] while [condition] end`
-A repeat loop work the same way as a [while loop](#while-loop), however its body is guarenteed to be ran once before the condition is evaluated
+A repeat loop can be made using the syntax : `repeat [body] while [condition] end`  
+A repeat loop work the same way as a [while loop](#while-loop), however its body is guarenteed to be ran once before the condition is evaluated  
 A repeat loop is the equivalent to `do { [body] } while [condition];` in many languages
 
 # Import statement
