@@ -204,7 +204,7 @@ TValue fold_gfor_loop(Node* node) {
 
 TValue fold_while_loop(Node* node) {
     TValue cond = fold(node->node.whileNode.condition);
-    if (FALSY(cond)) { free(node); return (node->cc = true, NIL); }
+    if (node->node.whileNode.condition->cc && FALSY(cond)) { free(node->node.whileNode.statements); return (node->cc = true, NIL); }
 
     fold(node->node.whileNode.statements);
     return (node->cc = false, NIL);

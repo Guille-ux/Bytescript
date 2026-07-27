@@ -15,9 +15,6 @@ static Node* bin_op(ParseResult* res, ParseFunc func1, Token ops[], int opc, Par
     if (func2 == NULL) func2 = func1;
 
     Node* left = BOPTIONAL(func1(res));
-    if (res->tokens->tt == TT_KWORD) printf("%d\n", res->tokens->tt);
-    if (!IS_NIL(res->tokens->value)) print(&res->tokens->value, 1);
-
     while (is_correct_operator(*res->tokens, ops, opc)) {
         Token op = *res->tokens; res->tokens++;
         Node* right = EXPECTED(func2(res), expected);
@@ -138,7 +135,7 @@ Node* if_expr(ParseResult* res) {
     do {
         res->tokens++;
 
-        Node* condition = EXPECTED(expr(res), "(EXPRESSION) EXPECTED");
+        Node* condition = EXPECTED(logical(res), "(EXPRESSION) EXPECTED");
         ERR_CHECK(expect(res, TT_KWORD, "(KEYWORD:'then') EXPECTED", NULL, "then"))
         Node* thenStatements = get_parsed(statement, res, ELSEIF_TOKEN);
         

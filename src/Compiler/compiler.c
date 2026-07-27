@@ -476,7 +476,7 @@ int compile_while_loop(Node* node, Scope* context) {
     int condition = compile(node->node.whileNode.condition, context);
     
     emit(OP_JFALSE, context);
-    emit(0x00, context);
+    emit(condition, context);
     emit(0x00, context);
     emit(0x00, context);
     size_t condition_label = CURRENT_INSTR;
@@ -484,7 +484,7 @@ int compile_while_loop(Node* node, Scope* context) {
     compile_in_scope(node->node.whileNode.statements, context);
 
     emit(OP_JUMP, context);
-    emit(condition, context);
+    emit(0x00, context);
     emit(0x00, context);
     emit(0x00, context);
 

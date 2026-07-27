@@ -5,7 +5,7 @@ all:
 
 %:
 	$(MAKE) -C src $@
-	$(MAKE) -c stdlib_src $@
+	$(MAKE) -C stdlib_src $@
 	cp icon.ico dist/icon.ico
 
 clean:

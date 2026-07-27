@@ -33,5 +33,6 @@ There are two ways of installing bytescript :
 ## Documentation
 
 - [Syntax](docs/syntax.md)
-- [Standart library](docs/stdlib.md)
+- [Standard library](docs/stdlib.md)
 - [Embedding](docs/embedding.md)
+- [BVM](docs/bvm.md)
