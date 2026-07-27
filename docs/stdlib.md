@@ -152,7 +152,7 @@ These include :
 
 ### IO
 
-- `IO.stdout`
+- `IO.stdout`  
 **Description** : A File wrapper to the standard output  
 
 - `IO:open(String filename, String openType)`  
@@ -181,8 +181,370 @@ These include :
 **Description** : Closes the file  
 **Arguments** : None
 
+### Error
+
+- `Error:new(String name, String details)`  
+**Signature** : `func static Error __new(String name, String details) end`      
+**Description** : Calls an Error with the specified name and details  
+**Arguments** :  
+    - `name` : the name to call the error with
+    - `details` : the details of the error
+
+- `TypeError:new(String details)`  
+**Signature** : `func static TypeError __new(String details) end`      
+**Description** : Calls a TypeError with the specified details  
+**Arguments** :  
+    - `details` : the details of the error
+
+- `IndexError:new(String details)`  
+**Signature** : `func static IndexError __new(String details) end`      
+**Description** : Calls an IndexError with the specified details  
+**Arguments** :  
+    - `details` : the details of the error
 
 ## Standard library
 
 Modules that needs to be imported, they come with bytescript in the `stdlib` folder  
+
+
+### Base64
+
+- `Base64:encode(String text)`  
+**Signature** : `func String encode(String text) end`  
+**Description** : Encode a string into base64  
+**Arguments** : 
+    - `text` : The text to encode  
+
+- `Base64:decode(String text)`  
+**Signature** : `func String decode(String text) end`  
+**Description** : Decode a base64 encoded string  
+**Arguments** : 
+    - `text` : The text to decode  
+
+
+### Debug
+
+- `AssertionError:new(String details)`  
+**Signature** : `func static AssertionError __new(String details) end`      
+**Description** : Calls an AssertionError with the specified details  
+**Arguments** :  
+    - `details` : the details of the error
+
+
+- `Debug:assert(Number condition, String message)`  
+**Signature** : `func var assert(Number condition, String message) end`  
+**Description** : Throw an AssertionError error if the given condition is falsy  
+**Arguments** : 
+    - `message` : The error message to show, **optional**
+
+
+### Json
+
+- `Json:parse(String json)`  
+**Signature** : `func Table parse(String json) end`  
+**Description** : Parse a json string into a bytescript table  
+**Arguments** : 
+    - `json` : The string to parse
+
+- `Json:stringify(var value)`  
+**Signature** : `func String stringify(var value) end`  
+**Description** : Stringifies the given value into a json string  
+**Arguments** : 
+    - `value` : The value to stringify
+
+- `Json:valid(String json)`  
+**Signature** : `func Number valid(String json) end`  
+**Description** : Returns true if the json string is valid, otherwise returns false  
+**Arguments** : 
+    - `json` : The string to validify
+
+- `Json:load(String path)`  
+**Signature** : `func Table load(String path) end`  
+**Description** : Parse a json file into a bytescript table  
+**Arguments** : 
+    - `path` : The path to the json file
+
+- `Json:write(String path, Table json)`  
+**Signature** : `func Number write(String path, Table json) end`  
+**Description** : Write a bytescript table into a json file  
+**Arguments** : 
+    - `path` : The path to the json file
+    - `json` : The table to write into the file  
+
+
+### Math
+
+- `Math.pi`  
+**Description** : it's pi  
+
+- `Math.e`  
+**Description** : it's e  
+
+- `Math.inf`  
+**Description** : it's infinity  
+
+- `Math:max(Number a, Number b)`  
+**Signature** : `func Number max(Number a, Number b) end`  
+**Description** : Returns the bigger number between a and b  
+**Arguments** : 
+    - `a` : The first number
+    - `b` : The second number
+
+- `Math:max(Number a, Number b)`  
+**Signature** : `func Number max(Number a, Number b) end`  
+**Description** : Returns the bigger number between a and b  
+**Arguments** : 
+    - `a` : The first number
+    - `b` : The second number
+
+- `Math:min(Number a, Number b)`  
+**Signature** : `func Number min(Number a, Number b) end`  
+**Description** : Returns the smaller number between a and b  
+**Arguments** : 
+    - `a` : The first number
+    - `b` : The second number
+
+- `Math:clamp(Number a, Number b, Number c)`  
+**Signature** : `func Number clamp(Number a, Number b, Number c) end`  
+**Description** : Clamps c between a and b  
+**Arguments** : 
+    - `a` : The first number
+    - `b` : The second number
+    - `c` : The number to clamp
+
+- `Math:abs(Number a)`  
+**Signature** : `func Number abs(Number a) end`  
+**Description** : Returns the absolute value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:floor(Number a)`  
+**Signature** : `func Number floor(Number a) end`  
+**Description** : Returns the floor value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:ceil(Number a)`  
+**Signature** : `func Number ceil(Number a) end`  
+**Description** : Returns the ceiling value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:round(Number a)`  
+**Signature** : `func Number round(Number a) end`  
+**Description** : Returns the rounded value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:trunc(Number a)`  
+**Signature** : `func Number trunc(Number a) end`  
+**Description** : Returns the truncated value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:sqrt(Number a)`  
+**Signature** : `func Number sqrt(Number a) end`  
+**Description** : Returns the square root of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:sin(Number a)`  
+**Signature** : `func Number sin(Number a) end`  
+**Description** : Returns the sine of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:cos(Number a)`  
+**Signature** : `func Number cos(Number a) end`  
+**Description** : Returns the cosine of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:tan(Number a)`  
+**Signature** : `func Number tan(Number a) end`  
+**Description** : Returns the tangent of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:asin(Number a)`  
+**Signature** : `func Number asin(Number a) end`  
+**Description** : Returns the arcsine of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:acos(Number a)`  
+**Signature** : `func Number acos(Number a) end`  
+**Description** : Returns the arccosine of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:atan(Number a)`  
+**Signature** : `func Number atan(Number a) end`  
+**Description** : Returns the arctangent of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:atan2(Number a, Number b)`  
+**Signature** : `func Number atan2(Number a, Number b) end`  
+**Description** : Returns the arctangent of the given vector without information loss  
+**Arguments** : 
+    - `a` : The vector's x coordinate
+    - `b` : The vector's y coordinate
+
+- `Math:exp(Number a)`  
+**Signature** : `func Number exp(Number a) end`  
+**Description** : Returns the exponential value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:log(Number a)`  
+**Signature** : `func Number log(Number a) end`  
+**Description** : Returns the natural logarithmic value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:log10(Number a)`  
+**Signature** : `func Number log10(Number a) end`  
+**Description** : Returns the base 10 logarithmic value of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:sign(Number a)`  
+**Signature** : `func Number sign(Number a) end`  
+**Description** : Returns the sign of the given number  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:is_inf(Number a)`  
+**Signature** : `func Number abs(Number a) end`  
+**Description** : Returns true if the given value is infinity otherwise false  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:deg(Number a)`  
+**Signature** : `func Number deg(Number a) end`  
+**Description** : Converts the given radiants into degrees and returns it  
+**Arguments** : 
+    - `a` : The target number
+
+- `Math:rad(Number a)`  
+**Signature** : `func Number rad(Number a) end`  
+**Description** : Converts the given degrees into radiants and returns it  
+**Arguments** : 
+    - `a` : The target number
+
+
+### OS
+
+- `OS:env(String name)`  
+**Signature** : `func String env(String name) end`  
+**Description** : Returns content of the specified environnement  
+**Arguments** : 
+    - `name` : The name of the target environnement
+
+- `OS:cwd()`  
+**Signature** : `func String cwd() end`  
+**Description** : Returns the current working directory  
+**Arguments** : None  
+
+- `OS:chdir(String path)`  
+**Signature** : `func String env(String path) end`  
+**Description** : Changes the current working directory into the given path  
+**Arguments** : 
+    - `path` : The new working directory
+
+- `OS:absolute(String path)`  
+**Signature** : `func String absolute(String path) end`  
+**Description** : Returns the absolute path of the given location  
+**Arguments** : 
+    - `path` : The path to the directory/file you want the absolute path to
+
+- `OS:filename(String path)`  
+**Signature** : `func String filename(String path) end`  
+**Description** : Returns the filename of a given file's path  
+**Arguments** : 
+    - `path` : The path to the target file
+
+- `OS:stem(String path)`  
+**Signature** : `func String stem(String path) end`  
+**Description** : Returns the stem of a given file's path (filename without extention)  
+**Arguments** : 
+    - `path` : The path to the target file
+
+- `OS:ext(String path)`  
+**Signature** : `func String ext(String path) end`  
+**Description** : Returns the extention of a given file's path  
+**Arguments** : 
+    - `path` : The path to the target file
+
+- `OS:parent(String path)`  
+**Signature** : `func String parent(String path) end`  
+**Description** : Returns the parent of the given file  
+**Arguments** : 
+    - `path` : The path to the target file
+
+- `OS:join(String a, String b)`  
+**Signature** : `func String join(String a, String b) end`  
+**Description** : Joins 2 paths into one  
+**Arguments** : 
+    - `a` : The first part of the target path
+    - `b` : The second part of the target path
+
+- `OS:run(String command)`  
+**Signature** : `func Number run(String command) end`  
+**Description** : Runs a command and returns the exit code  
+**Arguments** : 
+    - `run` : The command to execute
+
+- `OS:exit(Number code)`  
+**Signature** : `func var exit(Number code) end`  
+**Description** : exit the program with the given exit code  
+**Arguments** : 
+    - `code` : The exit code to exit with
+
+
+### Random
+
+- `Random:seed()`  
+**Signature** : `func var seed() end`  
+**Description** : set a new random seed  
+**Arguments** : None  
+
+- `Random:random()`  
+**Signature** : `func Number random() end`  
+**Description** : Returns a random number between 0 and 1  
+**Arguments** : None  
+
+- `Random:range()`  
+**Signature** : `func Number range(Number min, Number max) end`  
+**Description** : Returns a random number in the given range  
+**Arguments** : 
+    - `min` : the minimum number that can be generated
+    - `max` : the maximum number that can be generated
+
+- `Random:integer()`  
+**Signature** : `func Number integer(Number min, Number max) end`  
+**Description** : Returns a random integer in the given range  
+**Arguments** : 
+    - `min` : the minimum number that can be generated
+    - `max` : the maximum number that can be generated
+
+
+### Time
+
+- `Time:time()`  
+**Signature** : `func Number time() end`  
+**Description** : Returns the current time of the day  
+**Arguments** : None  
+
+- `Time:clock()`  
+**Signature** : `func Number clock() end`  
+**Description** : Returns a high precision value corresponding to the current cpu cycle  
+**Arguments** : None  
+
+- `Time:sleep()`  
+**Signature** : `func var sleep(Number milliseconds) end`  
+**Description** : Pause the program for a specific amount of time  
+**Arguments** : 
+    - `milliseconds` : the amount of time to pause to program for, in milliseconds
 
