@@ -7,9 +7,10 @@ These include :
 - String
 - Table
 - IO
+- File
 - Error
 
-#### Table
+### Table
 
 - `Table:new()`  
 **Signature** : `func static Table __new() end`  
@@ -128,8 +129,57 @@ These include :
     - `value` : The value to hash
   
   
-#### String
+### String
 
+- `String:compare(String other)`  
+**Signature** : `func Number compare(String other) end`  
+**Description** : Compares the string with another one  
+**Arguments** : 
+    - `other` : The string to compare with
+
+- `String:format(var value)`  
+**Signature** : `func Number format(var value) end`  
+**Description** : Formats a string using format specifiers  
+**Arguments** : 
+    - `value` : The value to format
+
+- `String:toString(var value)`  
+**Signature** : `func static String toString(var value) end`  
+**Description** : Turn a value into a string  
+**Arguments** : 
+    - `value` : The value to cast into a string
+
+
+### IO
+
+- `IO.stdout`
+**Description** : A File wrapper to the standard output  
+
+- `IO:open(String filename, String openType)`  
+**Signature** : `func static File open(String filename, String openType) end`  
+**Description** : opens a file with the specified openType, returns a File object  
+**Arguments** : 
+    - `filename` : The path to the file
+    - `openType` : The open type to open the file with
+
+
+### File
+
+- `File:read()`  
+**Signature** : `func String read() end`  
+**Description** : Reads a file and returns a string with its content  
+**Arguments** : None
+
+- `File:write(String content)`  
+**Signature** : `func write(String content) end`  
+**Description** : Writes content into a file  
+**Arguments** : 
+    - `content` : The content to write into the file
+
+- `File:close()`  
+**Signature** : `func close() end`    
+**Description** : Closes the file  
+**Arguments** : None
 
 
 ## Standard library

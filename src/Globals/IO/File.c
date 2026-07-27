@@ -5,7 +5,9 @@ TCDataType FileData_Type = { .name = "FileData" }, *FileDataType = &FileData_Typ
 TValue File_class;
 void initialize_file_class() {
     TValue File_fields[] = {
-        new_cfunc(read_file)
+        new_cfunc(read_file),
+        new_cfunc(write_file),
+        new_cfunc(close_file)
     };
 
     File_class = new_class(NULL, File_fields, 0, sizeof(File_fields) / sizeof(TValue));
