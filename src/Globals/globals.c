@@ -22,6 +22,7 @@ void initialize_globals() {
     globals_namespace = AS_TABLE(new_table(NULL, 0));
     globals_map = TBL_TO_TVALUE(globals_namespace);
 
+    add_global(NIL, make_fstring("NIL"));
     add_global(new_cfunc(print), make_fstring("print"));
     add_global(new_cfunc(tfree), make_fstring("free"));
     add_global(new_cfunc(disassemble), make_fstring("disassemble"));
