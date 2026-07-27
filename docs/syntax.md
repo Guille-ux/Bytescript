@@ -112,11 +112,96 @@ Class fields are owned by the class object itself and not given to the individua
 Methods may include a modifier using the syntax : `func [modifier] [data type]? identifier([arguments]) [body] end`, at the moment the only modifier is `static` wich allows the method to be called without object
 Non-static method will have `self` as their first argument (automaticaly done by the compiler) corresponding to the object the method was called with
 
+Some methods such as a [*constructor*](#constructor) are known by the bytescript compiler and may result in special behavior
+see more about [these function](#native-functions)
+
 ### constructor
 
 A class's constructor must follow the signature : `func static [class name] __new([arguments]) end`
 The compiler will emit an object creation instruction at the top of this function
-Unlike other **static methods**, a constructor's self
+Unlike other **static methods**, a constructor has a **self** argument corresponding to the created object
+
+# Return statement
+
+A return statement can be made using the syntax : `return [value]`
+The returned value's type must correspond to the current function's [return type](#data-types)
+
+If a return statement is put at the file's top level the return value's type must correspond to the data type it is [required](#require-expression) with
+
+# Allocation statement
+
+An allocation statement can be made using the syntax : `alloc [target] -> [values] end`, where each value is separated by a comma
+Allocation statements act as a shortcut to table:insert(), therefore the target **must** be a table
+
+# Break statement
+
+A break statement can be made using the syntax : `break` (shocking ik)
+It breaks the 4th wall
+
+# Continue statement
+
+A continue statement can be made using the syntax : `continue`
+(why are u even reading that?)
+
+# Field definition
+
+A field definition can be made using the syntax : `[data type] self.[identifier] = [data]`
+Similarely to variable it can be defined without value, leading to **garbage value**
+A field definition will register the identifier under the type it is currently operating under, see [class definitions](#class-definition)
+
+# Require expression
+
+A require expression can be made using the syntax : `require "[path]" as [data type] [identifier] end`
+The [data type](#data-types) and identifier are optional, therefore the following syntax is correct : `require "[path]"`
+A require expression will [import](#import-statement) the specified path and return the module's returned value
+
+# Operations
+
+An operation can be done between two [numeric values](#numeric-values) using an operator
+The following operators exist in bytescript :
+- *PLUS* (+)
+- *MINUS* (-)
+- *STAR* (*)
+- *SLASH* (/), (//) for floor division
+- *MODULO* (%)
+- *POWER* (^)
+- *CONCAT* (..), shortcut to string:concat()
+- *BOOLEANS* (and, or, ||, &&)
+- *COMPARAISONS* (==, !=, <, >, <=, >=)
+- *BITWISE* (&, |)
+- [*POSTFIX*](#postfix-operations)
+
+The order of priority is the following :
+- *POSTFIX*
+- *ARITHMETICS*
+- *POWER*
+- *COMPARAISONS*
+- *BOOLEAN*
+
+### Unary operations
+
+There are three unary operations in bytescript, -[value], +[value], **not** [value], wich may also be written !value
+
+### Postfix operations
+
+There are three postfix operations in bytescript
+
+#### Calls
+
+Calls can be made using the syntax : `[function]([arguments])`
+
+#### Indexing
+
+Indexing can be done using the syntax : `[target][[value]]` / `target[value]` beacause the first version wasn't readable
+
+#### Method calls
+
+Method calls can be made using the syntax : `[object]:[method name]([arguments])`
+Method calls help the compiler figure out the method's signature
+
+#### Field accessing
+
+You can access a class or object's fields using the syntax : `[target].[field]`
 
 # Data types
 
