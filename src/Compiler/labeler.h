@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "Values/tutils.h"
+#include "Compiler/compiler.h"
 
 #define CURRENT_INSTR (context->bytecode.len)
 
@@ -26,6 +27,19 @@ static void patch_array_jump_label(uint8_t* bytecode, struct ArrayLabel label, s
         size_t lab = label.ptr[i];
         patch_single_jump_label(bytecode, lab, get_jump_lenght_to(lab, pos));
     }
+}
+
+static void patch_linked_list(Scope* context, struct sizeLinkedList list) {
+    struct sizeLinkedList* to_free;
+    for (struct sizeLinkedList* current = list.next; current;) {
+        patch_single_jump_label(context->bytecode.bytes, current->size, get_jump_lenght_to(current->size, CURRENT_INSTR));
+
+        to_free = current;
+        current = current->next;
+        free(to_free);
+    }
+
+    list.next = NULL;
 }
 
 #endif

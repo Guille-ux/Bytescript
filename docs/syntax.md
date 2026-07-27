@@ -50,6 +50,10 @@ The data must have the same [*data type*](#data-types) as the one that was speci
 
 see more about [lvalues](#lvalues)  
 
+### Lvalues
+
+In bytescript, lvalues correspond to either variables or  table indexes
+
 # If statement
 
 An if statement can be made using the syntax : `if [condition] then [body] end`  

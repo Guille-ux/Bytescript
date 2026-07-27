@@ -426,6 +426,7 @@ int compile_nfor_loop(Node* node, Scope* context) {
 
     compile(node->node.nForNode.statements, context);
     patch_single_jfalse_label(context->bytecode.bytes, init, get_jump_lenght(init, context));
+    patch_linked_list(context, context->continues);
 
     emit(OP_NFOR_LOOP, context);
     emit(r0, context);
@@ -434,6 +435,7 @@ int compile_nfor_loop(Node* node, Scope* context) {
 
     size_t loop = CURRENT_INSTR;
     patch_single_jfalse_label(context->bytecode.bytes, loop, get_jump_lenght_to(loop, init));
+    patch_linked_list(context, context->breaks);
 
     free_multiple(r1, 2, context);
     close_scope(context);
@@ -459,6 +461,7 @@ int compile_gfor_loop(Node* node, Scope* context) {
 
     compile(node->node.gForNode.statements, context);
     patch_single_jfalse_label(context->bytecode.bytes, init, get_jump_lenght(init, context));
+    patch_linked_list(context, context->continues);
 
     emit(OP_GFOR_LOOP, context);
     emit(r0, context);
@@ -467,6 +470,7 @@ int compile_gfor_loop(Node* node, Scope* context) {
 
     size_t loop = CURRENT_INSTR;
     patch_single_jfalse_label(context->bytecode.bytes, loop, get_jump_lenght_to(loop, init));
+    patch_linked_list(context, context->breaks);
 
     close_scope(context);
 }
@@ -482,6 +486,7 @@ int compile_while_loop(Node* node, Scope* context) {
     size_t condition_label = CURRENT_INSTR;
 
     compile_in_scope(node->node.whileNode.statements, context);
+    patch_linked_list(context, context->continues);
 
     emit(OP_JUMP, context);
     emit(0x00, context);
@@ -490,6 +495,7 @@ int compile_while_loop(Node* node, Scope* context) {
 
     patch_single_jump_label(context->bytecode.bytes, CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, pre_condition));
     patch_single_jfalse_label(context->bytecode.bytes, condition_label, get_jump_lenght(condition_label, context));
+    patch_linked_list(context, context->breaks);
 }
 
 int compile_repeat_loop(Node* node, Scope* context) {
@@ -503,6 +509,7 @@ int compile_repeat_loop(Node* node, Scope* context) {
     emit(0x00, context);
     size_t condition_label = CURRENT_INSTR;
 
+    patch_linked_list(context, context->continues);
     emit(OP_JUMP, context);
     emit(0x00, context);
     emit(0x00, context);
@@ -510,6 +517,7 @@ int compile_repeat_loop(Node* node, Scope* context) {
 
     patch_single_jump_label(context->bytecode.bytes, CURRENT_INSTR, get_jump_lenght_to(CURRENT_INSTR, pre_statement));
     patch_single_jfalse_label(context->bytecode.bytes, condition_label, get_jump_lenght(condition_label, context));
+    patch_linked_list(context, context->breaks);
 }
 
 int compile_require(Node* node, Scope* context) {
