@@ -34,9 +34,9 @@ A numeric value may take one of the following form:
 
 # Variable definition
 
-A **variable** can be **defined** with the syntax : `[data type] [identifier] = [data]`
-An **identifier** can either start with a *letter* or `_`, and can contain any *letter*, *number*, or `_`
-The specified **data** must have the same *data type* as the specified **data type** or the type `var`
+A variable can be **defined** with the syntax : `[data type] [identifier] = [data]`
+An identifier can either start with a *letter* or `_`, and can contain any *letter*, *number*, or `_`
+The specified data must have the same *data type* as the specified [*data type*](#data-types) or the type `var`
 
 A variable may be defined without value using the syntax `[data type] [identifier]`
 The variable will contain **garbage value** and should not be used until it has been [assigned](#assignement) a value
@@ -46,13 +46,77 @@ see more about [data types](#data-types)
 # Assignement
 
 You can **assign** a value to an lvalue (usaly variables) with the syntax : `[lvalue] = [data]`
-The **data** must have the same *data type* as the one that was specified during declaration, or `var`
+The data must have the same [*data type*](#data-types) as the one that was specified during declaration, or `var`
 
 see more about [lvalues](#lvalues)
 
 # If statement
 
 An if statement can be made using the syntax : `if [condition] then [body] end`
+An if statement's condition must be an [operation](#operations) or a [numeric value](#numeric-values)
+An if statement's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
+
+# For loop
+
+Bytescript has two type of syntaxes for **for loops**
+
+#### numeric for loops
+
+A numeric for loop can be made using the syntax : `for [identifier] = [start], [end], [step]? repeat [body] end`
+A numeric for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
+The *[start]* value is used to initialize the variable *[identifier]*, it must be a [Number](#number)
+The *[step]* is optional and defaults to 1
+
+#### generic for loops
+
+A generic for loop can be made using the syntax : `for [identifier], [identifier]? in [target] repeat [body] end`
+A generic for loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
+A generic for loop's target must have a specified [data type](#data-types) with an *__iter* method, if no data type is specified, bytescript will default to treating your value as a table
+The first identifier will correspond to the current **state** of iteration
+The second (optional) identifier will correspond to the value returned by the target's iterator
+
+# While loop
+
+A while loop can be made using the syntax : `while [condition] repeat [body] end`
+A while loop's condition must be an [operation](#operations) or a [numeric value](#numeric-values)
+A While loop's body can contain any amount of [statement](#statement) excluding [class definitions](#class-definitions)
+
+# Repeat loop
+
+A repeat loop can be made using the syntax : `repeat [body] while [condition] end`
+A repeat loop work the same way as a [while loop](#while-loop), however its body is guarenteed to be ran once before the condition is evaluated
+A repeat loop is the equivalent to `do { [body] } while [condition];` in many languages
+
+# Import statement
+
+An import statement can be made using the syntax : `import "[path]" as [identifier] end`
+The *[path]* correspond to the module's path, either relative to the current working directory or within the [standard library](stdlib.md)
+The *[identifier]* will contain the **module object**, the module's fields will correspond to the identifiers defined at the top level of the module
+
+You may import individual fields from the module using the syntax : `from "[path]" import [fields] as [nickname]? end`
+The *[fields]*'s [data types](#data-types) may be specified
+The *[nickname]* is optional
+
+# Class definition
+
+A class can be made using the syntax : `class [identifier] [body] end`
+Defining a class will register the class object as a global under the name *[identifier]*, defining a class will also register two [data types](#data-types), *[identifier]* will correspond to an **object** of that class, and __*[identifier]* will correspond to the class itself, this type should preferably only be owned by the global defined earlier
+
+You cannot name a class with an identifier starting with `__`
+
+A class may contain [class fields](#field-definition), as well as **methods** wich can be declared by using the [function definition syntax](#function) at the top level of the class definition's body
+
+Class fields are owned by the class object itself and not given to the individual objects
+**Object fields** can be declared using the same syntax as [class fields](#field-definition) inside a method, preferably every object fields should be declared inside the class's [*constructor*](#constructor)
+
+Methods may include a modifier using the syntax : `func [modifier] [data type]? identifier([arguments]) [body] end`, at the moment the only modifier is `static` wich allows the method to be called without object
+Non-static method will have `self` as their first argument (automaticaly done by the compiler) corresponding to the object the method was called with
+
+### constructor
+
+A class's constructor must follow the signature : `func static [class name] __new([arguments]) end`
+The compiler will emit an object creation instruction at the top of this function
+Unlike other **static methods**, a constructor's self
 
 # Data types
 

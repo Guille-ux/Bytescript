@@ -617,7 +617,8 @@ int compile_method_def(Node* node, Scope* context) {
         emit(class_r, func_context);
         emit(field_count, func_context);
         emit(self_r, func_context);
-    }
+
+    } else if (has_modifier(node->node.methodDefNode.modifiers, "static")) free_register(self_r, func_context);
 
     int argc = get_linked_list_len(node->node.funcDefNode.args);
     TValue args[argc]; linked_list_to_array(node->node.funcDefNode.args, args, argc);
