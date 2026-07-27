@@ -4,8 +4,8 @@
 
 ## Bytescript Value / TValue
 
-Bytescript stores all its values using **NaN boxing**
-Therefore all bytescript values are represented by a double, a **TValue**.
+Bytescript stores all its values using **NaN boxing**  
+Therefore all bytescript values are represented by a double, a **TValue**.  
 
 ```
 typedef union {
@@ -23,7 +23,7 @@ A TValue can take one of the following types :
 - *Object*, up to 256 fields
 - *CData*, cannot be read the the virtual machine
 
-see more about [*data types*](syntax.md#data-types)
+see more about [*data types*](syntax.md#data-types)  
 
 #### String
 
@@ -61,7 +61,7 @@ typedef struct Table {
 } TTable;
 ```
 
-see the definitions of *Array* and *HashTable* in the header **bytev.h**
+see the definitions of *Array* and *HashTable* in the header **bytev.h**  
 
 #### Class & Object
 
@@ -77,7 +77,7 @@ typedef struct {
 } TObject;
 ```
 
-size_t and TClass* both being 64bit, a class tvalue can safely be read as an object
+size_t and TClass* both being 64bit, a class tvalue can safely be read as an object  
 
 #### CData
 
@@ -91,11 +91,11 @@ typedef TCDataType* TCData;
 #define CDATA_HEADER TCData cdata_type
 ```
 
-see more about [embedding](embedding.md)
+see more about [embedding](embedding.md)  
 
 ## Constants
 
-**Constants** are values that are resolved and stored into a *constant pool* at **compile time**
-Due to the *BVM* taking 8bit instructions, only up to 256 can be stored in a function's constant pool
+**Constants** are values that are resolved and stored into a *constant pool* at **compile time**  
+Due to the *BVM* taking 8bit instructions, only up to 256 can be stored in a function's constant pool  
 
-see wich [data types](syntax.md#data-types) are considered constants
+see wich [data types](syntax.md#data-types) are considered constants  

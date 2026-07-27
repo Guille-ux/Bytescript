@@ -1,7 +1,7 @@
 # Bytescript 1.0
 
-Bytescript is an object-oriented interpreted programming language.
-it is general-purpose, embeddable language, made as a side project, it does not offer any cool features, nor is it efficient.
+Bytescript is an object-oriented interpreted programming language.  
+it is general-purpose, embeddable language, made as a side project, it does not offer any cool features, nor is it efficient.  
 
 ## Contents
 
