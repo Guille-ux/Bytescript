@@ -1,5 +1,7 @@
 class File
     func String read() end
+    func String write(String content) end
+    func close() end
 end
 
 class IO

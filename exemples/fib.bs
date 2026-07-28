@@ -1,0 +1,14 @@
+func Number fib(Number n)
+    if n <= 1 then return n end
+
+    Number a = 0
+    Number b = 1
+
+    for i = 1, n repeat
+        Number tmp = a + b
+        a = b
+        b = tmp
+    end
+
+    return b
+end

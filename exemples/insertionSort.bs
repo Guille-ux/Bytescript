@@ -1,0 +1,13 @@
+func insertionSort(Table arr)
+    for i = 1, arr:len() repeat
+        Number key = arr[i]
+        Number j = i - 1
+
+        while j >= 0 and arr[j] > key repeat
+            arr[j + 1] = arr[j]
+            j = j - 1
+        end
+
+        arr[j + 1] = key
+    end
+end

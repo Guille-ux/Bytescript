@@ -1,0 +1,14 @@
+class Counter
+    func static Counter __new()
+        Number self.value = 0
+        return self
+    end
+
+    func increment()
+        self.value = self.value + 1
+    end
+
+    func Number get()
+        return self.value
+    end
+end

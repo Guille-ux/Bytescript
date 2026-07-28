@@ -1,0 +1,10 @@
+return func Number benchmark(Function tester)
+    Number avg = 0
+    Number tests = 1000
+
+    String mes = "Calculating average time for %.0f tests"
+    print(mes:format(tests))
+
+    for i = 0, tests repeat avg = avg + tester() end
+    return avg / tests
+end

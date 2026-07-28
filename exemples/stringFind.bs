@@ -1,0 +1,9 @@
+func Number findChar(String s, String ch)
+    for i = 0, s:len() repeat
+        if s[i] == ch then
+            return i
+        end
+    end
+
+    return -1
+end

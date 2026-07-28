@@ -1,0 +1,24 @@
+import "Time.dll" as Time end
+import "Random.dll" as Random end
+import "exemples/bubbleSort.bs" as bubble end
+require "exemples/speedTests/benchmark.bs" as Function benchmark end
+
+
+func Number speedTest()
+    import "Time.dll" as Time end
+    import "Random.dll" as Random end
+    import "exemples/bubbleSort.bs" as bubble end
+
+    Number tests = 100000
+    Table nums = {}
+    for i = 0, tests repeat Random:integer(-100000, 100000) end
+
+    Number pre = Time:clock()
+    bubble:bubbleSort(nums)
+    Number post = Time:clock()
+
+    return post - pre
+end
+
+print("Testing the speed of bubble sort on a table of 100000 random elements")
+print(benchmark(speedTest))

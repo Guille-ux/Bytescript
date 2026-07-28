@@ -3,7 +3,6 @@
 #include <math.h>
 #include <stdio.h>
 
-
 FoldingFunction fold_functions[] = {
     [NT_STATEMENTS]     = fold_statements,
     [NT_RETURN]         = fold_return,

@@ -16,10 +16,12 @@ void initialize_string_class() {
     TValue String_fields[] = {
         new_cfunc(compare_string),
         new_cfunc(format_string),
+        new_cfunc(len_string),
 
         new_cfunc(to_string_string),
 
         new_cfunc(concat_string),
+        new_cfunc(index_string)
     };
 
     easy_map("string_map.bs");
@@ -42,26 +44,6 @@ TValue compare_string(TValue* argv, size_t argc) {
     
     int res = strcmp(self_ptr->str, other_ptr->str);
     return res == 0 ? TRUE_TVALUE : FALSE_TVALUE;
-}
-
-TValue concat_string(TValue* argv, size_t argc) {
-    STRICT_MIN_ARGC(2, "function <String.concat> take 2 arguments")
-
-    TValue self = argv[0];
-    TValue other = argv[1];
-    if (!IS_STRING(self)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
-    if (!IS_STRING(other)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
-
-    TStr* self_ptr = AS_STRING(self);
-    TStr* other_ptr = AS_STRING(other);
-
-    TStr* new = malloc(sizeof(TStr) + self_ptr->len + other_ptr->len + 1);
-    strcpy(new->str, self_ptr->str);
-    strcat(new->str, other_ptr->str);
-    new->len = self_ptr->len + other_ptr->len;
-    new->str[new->len] = '\0';
-
-    return cache_string(new);
 }
 
 TValue format_string(TValue* argv, size_t argc) {
@@ -148,6 +130,15 @@ TValue format_string(TValue* argv, size_t argc) {
     return STR_TO_TVALUE(new);
 }
 
+TValue len_string(TValue* argv, size_t argc) {
+    MIN_ARGC(1); TYPE_CHECK(0, STRING, "String", "String.len")
+
+    TValue self = argv[0];
+    TStr* ptr = AS_STRING(self);
+
+    return NUM_AS_TVALUE(ptr->len);
+}
+
 
 TValue to_string_string(TValue* argv, size_t argc) {
     TValue str1 = NIL;
@@ -191,6 +182,40 @@ TValue to_string_string(TValue* argv, size_t argc) {
     }
 
     return to_return_value(&str1, 1);
+}
+
+TValue concat_string(TValue* argv, size_t argc) {
+    STRICT_MIN_ARGC(2, "function <String.concat> take 2 arguments")
+
+    TValue self = argv[0];
+    TValue other = argv[1];
+    if (!IS_STRING(self)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
+    if (!IS_STRING(other)) call_error(new_type_error, "function <String.concat> take type <String> as arguments");
+
+    TStr* self_ptr = AS_STRING(self);
+    TStr* other_ptr = AS_STRING(other);
+
+    TStr* new = malloc(sizeof(TStr) + self_ptr->len + other_ptr->len + 1);
+    strcpy(new->str, self_ptr->str);
+    strcat(new->str, other_ptr->str);
+    new->len = self_ptr->len + other_ptr->len;
+    new->str[new->len] = '\0';
+
+    return cache_string(new);
+}
+
+TValue index_string(TValue* argv, size_t argc) {
+    MIN_ARGC(2);
+    TYPE_CHECK(0, STRING, "String", "String.index");
+    NUM_CHECK(1, "String.index");
+
+    TValue self = argv[0];
+    size_t idx = argv[1].num;
+
+    TStr* ptr = AS_STRING(self);
+    if (idx < 0 || idx >= ptr->len) call_error(new_index_error, "Index out of scope when trying to index a string");
+
+    return make_string(ptr->str +(size_t)argv[1].num, 1);
 }
 
 

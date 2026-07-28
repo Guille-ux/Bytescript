@@ -137,19 +137,10 @@ Token* make_tokens(char* text) {
             }
 
             case '-': {
-                /*
-                if (next_match(text, '-') && (next_match(text + 1, '-') || next_match(text + 1, '['))) {
-                    char end_condition = next_match((text += 2), '[') ? ']' : '\n';
-
-                    while (1) {
-                        while (!*++text || *text != end_condition);
-
-                        if (*text && end_condition == ']' && *++text != ']') continue;
-                        break;
-                    }
-
+                if (next_match(text, '-')) {
+                    while (*++text && *text != '\n');
                     break;
-                }*/
+                }
 
                 double_case(&text, tp, '>', TT_MINUS, TT_ARROW);
                 break;

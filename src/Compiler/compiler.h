@@ -78,9 +78,9 @@ static inline int register_try(uint8_t r, Scope* context);
 static inline int correct_constant_idx(int idx, Scope* context);
 static void delete_constant(int idx, Scope* context);
 static inline TValue get_constant(int idx, Scope* context);
-static inline int assignement_analysis(Node* node);
+static inline int assignement_analysis(Node* node, Scope* context);
 static inline int assign_to_reg(Node* node, uint8_t r, Scope* context);
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count);
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count, Scope* context);
 
 static void open_scope(Scope* context);
 static void close_scope(Scope* context);

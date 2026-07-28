@@ -61,11 +61,17 @@ int compile_statements(Node* node, Scope* context) {
 
 int compile_return(Node* node, Scope* context) {
     int r0 = free_register(register_top(context), context);
+    uint8_t can_free[node->node.ReturnNode.len]; for (int i = 0; i < node->node.ReturnNode.len; i++) can_free[i] = 1;
+
     if (node->node.ReturnNode.len == 1) {
         Node* nd = node->node.ReturnNode.nodes[0];
         int return_v = compile(nd, context);
 
-        if (nd->cc) r0 = register_constant(return_v, context, -1); else r0 = register_specific(return_v, context);
+        if (nd->cc) r0 = register_constant(return_v, context, -1); 
+        else {
+            r0 = register_specific(return_v, context);
+            can_free[0] = register_try_free(r0, context) + 1;
+        }
 
     } else if (node->node.ReturnNode.len > 1) {
         for (int i = 0; i < node->node.ReturnNode.len; i++) register_top(context);
@@ -78,9 +84,11 @@ int compile_return(Node* node, Scope* context) {
     }
 
     emit(OP_RETURN, context);
-    emit(free_multiple(r0, node->node.ReturnNode.len, context), context);
+    emit(r0, context);
     emit(node->node.ReturnNode.len, context);
     emit(0x00, context);
+
+    for (int i = 0; i < node->node.ReturnNode.len; i++) if (can_free[i]) free_register(r0 + i, context);
     return r0;
 }
 
@@ -137,7 +145,7 @@ int compile_assignement(Node* node, Scope* context) {
         case NT_VAR_ACESS: {
             int lvalue = compile(lvalue_node, context);
 
-            int analysis_res = assignement_analysis(node);
+            int analysis_res = assignement_analysis(node, context);
             if (analysis_res) free_register(lvalue, context);
 
             int value = compile(value_node, context);
@@ -171,6 +179,47 @@ int compile_assignement(Node* node, Scope* context) {
             emit(index, context);
 
             return value;
+        }
+
+        case NT_FIELDACCESS: {
+            TValue class_name = lvalue_node->node.FieldAccessNode.target->type;
+
+            int value = compile(value_node, context);
+            int value_copy = value;
+            int free_value = 1;
+
+            TValue class_namespace = get_value_from_hashtable(globals_map, class_name);
+            NamespaceEntry* class_entry = as_namespace_entry(class_namespace);
+            TValue class_map = get_namespace_map(class_namespace);
+
+            if (value_node->cc) value = register_constant(value, context, -1);
+            else free_value = register_try_free(value, context) + 1;
+
+            if (TYPE(class_entry->value) != CLASS) {
+                int lvalue = compile(lvalue_node->node.FieldAccessNode.target, context);
+
+                emit(OP_SETFIELD, context);
+                emit(lvalue, context);
+                emit(get_value_from_hashtable(class_map, lvalue_node->node.FieldAccessNode.name).num, context);
+                emit(value, context);
+
+            } else {
+                TValue idx = get_value_from_hashtable(class_map, lvalue_node->node.FieldAccessNode.name);
+                TValue tclass = class_entry->value;
+                TClass* class = AS_CLASS(tclass);
+
+                if (value_node->cc) class->fields[class->inherited_count + (int)idx.num] = get_constant(value_copy, context);
+                else {
+                    int class_r = free_register(register_global(get_value_from_hashtable(globals, undunder(class_name)).num, context, -1), context);
+
+                    emit(OP_SETFIELD, context);
+                    emit(class_r, context);
+                    emit(idx.num, context);
+                    emit(value, context);
+                }
+            }
+
+            return free_value ? free_register(value, context) : value;;
         }
 
         default : call_error(new_incorrect_lvalue_error, "cannot assign value to rvalue");
@@ -931,15 +980,15 @@ static inline void delete_constant(int idx, Scope* context) {
 
 static inline TValue get_constant(int idx, Scope* context) { return context->const_pool.const_pool[idx]; }
 
-static inline int assignement_analysis(Node* node) {
+static inline int assignement_analysis(Node* node, Scope* context) {
     int depth = 0;
     int target_count = 0;
-    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &target_count);
+    return full_assignement_analysis(node->node.AssignementNode.value, node->node.AssignementNode.lvalue, &depth, &target_count, context);
 }
 
 static inline int assign_to_reg(Node* node, uint8_t r, Scope* context) {
     int depth = 0; int target_count = 0;
-    int analysis = full_assignement_analysis(node, (Node[1]){ (Node){ .nt = NT_PLACEHOLDER } }, &depth, &target_count);
+    int analysis = full_assignement_analysis(node, (Node[1]){ (Node){ .nt = NT_PLACEHOLDER } }, &depth, &target_count, context);
     if (analysis) free_register(r, context);
 
     int end_value = compile(node, context);
@@ -948,43 +997,50 @@ static inline int assign_to_reg(Node* node, uint8_t r, Scope* context) {
     return r;
 }
 
-static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count) {
+static int full_assignement_analysis(Node* node, Node* target, int* depth, int* target_count, Scope* context) {
     #define ADD_DEPTH ( ((*depth)++), depth )
 
     if (node_equal(target, node)) target_count++;
     if (*depth > 1 && *target_count > 0) return 0;
 
-    int endv;
+    int endv = 1;
     switch (node->nt) {
         case NT_VAR_DECLARE: return 0;
-        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, target_count);
+        case NT_UNI_OP: return full_assignement_analysis(node->node.UniOpNode.target, target, ADD_DEPTH, target_count, context);
 
         case NT_ASSIGNEMENT: return 
-            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, target_count) &&
-            full_assignement_analysis(node->node.AssignementNode.value, target, depth, target_count);
+            full_assignement_analysis(node->node.AssignementNode.lvalue, target, ADD_DEPTH, target_count, context) &&
+            full_assignement_analysis(node->node.AssignementNode.value, target, depth, target_count, context);
 
-        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, target_count) &&
-                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, target_count);
+        case NT_BIN_OP: return full_assignement_analysis(node->node.BinOpNode.left, target, depth, target_count, context) &&
+                               full_assignement_analysis(node->node.BinOpNode.right, target, ADD_DEPTH, target_count, context);
 
         case NT_FIELDACCESS: return
-            full_assignement_analysis(node->node.FieldAccessNode.target, target, ADD_DEPTH, target_count);
+            full_assignement_analysis(node->node.FieldAccessNode.target, target, ADD_DEPTH, target_count, context);
 
         case NT_TABLE:
-            endv = 1;
-            
             for (int i = 0; i < node->node.TableNode.values.len; i++)
-                endv = endv && full_assignement_analysis(node->node.TableNode.values.nodes[i], target, ADD_DEPTH, target_count);
+                endv = endv && full_assignement_analysis(node->node.TableNode.values.nodes[i], target, ADD_DEPTH, target_count, context);
 
             return endv;
         
-        case NT_SELFCALL: *depth += 1;
-        case NT_CALL:
-            endv = 1;
+        case NT_SELFCALL:
+            return 0;
 
+        case NT_CALL:
             for (int i = 0; i < node->node.CallNode.args.len; i++)
-                endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, ADD_DEPTH, target_count);
+                endv = endv && full_assignement_analysis(node->node.CallNode.args.nodes[i], target, ADD_DEPTH, target_count, context);
 
             return endv;
+
+        case NT_VAR_ACESS:
+            if (IS_NIL(get_symbol_register(context, node->node.VarAcess.name))) return *ADD_DEPTH;
+            return 1;
+
+        case NT_REQUIRE: return *ADD_DEPTH;
+        case NT_INDEXING: return
+            full_assignement_analysis(node->node.IndexNode.target, target, depth, target_count, context) &&
+            full_assignement_analysis(node->node.IndexNode.index, target, ADD_DEPTH, target_count, context);
 
         default: return 1;
     }
@@ -1198,7 +1254,7 @@ int compile_load_module(Node* node, Scope* context, BytecodeInstruction instr, T
     TValue module = close_context(import_context);
     int mod_idx = module_load(module, type);
 
-    int r = register_first(context);
+    int r = register_top(context);
     if (!IS_NIL(node->node.importNode.identifier)) append_symbol(context, node->node.importNode.identifier, r);
     else free_register(r, context);
 

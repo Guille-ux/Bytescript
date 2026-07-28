@@ -175,7 +175,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_eeq_rr:
-        context.sp[arg1] = NUM_AS_TVALUE( EQUAL(CONSTANT(arg2), context.sp[arg3]) );
+        context.sp[arg1] = NUM_AS_TVALUE( EQUAL(context.sp[arg2], context.sp[arg3]) );
         NEXT_INSTR;
 
     instr_neq_rc:
@@ -183,7 +183,7 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_neq_rr:
-        context.sp[arg1] = NUM_AS_TVALUE( !EQUAL(CONSTANT(arg2), context.sp[arg3]) );
+        context.sp[arg1] = NUM_AS_TVALUE( !EQUAL(context.sp[arg2], context.sp[arg3]) );
         NEXT_INSTR;
 
     instr_lt_rc:
@@ -373,8 +373,11 @@ static TValue run_function(TValue func, VMState context) {
         TValue value = context.sp[arg2];
 
         if (!IS_TABLE(ttarget)) call_error(new_type_error, "Tried Indexing a non-table value");
+        if (IS_NUM(idx) && (size_t)idx.num <= target->array.len) {
+            if ((size_t)idx.num < target->array.len) target->array.array[(size_t)idx.num] = value;
+            else if ((size_t)idx.num == target->array.len) insert_table((TValue[2]){ ttarget, value }, 2);
+        }
 
-        if (IS_NUM(idx) && (size_t)idx.num == target->array.len) insert_table(context.sp + arg1, 2);
         else add_value_to_hashtable(ttarget, idx, value);
 
         NEXT_INSTR;
@@ -389,11 +392,11 @@ static TValue run_function(TValue func, VMState context) {
         NEXT_INSTR;
 
     instr_import:
-        context.sp[arg1] = vm_module_load(context, arg2, arg3, NULL);
+        context.sp[arg1] = vm_module_load(context, arg1, arg2, arg3, NULL);
         NEXT_INSTR;
 
     instr_require:
-        vm_module_load(context, arg2, arg3, context.sp + arg1);
+        vm_module_load(context, arg1, arg2, arg3, context.sp + arg1);
         NEXT_INSTR;
 
     instr_halt:
@@ -401,16 +404,16 @@ static TValue run_function(TValue func, VMState context) {
     return NIL;
 }
 
-static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3, TValue* return_ptr) {
+static inline TValue vm_module_load(VMState context, uint8_t arg1, uint8_t arg2, uint8_t arg3, TValue* return_ptr) {
     int mod_idx = off16_to_int16(arg2, arg3);
     TValue func = get_from_table(loaded_modules, NUM_AS_TVALUE(mod_idx));
     TValue module;
 
     TFunc* tfunc = AS_FUNC(func);
     if (tfunc->isCfunc) {
-        TValue res = tfunc->cfunc(context.sp, 256);
+        TValue res = tfunc->cfunc(context.sp + arg1, 256);
         module = new_object(Module_class, NULL, 256);
-        memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
+        memcpy(AS_OBJECT(module)->fields, context.sp + arg1, BSIZE(256));
 
         AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
         AS_TABLE(loaded_modules)->array.array[mod_idx] = module;
@@ -424,15 +427,16 @@ static inline TValue vm_module_load(VMState context, uint8_t arg2, uint8_t arg3,
             .prev = &context.frame
         };
 
-        TValue* pre_sp = context.sp;
         context.frame = caller_frame;
         context.frame.ip -= 4;
+        context.sp += arg1;
 
         TValue res = run_function(func, context);
+        context.sp -= arg1;
         context.frame = *caller_frame.prev;
 
         module = new_object(Module_class, NULL, 256);
-        memcpy(AS_OBJECT(module)->fields, context.sp, BSIZE(256));
+        memcpy(AS_OBJECT(module)->fields, context.sp + arg1, BSIZE(256));
 
         AS_TABLE(loaded_returns)->array.array[mod_idx] = res;
         AS_TABLE(loaded_modules)->array.array[mod_idx] = module;

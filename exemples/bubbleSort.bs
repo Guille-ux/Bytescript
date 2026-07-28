@@ -1,0 +1,13 @@
+func bubbleSort(Table arr)
+    Number n = arr:len()
+
+    for i = 0, n - 1 repeat
+        for j = 0, n - 2 repeat
+            if arr[j] > arr[j + 1] then
+                Number tmp = arr[j]
+                arr[j] = arr[j + 1]
+                arr[j + 1] = tmp
+            end
+        end
+    end
+end

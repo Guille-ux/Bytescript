@@ -120,7 +120,7 @@ TValue resolve_type_assignement(Node* node, TypesContext* context) {
 TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue ltype = resolve_type(node->node.BinOpNode.left, context);
     TValue rtype = resolve_type(node->node.BinOpNode.right, context);
-    if (IS_VAR(ltype) || IS_VAR(rtype)) return varType;
+    if (IS_VAR(ltype) || IS_VAR(rtype)) return node->type = varType;
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
@@ -130,8 +130,8 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
     TValue rmap = TBL_TO_TVALUE(as_class_descriptor(rcdesc)->func_namespace);
     TValue ldesc = get_value_from_hashtable(lmap, op);
     TValue rdesc = get_value_from_hashtable(rmap, rop);
-    MethodDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : (MethodDescriptor*)PAYLOAD(ldesc);
-    MethodDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : (MethodDescriptor*)PAYLOAD(rdesc);
+    MethodDescriptor* ldescPtr = IS_NIL(ldesc) ? NULL : as_method_descriptor(ldesc);
+    MethodDescriptor* rdescPtr = IS_NIL(rdesc) ? NULL : as_method_descriptor(rdesc);
 
     if (ldescPtr && in_table(ldescPtr->arg_types, rtype)) return (node->type = ldescPtr->return_type);
     if (rdescPtr && in_table(rdescPtr->arg_types, ltype)) return (node->type = rdescPtr->return_type);
@@ -144,13 +144,13 @@ TValue resolve_type_bin_op(Node* node, TypesContext* context) {
 
 TValue resolve_type_uni_op(Node* node, TypesContext* context) {
     TValue return_type = resolve_type(node->node.UniOpNode.target, context);
-    if (IS_VAR(return_type)) return varType;
+    if (IS_VAR(return_type)) return node->type = varType;
 
     TValue op = get_value_from_hashtable(unary_operation_methods, NUM_AS_TVALUE(node->node.UniOpNode.op.tt));
     TValue cdesc = get_value_from_hashtable(type_namespace, return_type);
-    TValue map = TBL_TO_TVALUE(as_class_descriptor(cdesc)->id_namespace);
+    TValue map = TBL_TO_TVALUE(as_class_descriptor(cdesc)->func_namespace);
     TValue desc = get_value_from_hashtable(map, op);
-    MethodDescriptor* descPtr = IS_NIL(desc) ? NULL : (MethodDescriptor*)PAYLOAD(desc);
+    MethodDescriptor* descPtr = IS_NIL(desc) ? NULL : as_method_descriptor(desc);
 
     if (descPtr && in_table(descPtr->arg_types, return_type)) return (node->type = descPtr->return_type);
     else if (node->node.UniOpNode.op.tt == TT_NOT) return (node->type = NumberType);
@@ -450,6 +450,9 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
         TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->id_namespace);
         TValue class_func = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
+        TValue dclass_desc = get_value_from_hashtable(type_namespace, context->current_class);
+        TValue dclass_map = TBL_TO_TVALUE(as_class_descriptor(dclass_desc)->id_namespace);
+
         if (in_table(native_methods, dunder(name))) {
             TValue error_message = make_fstring("Cannot name a method <%s>");
             error_message = format_string((TValue[2]){ error_message, name }, 2);
@@ -458,6 +461,7 @@ TValue resolve_type_method_def(Node* node, TypesContext* context) {
         }
         
         add_value_to_hashtable(class_map, name, FunctionType);
+        add_value_to_hashtable(dclass_map, name, FunctionType);
         add_value_to_hashtable(class_func, name, desc);
 
     } else {
@@ -569,7 +573,7 @@ TValue resolve_type_selfdeclare(Node* node, TypesContext* context) {
     }
     
     node->node.SelfDeclarenode.class = context->current_class;
-    add_value_to_hashtable(class_map, name, return_type);
+    add_value_to_hashtable(class_map, name, var_type);
     return (node->type = var_type);
 }
 
@@ -630,7 +634,7 @@ TValue resolve_type_indexing(Node* node, TypesContext* context) {
     TValue target = resolve_type(node->node.IndexNode.target, context);
     TValue index = resolve_type(node->node.IndexNode.index, context);
 
-    if (EQUAL(target, varType)) return varType;
+    if (EQUAL(target, varType)) return node->type = varType;
     TValue class_desc = get_value_from_hashtable(type_namespace, target);
     TValue class_map = TBL_TO_TVALUE(as_class_descriptor(class_desc)->func_namespace);
 
@@ -645,7 +649,7 @@ TValue resolve_type_indexing(Node* node, TypesContext* context) {
     }
 
     TValue expected_type = get_from_table(descPtr->arg_types, NUM_AS_TVALUE(0));
-    if (EQUAL(index, varType) || EQUAL(expected_type, varType) || EQUAL(expected_type, index)) return descPtr->return_type;
+    if (EQUAL(index, varType) || EQUAL(expected_type, varType) || EQUAL(expected_type, index)) return node->type = descPtr->return_type;
 
     TValue error_message = make_fstring("Cannot index type : <%s> with type <%s>");
     error_message = format_string((TValue[4]){ error_message, target, index }, 3);
@@ -710,19 +714,20 @@ static inline TValue resolve_in_scope(Node* node, TypesContext* context) {
 }
 
 static void resolve_import_loading(Node* node, TypesContext* context, TValue type) {
+    TypesContext* import_context = new_resolve_context();
+    resolve_type(node->node.importNode.ast, import_context);
+
     TValue cached = get_value_from_hashtable(type_namespace, type);
     if (IS_NIL(cached)) {
-        TypesContext* import_context = new_resolve_context();
-        resolve_type(node->node.importNode.ast, import_context);
-
         TValue func_namespace = TBL_TO_TVALUE(import_context->func_namespace);
         TValue id_namespace = TBL_TO_TVALUE(import_context->id_namespace);
         func_namespace = copy_table(&func_namespace, 1);
         id_namespace = copy_table(&id_namespace, 1);
 
         add_value_to_hashtable(type_namespace, type, make_class_descriptor(func_namespace, id_namespace));
-        close_resolve_context(import_context);
     }
+
+    close_resolve_context(import_context);
 }
 
 static void open_type_scope(TypesContext* context) {

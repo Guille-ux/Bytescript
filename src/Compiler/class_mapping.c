@@ -68,7 +68,14 @@ void classmap_bin_op(Node* node) {
     classmap(left);
     classmap(right);
 
-    if ((EQUAL(left->type, varType) || EQUAL(left->type, NumberType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, NumberType))) return;
+    switch (node->node.BinOpNode.op.tt) {
+        case TT_EEQ:
+        case TT_CONCAT:
+            if ((EQUAL(left->type, varType) || EQUAL(left->type, StringType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, StringType))) return;
+
+        default:
+            if ((EQUAL(left->type, varType) || EQUAL(left->type, NumberType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, NumberType))) return;
+    }
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.BinOpNode.op.tt));
     TValue rop = right_operation_method(node->node.BinOpNode.op.tt);
@@ -98,8 +105,9 @@ void classmap_uni_op(Node* node) {
     if (EQUAL(target->type, varType) || EQUAL(target->type, NumberType)) return;
 
     TValue op = get_value_from_hashtable(operation_methods, NUM_AS_TVALUE(node->node.UniOpNode.op.tt));
-    TValue lmap = get_value_from_hashtable(globals_map, target->type);
-    TValue desc = get_value_from_hashtable(lmap, op);
+    TValue map = get_value_from_hashtable(globals_map, dunder(target->type));
+    TValue nm = IS_NIL(map) ? NIL : get_namespace_map(map);
+    TValue desc = IS_NIL(nm) ? NIL : get_value_from_hashtable(nm, op);
 
     if (IS_NIL(desc)) return;
 
@@ -216,6 +224,7 @@ void classmap_fieldaccess(Node* node) {
 
 void classmap_indexing(Node* node) {
     Node* target = node->node.IndexNode.target;
+    Node* index = node->node.IndexNode.index;
 
     classmap(target);
     classmap(node->node.IndexNode.index);
@@ -223,8 +232,9 @@ void classmap_indexing(Node* node) {
     if (EQUAL(target->type, varType) || EQUAL(target->type, TableType)) return;
 
     TValue __index = make_fstring("__index");
-    TValue lmap = get_value_from_hashtable(globals_map, target->type);
-    TValue desc = get_value_from_hashtable(lmap, __index);
+    TValue map = get_value_from_hashtable(globals_map, dunder(target->type));
+    TValue nm = IS_NIL(map) ? NIL : get_namespace_map(map);
+    TValue desc = IS_NIL(nm) ? NIL : get_value_from_hashtable(nm, __index);
 
     if (IS_NIL(desc)) return;
 
@@ -233,5 +243,5 @@ void classmap_indexing(Node* node) {
     node->node.SelfCallnode.target = target;
     node->node.SelfCallnode.args = make_node_array();
 
-    append_to_node_array(&node->node.SelfCallnode.args, node->node.IndexNode.index);
+    append_to_node_array(&node->node.SelfCallnode.args, index);
 }

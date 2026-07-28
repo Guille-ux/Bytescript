@@ -718,8 +718,7 @@ void print_pair(TValue key, TValue value, size_t tabs) {
             break;
 
         default:
-            printf("[");
-            print(&key, 1);
+            printf("[%f", key.num);
             break;
     }
 

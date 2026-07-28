@@ -203,6 +203,7 @@ TValue make_globals_types_from_file(TValue filename) {
         switch (node->nt) {
             case NT_VAR_DECLARE: {
                 add_value_to_hashtable(global_types, node->node.VarDeclareNode.var_name, node->type);
+                break;
             }
 
             case NT_FUNCDEF: {

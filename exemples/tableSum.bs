@@ -1,0 +1,9 @@
+func Number sum(Table t)
+    Number total = 0
+
+    for i = 0, t:len() repeat
+        total = total + t[i]
+    end
+
+    return total
+end

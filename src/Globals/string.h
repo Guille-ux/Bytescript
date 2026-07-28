@@ -27,10 +27,13 @@ extern TValue String_class;
 void initialize_string_class();
 
 TValue compare_string(TValue* argv, size_t argc);
-TValue concat_string(TValue* argv, size_t argc);
 TValue format_string(TValue* argv, size_t argc);
+TValue len_string(TValue* argv, size_t argc);
 
 TValue to_string_string(TValue* argv, size_t argc);
+
+TValue concat_string(TValue* argv, size_t argc);
+TValue index_string(TValue* argv, size_t argc);
 
 TValue cache_string(TStr* str);
 TValue make_string(char* string, size_t len);

@@ -1,0 +1,10 @@
+
+func String reverse(String s)
+    String out = ""
+
+    for i = s:len() - 1, -1, -1 repeat
+        out = out .. s[i]
+    end
+
+    return out
+end

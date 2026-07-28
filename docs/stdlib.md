@@ -177,10 +177,15 @@ Built-ins modules do not need to be imported by the user and can be accessed at 
     - `other` : The string to compare with
 
 - `String:format(var value)`  
-**Signature** : `func Number format(var value) end`  
+**Signature** : `func String format(var value) end`  
 **Description** : Formats a string using format specifiers  
 **Arguments** : 
     - `value` : The value to format
+
+- `String:len()`  
+**Signature** : `func Number len() end`  
+**Description** : Returns the lenght of the string  
+**Arguments** : None  
 
 - `String:toString(var value)`  
 **Signature** : `func static String toString(var value) end`  
@@ -210,7 +215,7 @@ Built-ins modules do not need to be imported by the user and can be accessed at 
 **Arguments** : None
 
 - `File:write(String content)`  
-**Signature** : `func write(String content) end`  
+**Signature** : `func String write(String content) end`  
 **Description** : Writes content into a file  
 **Arguments** : 
     - `content` : The content to write into the file
