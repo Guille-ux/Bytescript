@@ -1,14 +1,53 @@
 # Bytescript Standard library
 
+Content :
+- [*Built-ins*](#built-ins)
+    - [Globals](#globals)
+    - [Table](#table)
+    - [String](#string)
+    - [IO](#io)
+    - [File](#file)
+    - [Error](#error)  
+- [*stdlib*](#standard-library)
+    - [Base64](#base64)
+    - [Debug](#debug)
+    - [Json](#json)
+    - [Math](#math)
+    - [OS](#os)
+    - [Random](#random)
+    - [Time](#time)
+
 ## Built-ins
 
 Built-ins modules do not need to be imported by the user and can be accessed at any time  
-These include :
-- String
-- Table
-- IO
-- File
-- Error
+
+### Globals
+
+- `print(var value)`  
+**Signature** : `func var print(var value) end`  
+**Description** : Prints a value in stdout  
+**Arguments** : 
+    - `value` : The value to print
+  
+- `free(var value)`  
+**Signature** : `func var free(var value) end`  
+**Description** : Frees a heap allocated value  
+**Arguments** : 
+    - `value` : The value to free
+  
+- `disassemble(Function func, String output)`  
+**Signature** : `func var disassemble(Function func, String output) end`  
+**Description** : Writes the bytecode of a given function in the given file  
+**Arguments** : 
+    - `func` : The function to disassemble
+    - `output` : The path to the file you wish to write the bytecode in, **optional**, *defaults to IO.stdout*
+  
+- `exec(String src)`  
+**Signature** : `func var exec(String src) end`  
+**Description** : Execute the given source code  
+**Arguments** : 
+    - `src` : The code to execute
+  
 
 ### Table
 
