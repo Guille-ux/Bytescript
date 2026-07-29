@@ -70,7 +70,6 @@ void classmap_bin_op(Node* node) {
 
     switch (node->node.BinOpNode.op.tt) {
         case TT_EEQ:
-        case TT_CONCAT:
             if ((EQUAL(left->type, varType) || EQUAL(left->type, StringType)) && ( EQUAL(right->type, varType) || EQUAL(right->type, StringType))) return;
 
         default:

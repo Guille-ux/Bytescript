@@ -46,7 +46,9 @@ CompileFunction compiler_functions[] = {
 };
 
 
-int compile(Node* node, Scope* context) { return compiler_functions[node->nt](node, context); }
+int compile(Node* node, Scope* context) {
+    return compiler_functions[node->nt](node, context);
+}
 
 int compile_statements(Node* node, Scope* context) {
     int res = 0;
@@ -726,7 +728,7 @@ int compile_selfcall(Node* node, Scope* context) {
     Node* target_node = node->node.SelfCallnode.target;
     int call_method = !is_dunder(target_node->type).num;
     int func;
-    
+
     if (call_method) {
         Node var_access = { .cc = false, .nt = NT_VAR_ACESS, .node.VarAcess.name = target_node->type, .type = dunder(target_node->type) };
         Node field_acess = { .cc = false, .nt = NT_FIELDACCESS, .node.FieldAccessNode.name = node->node.SelfCallnode.name };
@@ -736,7 +738,7 @@ int compile_selfcall(Node* node, Scope* context) {
         register_specific_top(compile(target_node, context), context);
 
     } else func = register_specific_top(get_target_field(target_node, node->node.SelfCallnode.name, !call_method, context), context);
-    
+
     for (int i = 0; i < node->node.SelfCallnode.args.len; i++) assign_to_reg(node->node.SelfCallnode.args.nodes[i], register_top(context), context);
     free_multiple(func, node->node.SelfCallnode.args.len + 1 + call_method, context);
 

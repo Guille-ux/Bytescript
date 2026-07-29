@@ -14,7 +14,7 @@ CleanerFunction cleaner_functions[] = {
     [NT_VAR_ACESS]      = clean_nothing,
     [NT_NUMBER]         = clean_nothing,
     [NT_STRING]         = clean_nothing,
-    [NT_TABLE]          = clean_table,
+    [NT_TABLE]          = clean_table_node,
     [NT_ALLOCATION]     = clean_call,
     [NT_IF]             = clean_if_statement,
     [NT_NFOR]           = clean_nfor_loop,
@@ -49,7 +49,7 @@ void clean_statements(Node* node) {
     free(node->node.StatementsNode.nodes);
 }
 
-void clean_var_declare(Node* node) { clean_node(node->node.VarDeclareNode.value); }
+void clean_var_declare(Node* node) { if (node->node.VarDeclareNode.value) clean_node(node->node.VarDeclareNode.value); }
 
 void clean_assignement(Node* node) {
     clean_node(node->node.AssignementNode.lvalue);
@@ -69,14 +69,14 @@ void clean_call(Node* node) {
     clean_node(node->node.CallNode.target);
 }
 
-void clean_table(Node* node) {
+void clean_table_node(Node* node) {
     for (int i = 0; i < node->node.TableNode.values.len; i++) clean_node(node->node.TableNode.values.nodes[i]);
     free(node->node.TableNode.values.nodes);
 }
 
 void clean_if_statement(Node* node) {
-    for (int i = 0; i < node->node.IfNode.cases.len; i++) clea_node(node->node.IfNode.cases.nodes[i]);
-    for (int i = 0; i < node->node.IfNode.statements.len; i++) clea_node(node->node.IfNode.statements.nodes[i]);
+    for (int i = 0; i < node->node.IfNode.cases.len; i++) clean_node(node->node.IfNode.cases.nodes[i]);
+    for (int i = 0; i < node->node.IfNode.statements.len; i++) clean_node(node->node.IfNode.statements.nodes[i]);
     free(node->node.IfNode.cases.nodes);
     free(node->node.IfNode.statements.nodes);
 }

@@ -98,6 +98,7 @@ TValue dis(TValue tfunc) {
             add_value_to_hashtable(labels, NUM_AS_TVALUE(i / 4+ jump_lenght + 1), label_name);
         }
 
+        printf("%s\n", opcodes_names[op]);
         bytecode += 4;
     }
 

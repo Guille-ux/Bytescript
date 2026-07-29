@@ -7,3 +7,6 @@ func Number findChar(String s, String ch)
 
     return -1
 end
+
+String idk = "Hello World!"
+print(findChar(idk, "W"))

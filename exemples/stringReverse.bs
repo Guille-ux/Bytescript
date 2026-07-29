@@ -1,4 +1,3 @@
-
 func String reverse(String s)
     String out = ""
 
@@ -8,3 +7,6 @@ func String reverse(String s)
 
     return out
 end
+
+String idk = "Hello World!"
+print(reverse(idk))
