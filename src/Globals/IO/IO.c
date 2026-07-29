@@ -23,7 +23,7 @@ void initialize_io_class() {
         new_cfunc(open_IO)
     };
 
-    easy_map("IO_map.bs");
+    clean_node(easy_map("IO_map.bs"));
     IO_class = new_class(NULL, IO_fields, 0, sizeof(IO_fields) / sizeof(IO_fields[0]));
     
 

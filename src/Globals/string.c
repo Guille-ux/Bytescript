@@ -24,7 +24,7 @@ void initialize_string_class() {
         new_cfunc(index_string)
     };
 
-    easy_map("string_map.bs");
+    clean_node(easy_map("string_map.bs"));
     String_class = new_class(NULL, String_fields, 0, sizeof(String_fields) / sizeof(String_fields[0]));
 
     add_global(String_class, make_fstring("String"));

@@ -30,5 +30,6 @@ void print_tokens(Token* tokens);
 void print_hash_table(TTable* tab);
 int get_linked_list_len(struct TValueLinkedList list);
 void linked_list_to_array(struct TValueLinkedList list, TValue array[], size_t len);
+void free_linked_list(struct TValueLinkedList list);
 
 #endif

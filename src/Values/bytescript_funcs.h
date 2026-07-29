@@ -3,6 +3,7 @@
 
 #include "Values/bytev.h"
 #include "Parser/nodes.h"
+#include "Compiler/ast_cleaner.h"
 
 typedef enum {
     FLAG_FILENAME

@@ -57,6 +57,7 @@ TValue easy_compile(char filename[]) {
     Scope* compile_context = new_scope();
     compile(ast, compile_context);
 
+    clean_node(ast);
     return close_context(compile_context);
 }
 

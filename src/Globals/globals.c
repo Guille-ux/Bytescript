@@ -220,4 +220,6 @@ TValue make_globals_types_from_file(TValue filename) {
             }
         }
     }
+
+    clean_node(ast);
 }

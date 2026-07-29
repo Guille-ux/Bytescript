@@ -101,3 +101,14 @@ void linked_list_to_array(struct TValueLinkedList list, TValue array[], size_t l
     struct TValueLinkedList* arg = list.next;
     for (int i = 0; i < len; (arg = arg->next ,i++)) { array[len - i - 1] = arg->value; }
 }
+
+void free_linked_list(struct TValueLinkedList list) {
+    for (struct TValueLinkedList* current = list.next; current;) {
+        struct TValueLinkedList* to_free = current;
+        current = current->next;
+
+        free(to_free);
+    }
+
+    list.next = NULL;
+}

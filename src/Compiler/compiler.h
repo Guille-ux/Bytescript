@@ -53,7 +53,6 @@ int compile_from_import(Node* node, Scope* context);
 int compile_func_def(Node* node, Scope* context);
 int compile_method_def(Node* node, Scope* context);
 int compile_class_def(Node* node, Scope* context);
-int compile_class_def(Node* node, Scope* context);
 int compile_selfcall(Node* node, Scope* context);
 int compile_selfdeclare(Node* node, Scope* context);
 int compile_fieldaccess(Node* node, Scope* context);
