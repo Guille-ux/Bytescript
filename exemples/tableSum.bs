@@ -1,8 +1,8 @@
 func Number sum(Table t)
     Number total = 0
 
-    for i = 0, t:len() repeat
-        total = total + t[i]
+    for i, v in t repeat
+        total = total + v
     end
 
     return total

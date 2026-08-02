@@ -11,7 +11,7 @@ func Number speedTest()
 
     Number tests = 100000
     Table nums = {}
-    for i = 0, tests repeat Random:integer(-100000, 100000) end
+    for i = 0, tests repeat nums:insert(Random:integer(-100000, 100000)) end
 
     Number pre = Time:clock()
     tableSum:sum(nums)
