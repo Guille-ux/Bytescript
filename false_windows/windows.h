@@ -27,11 +27,11 @@ static inline void dll2so(char *name) {
 }
 
 static inline HMODULE LoadLibrary(char* lpLibFileName) {
-	dll2so(lpLibFileName);
+	//dll2so(lpLibFileName);
 	return dlopen(lpLibFileName, RTLD_LAZY);
 }
 
-static inline FARPROC GetProcAddress(HMODULE hModule, const char* lpProcName) {
+static inline void *GetProcAddress(HMODULE hModule, const char* lpProcName) {
 	return dlsym((void*)hModule, lpProcName);	
 }
 

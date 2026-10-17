@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I../src -I../dist -I../false_windows -ldl -lm -D_GNU_SOURCE -fPIC
+CFLAGS = -I./ -I../ -I../src -I../dist -I../false_windows -ldl -lm -D_GNU_SOURCE -fPIC -rdynamic
 
 SRC := $(wildcard */*.c)
 OBJS := $(SRC:.c=.o)

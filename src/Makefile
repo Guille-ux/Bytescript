@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE
+CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE -rdynamic
 
 SRC := $(shell find . -name '*.c')
 MAIN_SRC := $(wildcard *.c)
