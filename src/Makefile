@@ -11,7 +11,7 @@ LIB_OBJ  := $(patsubst %.c, ../build/%.o, $(notdir $(LIB_SRC)))
 
 OBJ    		:= $(MAIN_OBJ) $(LIB_OBJ)
 MAPS   		:= $(MAPS_SRC:%.bs=../dist/stdlib/%.bs)
-TARGET 		:= $(patsubst %.c, ../dist/%.elf, $(MAIN_SRC))
+TARGET 		:= $(patsubst %.c, ../dist/%, $(MAIN_SRC))
 C_API		:= ../dist/bytescript.h ../dist/Values/bytev.h
 
 main : $(TARGET) $(MAPS) $(C_API)
@@ -40,7 +40,7 @@ release : main
 debug : CFLAGS += -O0 -g
 debug : main
 
-../dist/%.elf: ../build/%.o $(LIB_OBJ)  | ../dist
+../dist/%: ../build/%.o $(LIB_OBJ)  | ../dist
 	$(CC) $(CFLAGS) $^ -o $@
 
 # it turn's linux doesn't need the .lib, xD

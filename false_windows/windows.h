@@ -37,6 +37,7 @@ static inline FARPROC GetProcAddress(HMODULE hModule, const char* lpProcName) {
 
 static inline uint32_t GetModuleFileName(HMODULE hModule, char *buffer, uint32_t nSize) {
 	Dl_info info;
+	memset(buffer, 0, nSize);
 	if (hModule!=NULL) {
 		// devolvemos el path del basura esta...
 		// eso como se llame el path del .so
