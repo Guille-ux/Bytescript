@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <windows.h>
 #include <time.h>
+#include <bs_api.h>
 
 #include "Time/Time.h"
 
-__declspec(dllexport) char* bytescript_module_map = "Time_map.bs";
-__declspec(dllexport) TValue bytescript_module_loader(TValue* argv, size_t argc) {
+BS_API char* bytescript_module_map = "Time_map.bs";
+BS_API TValue bytescript_module_loader(TValue* argv, size_t argc) {
     TValue fields[] = {
         new_cfunc(time_time),
         new_cfunc(clock_time),

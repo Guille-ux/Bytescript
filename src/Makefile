@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I./Values
+CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE
 
 SRC := $(shell find . -name '*.c')
 MAIN_SRC := $(wildcard *.c)
@@ -11,7 +11,7 @@ LIB_OBJ  := $(patsubst %.c, ../build/%.o, $(notdir $(LIB_SRC)))
 
 OBJ    		:= $(MAIN_OBJ) $(LIB_OBJ)
 MAPS   		:= $(MAPS_SRC:%.bs=../dist/stdlib/%.bs)
-TARGET 		:= $(patsubst %.c, ../dist/%.exe, $(MAIN_SRC))
+TARGET 		:= $(patsubst %.c, ../dist/%.elf, $(MAIN_SRC))
 C_API		:= ../dist/bytescript.h ../dist/Values/bytev.h
 
 main : $(TARGET) $(MAPS) $(C_API)
@@ -40,14 +40,15 @@ release : main
 debug : CFLAGS += -O0 -g
 debug : main
 
-../dist/%.exe: ../build/%.o ../dist/bytescript.lib | ../dist
+../dist/%.elf: ../build/%.o $(LIB_OBJ)  | ../dist
 	$(CC) $(CFLAGS) $^ -o $@
 
-../dist/bytescript.lib: ../dist/bytescript.dll | ../dist
-	dlltool -d bytescript.def -l $@
+# it turn's linux doesn't need the .lib, xD
+#../dist/bytescript.lib: ../dist/bytescript.dll | ../dist
+#	dlltool -d bytescript.def -l $@
 
-../dist/bytescript.dll: $(LIB_OBJ) | ../dist
-	$(CC) $(CFLAGS) $^ -shared bytescript.def -o $@
+../dist/bytescript.so: $(LIB_OBJ) | ../dist
+	$(CC) $(CFLAGS) $^ -shared -o $@
 
 ../build/%.o: ../build
 	$(CC) $(CFLAGS) -c $(shell find . -name $*.c) -o $@
@@ -70,3 +71,5 @@ debug : main
 dis : CFLAGS += -O2
 dis : clean all
 	objdump -d ../build/dised.o > ../dist/dised.txt
+
+
