@@ -21,6 +21,9 @@ extern TValue globals_map;
 
 void initialize_globals();
 
+#define BYTESCRIPT_MAX_INPUT_BUFFER_SIZE 1024
+
+TValue input(TValue* argv, size_t argc); // yay! user input
 TValue print(TValue* argv, size_t argc);
 TValue tfree(TValue* argv, size_t argc);
 TValue ttypeof(TValue* argv, size_t argc);
