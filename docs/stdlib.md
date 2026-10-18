@@ -29,11 +29,11 @@ Built-ins modules do not need to be imported by the user and can be accessed at 
 **Arguments** : 
     - `value` : The value to print
 
-- `input(String text)`
-**Signature** : `func var input(String text) end`
-**Description** : Reads a line from `stdin`
-**Arguments**
-    - `text` : The text to print
+- `input(String text)`    
+**Signature** : `func var input(String text) end`   
+**Description** : Reads a line from `stdin`   
+**Arguments**   
+    - `text` : The text to print   
 
 - `free(var value)`  
 **Signature** : `func var free(var value) end`  
