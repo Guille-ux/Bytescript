@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE -rdynamic
-
+AR = ar
+ARFLAGS = rcs
 SRC := $(shell find . -name '*.c')
 MAIN_SRC := $(wildcard *.c)
 LIB_SRC := $(filter-out $(MAIN_SRC), $(SRC))
@@ -13,11 +14,14 @@ OBJ    		:= $(MAIN_OBJ) $(LIB_OBJ)
 MAPS   		:= $(MAPS_SRC:%.bs=../dist/stdlib/%.bs)
 TARGET 		:= $(patsubst %.c, ../dist/%, $(MAIN_SRC))
 C_API		:= ../dist/bytescript.h ../dist/Values/bytev.h
+LIBRARIES := ../dist/libbytescript.a ../dist/bytescript.so
 
 main : $(TARGET) $(MAPS) $(C_API)
 
+libs: $(LIBRARIES)
+
 all: CFLAGS += -O3 -march=native
-all: main
+all: main libs
 
 o_o : CFLAGS += -O0 -march=native
 o_o : main
@@ -72,4 +76,5 @@ dis : CFLAGS += -O2
 dis : clean all
 	objdump -d ../build/dised.o > ../dist/dised.txt
 
-
+../dist/libbytescript.a: $(LIB_OBJ)
+	$(AR) $(ARFLAGS) ../dist/libbytescript.a $(LIB_OBJ)
