@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE -rdynamic
+CFLAGS = -I./ -I../ -I./Values -I../false_windows -ldl -lm -D_GNU_SOURCE -rdynamic -fPIC
 AR = ar
 ARFLAGS = rcs
 SRC := $(shell find . -name '*.c')
