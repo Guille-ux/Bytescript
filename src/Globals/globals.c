@@ -10,7 +10,9 @@
 #include "Parser/nodes.h"
 #include "TypeResolving/type_specifiers.h"
 #include "Values/bytescript_funcs.h"
-
+#include <stdio.h>  // yk, just in case
+#include <stdlib.h> // this too
+#include <string.h> // also
 
 TValue globals;
 TValue global_types;
@@ -29,6 +31,7 @@ void initialize_globals() {
     add_global(new_cfunc(tfree), make_fstring("free"));
     add_global(new_cfunc(disassemble), make_fstring("disassemble"));
     add_global(new_cfunc(exec), make_fstring("exec"));
+    add_global(new_cfunc(input), make_fstring("input"));
 
     initialize_function_class();
     initialize_number_class();
@@ -42,6 +45,21 @@ void initialize_globals() {
     make_globals_types_from_file(make_fstring("globals.bs"));
 }
 
+// the input function is made by Guillermo Leira Temes
+// yk, i wanted an input function
+
+TValue input(TValue* argv, size_t argc) {
+    MIN_ARGC(1);
+    TValue text = argv[0];
+    if (argc > 0 && TYPE(argv[0]) != STRING) call_error(new_type_error, "function <input> take type <String> as argument");
+    // ooooooh shit
+    // i need to use a buffer and then malloc
+    char buffer[BYTESCRIPT_MAX_INPUT_BUFFER_SIZE];
+    printf("%s", AS_STRING(text)->str); // first we print the text
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strlen(buffer)-1] = '\0';
+    return make_fstring(buffer);
+}
 
 TValue print(TValue* argv, size_t argc) {
     for (int i = 0; i < argc; i++) {
@@ -223,3 +241,4 @@ TValue make_globals_types_from_file(TValue filename) {
 
     clean_node(ast);
 }
+
