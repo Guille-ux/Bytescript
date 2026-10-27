@@ -10,11 +10,11 @@ func Number speedTest()
     import "../fib.bs" as fib end
 
     Number pre = Time:clock()
-    fib:fib(500)
+    fib:fib(32)
     Number post = Time:clock()
 
     return post - pre
 end
 
-print("Testing the speed of fibonacci of 500")
+print("Testing the speed of fibonacci of 32")
 print(benchmark(speedTest))

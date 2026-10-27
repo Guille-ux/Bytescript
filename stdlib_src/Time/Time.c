@@ -5,6 +5,16 @@
 
 #include "Time/Time.h"
 
+
+double get_time(void)
+{
+	struct timespec ts;
+
+	timespec_get(&ts, TIME_UTC);
+
+	return ts.tv_sec + ts.tv_nsec / 1000000000.0;
+}
+
 BS_API char* bytescript_module_map = "Time_map.bs";
 BS_API TValue bytescript_module_loader(TValue* argv, size_t argc) {
     TValue fields[] = {
@@ -23,12 +33,12 @@ TValue time_time(TValue* argv, size_t argc) {
 }
 
 TValue clock_time(TValue* argv, size_t argc) {
-    LARGE_INTEGER tick;
+    /*LARGE_INTEGER tick;
     LARGE_INTEGER freq;
     QueryPerformanceCounter(&tick);
     QueryPerformanceFrequency(&freq);
-
-    return NUM_AS_TVALUE((double)tick.QuadPart / freq.QuadPart);
+    */
+    return NUM_AS_TVALUE(get_time());
 }
 
 TValue sleep_time(TValue* argv, size_t argc) {
