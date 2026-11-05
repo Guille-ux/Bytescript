@@ -4,12 +4,11 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <bs_api.h>
 #include <stdbool.h>
 #include <sys/time.h>
 #include <netdb.h>
-#include "bytescript.h"
-
+#include <bs_api.h>
+#include <bytescript.h>
 
 int newSocket() {
 	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
